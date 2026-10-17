@@ -544,3 +544,157 @@ build_hourly_feature_matrix(observations: Sequence[Any], lags=(1, 2, 3, 24, 168)
 load_organizer_dataset(source: str | Path | TextIO, *, limit: int | None = None) -> tuple[OrganizerHourlyObservation, ...]
 ```
 Read-only adapter for organizer CSV rows. Preserves native Decimal scale and unspecified timezones. Does not duplicate or overwrite Member 2's loader.
+
+## RJ-M1-08 Four-tier instrument economics
+
+`treasury_intelligence.instrument_economics` adds pure calculations and immutable,
+JSON-compatible result models, re-exported at the package root. All results carry
+`calculation_only=true`; none books a trade, changes a portfolio, or records realized
+accounting. Original functions/models remain unchanged. Decimal inputs reject
+floats, booleans, and nonfinite numbers; time inputs retain the new unspecified
+timezone semantics. Calculations use local Decimal precision, independent of the
+caller's precision/rounding mode. Source percentage points are never converted to
+integer bps. Source CSV and hourly observations remain unchanged.
+
+### Rounding, quantities, and day count
+
+- `usd_to_ledger_cents(amount_usd)` converts signed Decimal USD to integer cents
+  using ROUND_HALF_UP (half away from zero).
+- `percentage_cost_cents(amount_cents, percentage)` applies a percentage-point
+  haircut to a nonnegative cent value and rounds upward. Market values are first
+  rounded to ledger cents; their liquidation haircut is then rounded upward.
+- `calculate_index_acquisition(budget_cents, acquisition_price_index, *,
+  unit_decimal_places=18)` calculates normalized dollar-per-index-point units.
+  Units round down to the declared precision (0–1000 decimal places). The returned
+  IndexAcquisitionResult includes budget, price, units, exact Decimal acquisition
+  notional, half-up cent cost basis, and remaining unallocated cents. Source price
+  precision is preserved. Unit rounding is a stated modeling convention, not an
+  exchange-lot specification. Fees require separate budgeting by Member 2.
+- Repo/overdraft simple interest uses **ACT/365 fixed**: principal cents times
+  annual percentage-point quote / 100 times actual elapsed microseconds /
+  (365 * 86400 * 1,000,000). No compounding, no leap-year denominator adjustment,
+  no per-hour rounding, and no yield-to-effective-rate conversion. Repo source
+  APY is treated as the annual simple quote under this explicit convention.
+  Repo income rounds half up once; financing costs round upward once per supplied
+  constant-principal interval. Splitting a ledger accrual into separately rounded
+  intervals can change its total; the accounting cadence belongs to Member 2.
+
+### Repo
+
+```python
+repo_maturity_at(entered_at: datetime) -> datetime
+rate_fixings_from_observations(observations, *, instrument="repo" | "overdraft")
+    -> tuple[AnnualRateFixing, ...]
+calculate_repo_economics(position: Tier1RepoPosition, *, as_of: datetime,
+    rate_history: Sequence[AnnualRateFixing],
+    pay_accrued_interest_on_early_break: bool = False) -> RepoEconomicsResult
+```
+
+Repo entry must be exactly 17:00; maturity is next-day 08:00 (15 hours). Accrual
+stops at maturity. AnnualRateFixing holds observed_at and Decimal annual_rate_pct.
+Fixings are effective from their timestamp to the next fixing (piecewise constant,
+no interpolation). History must be strictly ordered/unique, cover the accrual
+start when nonzero, and contain no fixing after as_of. The latest fixing at/before
+entry seeds the rate; subsequent known fixings change it. A fixing exactly at the
+interval end does not apply retroactively. The adapter copies actual organizer
+repo/overdraft rate observations; it loads no data and invents no fixings. The
+calculation uses supplied fixings, not the position's estimated_interest_cents or
+an assumed immutable entry quote. Zero principal/duration needs no starting quote.
+
+RepoEconomicsResult separates principal, accrued_interest_cents, gross_claim_cents,
+interest_payable_on_redemption_cents, early_break_fee_cents,
+net_redemption_proceeds_cents, immediately_redeemable, accessible_redemption_cents,
+matured, holding_seconds, and maturity/as_of timestamps. Principal plus modeled
+accrual is a claim, never checking cash. Before maturity, source early-break haircut
+applies to principal; default 0.5% comes from the position contract. A locked position
+without early_break_allowed has zero accessible proceeds even though a conditional
+redemption quote is shown. At maturity, no early fee applies and claim redemption
+is available; actual cash settlement still belongs to Member 2.
+
+The dataset does not specify whether positive interest survives an early break.
+Default behavior forfeits positive accrued interest; callers may explicitly enable
+payment via pay_accrued_interest_on_early_break under the applicable contract.
+Negative accrued interest is retained under either rule, not silently forgiven.
+Rates/costs implying a negative claim or redemption proceeds raise ValueError.
+For example $5M at 5% for 15 hours yields $428.08, rather than one day's $684.93.
+
+### Bonds and equity
+
+```python
+calculate_bond_economics(index_units, acquisition_price_index, current_price_index,
+    *, quoted_yield_pct, liquidation_haircut_pct=Decimal("2"),
+    cost_basis_cents=None) -> MarketEconomicsResult
+calculate_equity_economics(index_units, acquisition_price_index, current_price_index,
+    *, annual_volatility_pct, emergency_sale=False, slippage_pct=Decimal("15"),
+    cost_basis_cents=None) -> MarketEconomicsResult
+calculate_duration_sensitivity(modified_duration_years, *, previous_yield_pct,
+    current_yield_pct) -> DurationSensitivityResult
+calculate_equity_risk(market_value_cents, gross_asset_value_cents, *,
+    current_price_index, peak_price_index, annual_volatility_pct) -> EquityRiskResult
+```
+
+MarketEconomicsResult reports normalized units, acquisition/current indices,
+Decimal acquisition_notional_usd and market_value_usd, cost_basis_cents,
+market_value_cents, signed unrealized_pnl_cents, haircut/cost, net liquidation
+proceeds, and signed realized_pnl_if_sold_cents. Default basis is the half-up
+acquisition mark; an explicit actual allocated cost basis may include acquisition
+fees. Member 2 supplies the appropriate units/basis for a partial lot. Actual
+mark is units * current observed index, without adding quoted yield or expected
+return. Unrealized P&L equals marked cents minus basis; conditional sale P&L equals
+net proceeds minus basis. Conditional sale P&L is a pure calculation, not a claim a sale occurred.
+
+Bond liquidation uses the supplied haircut, default 2%. YTM is preserved as quote
+metadata only; no synthetic coupon is credited. Duration sensitivity returns the
+separate approximation -Dmod * (current_yield_pct - previous_yield_pct) / 100,
+both as a fraction and percentage-point price change. A 1-percentage-point yield
+rise with duration 1.92 implies -1.92% hypothetical price sensitivity. It never
+adjusts the observed-index mark a second time, and is not added as realized P&L.
+
+Equity ordinary sale has zero modeled slippage unless emergency_sale=true;
+emergency slippage defaults to the source 15%. Source volatility is preserved as
+risk input, never converted to actual income. No expected 10% annual return is
+assumed or added to observed price gains. Exposure is equity market value divided
+by gross asset value (not debt-netted value); empty assets/exposure returns zero.
+Drawdown is (known running peak - current) / peak. Peak must be positive and at
+least current; the caller must supply a peak observed by the calculation cutoff.
+
+### Emergency overdraft and portfolio summary
+
+```python
+calculate_overdraft_economics(principal_cents, *, start_at, end_at, rate_history,
+    draw_cents=0, principal_repayment_cents=0, accrued_financing_cost_cents=0,
+    paid_financing_cost_cents=0) -> OverdraftEconomicsResult
+calculate_portfolio_values(portfolio: FourTierPortfolioState, *,
+    repo_rate_history=(), pay_accrued_interest_on_early_break=False)
+    -> PortfolioValueResult
+```
+
+Overdraft calculations explicitly place designated draws, principal repayments,
+and prior-cost payments at interval start. Use separate constant-principal calls
+for later changes; do not pretend a later repayment reduced earlier financing
+cost. Financing APR must be nonnegative; known fixings must cover interval start
+and must not extend past end_at (the calculation cutoff). For a decision at an
+earlier time, do not supply future historical fixings; these are accrual calculations,
+not a forecast of unknown rates. Existing unpaid costs do not earn interest.
+Principal and financing-cost overpayments are rejected, never silently clipped.
+
+OverdraftEconomicsResult separates closing_principal_cents,
+unpaid_prior_financing_cost_cents, interval_financing_cost_cents,
+outstanding_liability_cents, net_cash_change_cents, net_liability_change_cents,
+and signed net_portfolio_value_effect_cents. A draw increases cash and principal
+equally; its net-worth effect is zero before cost. Financing accrual decreases
+net worth. Outstanding liability includes principal plus unpaid prior/new cost.
+Credit-limit eligibility and actual payment booking belong to Member 2.
+
+PortfolioValueResult reports immediately_available_cash_cents, fixed zero
+cash_investment_yield_cents, repo_gross_claim_cents, bond_market_value_cents,
+equity_market_value_cents, gross_asset_value_cents, potential_liquidation_proceeds_cents,
+outstanding_liability_cents, signed net_portfolio_value_cents and net_liquidation_value_cents.
+Only Tier 0 is checking cash. Gross assets sum cash, repo modeled claims, and
+observed-index market marks exactly once. Potential liquidation includes permitted
+repo proceeds plus bond/equity values after their source haircuts; it is not settled
+cash. Overdraft is subtracted once as principal plus already accrued financing cost.
+The summary does not accrue overdraft again; pass current liability observations.
+Recorded realized costs and market losses are already reflected in the snapshot
+and are not subtracted again. Member 2 must remove a repo from holdings when its
+proceeds are booked to cash, and must preserve exclusive cash/position accounting.

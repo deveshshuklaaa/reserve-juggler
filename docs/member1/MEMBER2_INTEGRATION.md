@@ -34,3 +34,11 @@ a contract-only stub in RJ-M1-06. No API/database files or old signatures change
 Serialize with `model_dump_json()` or `model_dump(mode="json")`; Decimal fields
 become strings. Read the request/response fixtures and ENGINE_CONTRACT.md for the
 complete field contract. Legacy single-vault APIs remain operational for compatibility.
+
+RJ-M1-08 adds `instrument_economics` pure helpers (also package exports). Use supplied
+Decimal rate fixings for repo/overdraft accrual, source index marks for bonds/equity,
+and conditional sale P&L for execution planning. Results are calculation_only=true,
+not accounting receipts. Repo defaults to forfeiting positive interest on early break
+unless the product explicitly permits payment. ACT/365 fixed uses actual duration;
+income rounds half up, fees/funding round upward. Read the RJ-M1-08 contract section
+for repayment timing, cost-basis allocation, and no-double-counting conventions.

@@ -48,6 +48,14 @@ from .hourly_forecasting import (
     load_organizer_dataset,
     validate_hourly_forecast_inputs,
 )
+from .instrument_economics import (
+    AnnualRateFixing, RepoEconomicsResult, MarketEconomicsResult, IndexAcquisitionResult,
+    DurationSensitivityResult, EquityRiskResult, OverdraftEconomicsResult, PortfolioValueResult,
+    usd_to_ledger_cents, percentage_cost_cents, repo_maturity_at, rate_fixings_from_observations,
+    calculate_repo_economics, calculate_index_acquisition, calculate_bond_economics,
+    calculate_equity_economics, calculate_duration_sensitivity, calculate_equity_risk,
+    calculate_overdraft_economics, calculate_portfolio_values,
+)
 
 __all__ = [
     "CashFlowBucket", "ForecastPoint", "ForecastResult", "TreasuryContext",
@@ -73,4 +81,10 @@ __all__ = [
     "forecast_hourly_cashflows", "extract_hourly_calendar_features", "compute_hourly_lag_features",
     "compute_hourly_rolling_features", "build_hourly_feature_matrix", "load_organizer_dataset",
     "validate_hourly_forecast_inputs",
+    "AnnualRateFixing", "RepoEconomicsResult", "MarketEconomicsResult", "IndexAcquisitionResult",
+    "DurationSensitivityResult", "EquityRiskResult", "OverdraftEconomicsResult", "PortfolioValueResult",
+    "usd_to_ledger_cents", "percentage_cost_cents", "repo_maturity_at", "rate_fixings_from_observations",
+    "calculate_repo_economics", "calculate_index_acquisition", "calculate_bond_economics",
+    "calculate_equity_economics", "calculate_duration_sensitivity", "calculate_equity_risk",
+    "calculate_overdraft_economics", "calculate_portfolio_values",
 ]

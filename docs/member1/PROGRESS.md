@@ -8,6 +8,42 @@
 
 ## Task Log
 
+### [RJ-M1-08] Four-Tier Financial Mathematics
+- **Status**: COMPLETED
+- **Scope**: Added pure `instrument_economics.py` helpers and typed JSON results
+  for ACT/365 fixed floating-rate repo accrual, actual 17:00-to-08:00 maturity,
+  early-break fee/proceeds/lock-aware availability, index acquisition quantity,
+  bond/equity observed-index valuation, signed price P&L and conditional sale P&L,
+  liquidation costs, separate duration sensitivity, equity exposure/drawdown,
+  actual-duration overdraft costs/principal changes, and portfolio value summaries.
+- **Precision**: Decimal source rates/prices/percentages preserved, local precision,
+  actual microsecond durations, half-up money values/income, upward-rounded costs,
+  down-rounded explicitly specified acquisition unit precision. No per-hour interest
+  rounding or obsolete 24-hour repo assumption.
+- **Financial Boundaries**: Tier 0 alone is available checking cash; modeled repo
+  claims, marked assets, potential liquidation proceeds, and overdraft liabilities
+  are separate. No coupons inferred from YTM, duration double charge, guaranteed
+  equity return, duplicate settled repo asset, or repeated deduction of recorded
+  costs. Results are calculation_only=true; execution/realized booking stays with
+  Member 2. Early-break positive-interest entitlement is an explicit input, with
+  documented default forfeiture; source data does not specify that entitlement.
+- **Compatibility**: Existing interfaces, hourly forecasting, legacy algorithms,
+  and all earlier tests preserved. No changes to loaders, datasets, API/database,
+  frontend, or optimizer implementations. Organizer CSV SHA-256 remains
+  `2e7c1d2e5b678e9975250211e7e0017022049c510e1dd90cd7f29e931837b0c5`.
+- **Tests**: Full suite 314 passed (265 previous tests preserved; 49 new economics
+  tests). Required repo 15-hour interest ($5M at 5% gives $428.08), 0.5% break fee,
+  bond/equity gains and losses, 2%/15% liquidation, duration sign/units, overdraft
+  cost, conservation, cent rounding, causal quotes, JSON, and precision all pass.
+- **Command**: `$env:PYTHONPATH=".;backend"; uv run --with pytest --with fastapi --with pydantic --with httpx --with sqlalchemy --with pydantic-settings pytest tests/ -q`
+- **Diff Check**: `git diff --check` passed.
+- **Files**: New instrument economics module/tests, package exports,
+  ENGINE_CONTRACT.md, MEMBER2_INTEGRATION.md, and this log only.
+- **Commit**: `feat(engine): add four-tier instrument economics`
+  (hash in Git history and completion report).
+- **Push Target**: `origin/feat/treasury-intelligence`; result in completion report.
+- **Next Task**: Await explicit assignment; stop after RJ-M1-08.
+
 ### [RJ-M1-07] Official Hourly Forecast Foundation
 - **Status**: COMPLETED
 - **Scope**: Adapted the quantitative forecasting foundation to natively support the
