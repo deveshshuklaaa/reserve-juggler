@@ -8,6 +8,29 @@
 
 ## Task Log
 
+### [RJ-M1-02] Financial Mathematics
+- **Status**: COMPLETED
+- **Scope**: Pure pathwise peak shortfall, explicit contractual vault settlement
+  schedules, supplied-buffer reserve, frozen reserve API implementation, candidate
+  surplus, ACT/365 simple expected interest, early redemption costs, and signed
+  expected net economic benefit. Original model fields and signatures preserved.
+- **Timing**: Outflows at bucket start, inflows at bucket end; only explicit
+  unbooked vault settlements count at actual availability. Locked balances are not
+  cash. Duplicate schedules are rejected. Source-exclusive forecast inflows are
+  a documented caller requirement because frozen buckets have no source IDs.
+- **Rounding**: Integer cents, Decimal rate calculations; reserve uncertainty and
+  penalty round upward; expected interest rounds half up. No realized-return claims.
+- **Tests**: Full suite 122 passed, including original baseline and contract checks.
+  Added required $8M ordering, $14M reserve, $684.93 one-day yield, zero flows,
+  settlement timing, booked/duplicate maturity, penalty and invalid-input tests.
+  Updated the former reserve-stub assertion to test the implemented reserve API.
+- **Command**: `$env:PYTHONPATH=".;backend"; uv run --with pytest --with fastapi --with pydantic --with httpx --with sqlalchemy --with pydantic-settings pytest tests/ -q`
+- **Files**: Member 1 package, its tests, ENGINE_CONTRACT.md, and this log only.
+- **Commit**: `feat(engine): implement reserve and economic calculations`
+  (hash in Git history and completion report).
+- **Push Target**: `origin/feat/treasury-intelligence`; result in completion report.
+- **Next Task**: Await explicit assignment; stop after RJ-M1-02.
+
 ### [RJ-M1-01] Quantitative Engine Contracts
 - **Status**: COMPLETED
 - **Scope**: Added eleven immutable validated Pydantic 2 contracts, six public

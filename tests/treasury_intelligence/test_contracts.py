@@ -94,7 +94,10 @@ def test_fixture_financial_consistency():
     assert point.outflow_cents - point.inflow_cents == decision.reserve.net_drain_cents
 
 
-@pytest.mark.parametrize("name", engine.__all__[11:])
+@pytest.mark.parametrize("name", [
+    "forecast_cashflows", "recommend_treasury_action", "evaluate_forecasting_models",
+    "generate_risk_scenarios", "evaluate_allocation_candidates",
+])
 def test_public_functions_are_contract_only(name):
     function = getattr(engine, name)
     signature = inspect.signature(function)

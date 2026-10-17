@@ -1,10 +1,12 @@
-"""Public contract declarations. Algorithms are deliberately deferred."""
+"""Public engine API; reserve mathematics implemented, other algorithms deferred."""
 from collections.abc import Sequence
 from datetime import datetime
 
+from .reserve import calculate_required_reserve
+
 from .types import (
     CashFlowBucket, ForecastResult, TreasuryContext, TreasuryPolicy,
-    ReserveResult, DecisionResult, EvaluationResult, RiskScenarioResult,
+    DecisionResult, EvaluationResult, RiskScenarioResult,
     OptimizationResult,
 )
 
@@ -12,10 +14,6 @@ from .types import (
 def forecast_cashflows(history: Sequence[CashFlowBucket], *, as_of: datetime,
                        horizon_minutes: int, bucket_minutes: int,
                        model_version: str = "baseline-v1") -> ForecastResult:
-    raise NotImplementedError("RJ-M1-01 defines contracts only")
-
-
-def calculate_required_reserve(forecast: ForecastResult, policy: TreasuryPolicy) -> ReserveResult:
     raise NotImplementedError("RJ-M1-01 defines contracts only")
 
 

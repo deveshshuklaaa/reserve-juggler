@@ -2,9 +2,10 @@
 
 Package: `treasury_intelligence`. Requires Python 3.10+ and Pydantic 2
 (`treasury_intelligence/requirements.txt`). No database, HTTP, or frontend imports.
-RJ-M1-01 defines validated immutable models and public function declarations only.
-All six functions currently raise `NotImplementedError`; no financial algorithm or
-execution path is implemented. Existing forecasting and backend classes are unchanged.
+RJ-M1-01 defined validated immutable models and public function declarations.
+RJ-M1-02 implements `calculate_required_reserve` and the pure helpers below.
+The other five original functions still raise `NotImplementedError`.
+Existing forecasting and backend classes are unchanged; no execution path is implemented.
 
 The referenced Member 1 prompt signatures, MEMBER1_SCOPE.md, and AGENT_RULES.md
 were absent when this contract was written. These are new standalone signatures,
@@ -14,7 +15,8 @@ must explicitly convert currency units and supply UTC timestamps.
 ## Units and serialization
 
 All `_cents` fields are nonnegative strict integers in the context's single currency;
-floats, strings, and booleans are rejected. Net drain means max(outflow - inflow, 0).
+floats, strings, and booleans are rejected. For pathwise reserve calculations,
+`net_drain_cents` is the maximum cumulative shortfall, floored at zero.
 All `_bps` values are integer basis points: 100 = 1%, 10,000 = 100%.
 The uncertainty multiplier may exceed 10,000 (19,600 means 1.96 times uncertainty).
 Other bps fields range from 0 through 10,000. Negative yields are outside v1.
@@ -91,3 +93,74 @@ are deferred alongside the algorithms; model-level validation is active now.
 Evaluation uses chronological holdout windows without future data leakage; scenario
 generation returns scenario_count results; allocation evaluation returns one result
 per candidate in input order, including infeasible candidates with reasons.
+
+## RJ-M1-02 pure financial mathematics
+
+The frozen original structures and six function signatures remain unchanged.
+Additional helpers are exported from `treasury_intelligence`:
+
+```python
+maximum_cumulative_shortfall(forecast: ForecastResult, *,
+    context: TreasuryContext | None = None,
+    maturities: Sequence[VaultMaturity] = ()) -> int
+known_vault_maturities(context: TreasuryContext,
+    maturities: Sequence[VaultMaturity]) -> tuple[VaultMaturity, ...]
+reserve_for_path(forecast: ForecastResult, *, uncertainty_buffer_cents: int,
+    operational_buffer_cents: int, context: TreasuryContext | None = None,
+    maturities: Sequence[VaultMaturity] = ()) -> ReserveResult
+candidate_deployable_surplus(checking_balance_cents: int,
+    required_reserve_cents: int) -> int
+simple_annualized_vault_yield(principal_cents: int, annual_yield_bps: int, *,
+    holding_minutes: int) -> int
+early_redemption_penalty(redeemed_principal_cents: int, penalty_bps: int, *,
+    early_redemption: bool, fixed_fee_cents: int = 0) -> int
+expected_net_economic_benefit(expected_yield_cents: int, *, penalty_cents: int = 0,
+    transaction_cost_cents: int = 0, opportunity_cost_cents: int = 0) -> int
+```
+
+Peak shortfall starts with zero opening cash. Outflows debit at each bucket's
+start; inflows credit at its end. This conservative convention avoids assuming
+that unspecified intrabucket inflows arrive before withdrawals. Use narrower
+buckets to represent known ordering. At a shared timestamp, settlements and
+inflows are available before withdrawals. The peak is never reduced retroactively
+by a later arrival. Existing checking is compared with the reserve separately.
+
+`VaultMaturity` adds an immutable validated schedule with `vault_id`, UTC
+`available_at`, integer `amount_cents`, and boolean `already_in_checking=false`.
+Its JSON API matches the other contracts. The caller must attest contractual
+availability at the actual checking settlement timestamp, including any delay;
+a maturity date before settlement is insufficient. This helper does not infer
+or guarantee a product's legal availability. Only principal is supported; uncertain
+future yield is excluded. No vault balance, including withdrawable balance, is
+automatically an inflow. A supplied schedule requires a context with the same
+as_of as forecast generation; each vault may occur once, must exist, and an unbooked
+amount cannot exceed its balance. Past unbooked settlements are rejected for
+reconciliation. Booked settlements cannot be future-dated and are excluded because
+checking already contains the cash. Beyond-horizon settlements do not fund the path.
+
+Forecast inflows must exclude vault settlements supplied separately. The frozen
+forecast points contain no source IDs, so cross-source duplicate detection is not
+possible; callers must choose one representation. Duplicate vault schedules and
+booked cash are handled explicitly by the helpers. No checking balance is mutated.
+
+`reserve_for_path` adds peak shortfall, supplied uncertainty buffer, and operational
+buffer exactly. `calculate_required_reserve` uses the same peak without maturities
+(its frozen signature has no schedule); it sums the forecast's supplied uncertainty
+magnitudes, scales by policy.uncertainty_multiplier_bps / 10,000, and rounds upward
+once. This conservative aggregation assumes no diversification benefit. It does
+not estimate uncertainty or simulate risk. Reserve amounts are nonnegative and
+never rounded down. Candidate surplus is max(0, checking - reserve), before policy
+limits, costs, or an execution decision; unarrived funds are never added to checking.
+
+Simple expected interest is principal * annual rate * minutes / (365 * 24 * 60),
+with basis point conversion, no compounding, Decimal arithmetic, and half-up rounding
+to integer cents. This is a fixed 365-day convention even in leap years. Early
+redemption cost is the ceiling of redeemed principal * penalty_bps / 10,000 plus
+the supplied fixed fee; a zero redemption or non-early redemption has zero cost.
+This models a specified principal haircut, not every possible vault penalty rule,
+and does not imply that a locked product supports early withdrawal. Net economic
+benefit subtracts penalty, transaction cost, and opportunity cost from the expected
+rounded yield. Unlike financial inputs, that returned integer may be negative.
+These values are expected economics, never realized earnings. Inputs are validated
+as nonnegative strict integers; floats/bools are rejected, and rates cannot exceed
+10,000 bps. There is no Monte Carlo or allocation optimization in this task.
