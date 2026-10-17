@@ -1,0 +1,18 @@
+{
+  "timestamp": "2026-01-01T00:00:00",
+  "deposits_usd": "6660184.94",
+  "withdrawals_usd": "6852980.85",
+  "net_flow_usd": "-192795.91",
+  "repo_sweep_window_open": false,
+  "repo_sweep_mature": false,
+  "tier1_repo_rate_apy": "4.292",
+  "tier2_bond_yield_pct": "4.8",
+  "tier2_bond_price_index": "100.0",
+  "tier2_bond_mod_duration": "1.92",
+  "tier3_stock_index_price": "4988.59",
+  "tier3_stock_volatility_pct": "18.0",
+  "tier1_early_redemption_haircut_pct": "0.5",
+  "tier2_bond_liquidation_haircut_pct": "2.0",
+  "tier3_stock_liquidation_haircut_pct": "15.0",
+  "emergency_overdraft_penalty_apr_pct": "12.0"
+}

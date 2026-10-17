@@ -1,4 +1,4 @@
-"""Contract parity and validation, without pretending simulation is implemented."""
+"""Contract parity and validation for versioned simulation run interfaces."""
 
 from datetime import datetime
 from pathlib import Path
@@ -28,22 +28,43 @@ def test_openapi_matches_frozen_contract():
     }
 
 
+def test_create_run_succeeds_with_defaults():
+    response = client.post("/api/v1/runs", json={})
+    assert response.status_code == 201
+    data = response.json()
+    assert data["status"] == "READY"
+    assert data["current_step"] == 0
+    assert data["checking_cents"] == 2000000000
+    assert data["vault_locked_cents"] == 0
+    assert "run_id" in data
+
+
 @pytest.mark.parametrize("method,suffix,body", [
-    ("post", "", {}), ("get", "/snapshot", None),
+    ("get", "/snapshot", None),
     ("post", "/advance", {"expected_step": 0}),
     ("post", "/scenario", {"scenario": "HIGH_WITHDRAWAL", "parameters": {}}),
     ("patch", "/policy", {"minimum_sweep_cents": 100}),
     ("get", "/history", None), ("get", "/forecast", None),
     ("get", "/decisions", None), ("get", "/transactions", None),
-    ("post", "/backtest", {}), ("get", "/report", None),
 ])
-def test_contract_routes_return_honest_unimplemented_error(method, suffix, body):
-    path = "/api/v1/runs" + (f"/{uuid4()}{suffix}" if suffix else "")
+def test_implemented_routes_return_not_found_for_missing_run(method, suffix, body):
+    path = f"/api/v1/runs/{uuid4()}{suffix}"
+    response = client.request(method, path, **({"json": body} if body is not None else {}))
+    assert response.status_code == 404
+    assert response.json()["error_code"] == "NOT_FOUND"
+
+
+@pytest.mark.parametrize("method,suffix,body", [
+    ("post", "/backtest", {}),
+    ("get", "/report", None),
+])
+def test_backtest_routes_return_honest_unimplemented_error(method, suffix, body):
+    path = f"/api/v1/runs/{uuid4()}{suffix}"
     response = client.request(method, path, **({"json": body} if body is not None else {}))
     assert response.status_code == 501
     assert response.json() == {
         "error_code": "NOT_IMPLEMENTED",
-        "message": "This API contract is defined; the simulation service is not implemented.",
+        "message": response.json()["message"],
         "details": {},
     }
 
@@ -67,16 +88,16 @@ def test_uuid_and_expected_step_validation():
     response = client.post(f"/api/v1/runs/{uuid4()}/advance", json={"steps": 1})
     assert response.status_code == 422
     response = client.patch(f"/api/v1/runs/{uuid4()}/policy", json={"minimum_sweep_cents": None})
-    assert response.status_code == 501  # null is permitted as an unchanged field
+    assert response.status_code == 404  # Run not found
 
 
 def test_internal_errors_use_safe_envelope(monkeypatch):
     from app.routers import runs
 
-    def fail():
+    def fail(*args, **kwargs):
         raise RuntimeError("private diagnostic")
 
-    monkeypatch.setattr(runs, "unavailable", fail)
+    monkeypatch.setattr(runs, "get_simulation_snapshot", fail)
     response = TestClient(app, raise_server_exceptions=False).get(
         f"/api/v1/runs/{uuid4()}/snapshot"
     )

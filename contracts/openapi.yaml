@@ -1,4 +1,4 @@
-openapi: 3.1.0
+﻿openapi: 3.1.0
 info:
   title: Reserve Juggler API
   description: Quantitative Treasury Decision Engine for HackForge 2026
@@ -347,10 +347,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/SimulationSnapshot'
-                title: Response History Api V1 Runs  Id  History Get
+                $ref: '#/components/schemas/HistoryResponse'
         '400':
           description: Invalid parameters
           content:
@@ -401,16 +398,22 @@ paths:
           type: string
           format: uuid
           title: Id
+      - name: horizon_minutes
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 1440
+          minimum: 15
+          default: 240
+          title: Horizon Minutes
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
               schema:
-                anyOf:
-                - $ref: '#/components/schemas/ForecastSummary'
-                - type: 'null'
-                title: Response Forecast Api V1 Runs  Id  Forecast Get
+                $ref: '#/components/schemas/ForecastResponse'
         '400':
           description: Invalid parameters
           content:
@@ -476,10 +479,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/DecisionRecord'
-                title: Response Decisions Api V1 Runs  Id  Decisions Get
+                $ref: '#/components/schemas/DecisionsResponse'
         '400':
           description: Invalid parameters
           content:
@@ -545,10 +545,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/TransactionRecord'
-                title: Response Transactions Api V1 Runs  Id  Transactions Get
+                $ref: '#/components/schemas/TransactionsResponse'
         '400':
           description: Invalid parameters
           content:
@@ -723,6 +720,64 @@ components:
       required:
       - expected_step
       title: AdvanceRequest
+    AggregatesSnapshot:
+      properties:
+        gross_assets_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Gross Assets Cents
+        total_liabilities_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Total Liabilities Cents
+        net_portfolio_value_cents:
+          type: integer
+          title: Net Portfolio Value Cents
+        total_immediate_liquidity_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Total Immediate Liquidity Cents
+        total_realized_returns_cents:
+          type: integer
+          title: Total Realized Returns Cents
+        total_unrealized_returns_cents:
+          type: integer
+          title: Total Unrealized Returns Cents
+        net_financial_benefit_cents:
+          type: integer
+          title: Net Financial Benefit Cents
+        checking_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Checking Cents
+        required_reserve_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Required Reserve Cents
+        deployable_surplus_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Deployable Surplus Cents
+      additionalProperties: false
+      type: object
+      required:
+      - gross_assets_cents
+      - total_liabilities_cents
+      - net_portfolio_value_cents
+      - total_immediate_liquidity_cents
+      - total_realized_returns_cents
+      - total_unrealized_returns_cents
+      - net_financial_benefit_cents
+      - checking_cents
+      - required_reserve_cents
+      - deployable_surplus_cents
+      title: AggregatesSnapshot
     BacktestRequest:
       properties:
         strategies:
@@ -848,6 +903,18 @@ components:
       - executed
       - explanation
       title: DecisionRecord
+    DecisionsResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/DecisionRecord'
+          type: array
+          title: Items
+      additionalProperties: false
+      type: object
+      required:
+      - items
+      title: DecisionsResponse
     ErrorResponse:
       properties:
         error_code:
@@ -939,6 +1006,71 @@ components:
       - unpaid_cents
       - net_benefit_cents
       title: FinancialMetrics
+    ForecastPoint:
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          title: Timestamp
+        predicted_inflow_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Predicted Inflow Cents
+        predicted_outflow_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Predicted Outflow Cents
+        predicted_net_cents:
+          type: integer
+          title: Predicted Net Cents
+        lower_cents:
+          type: integer
+          title: Lower Cents
+        upper_cents:
+          type: integer
+          title: Upper Cents
+      additionalProperties: false
+      type: object
+      required:
+      - timestamp
+      - predicted_inflow_cents
+      - predicted_outflow_cents
+      - predicted_net_cents
+      - lower_cents
+      - upper_cents
+      title: ForecastPoint
+    ForecastResponse:
+      properties:
+        as_of:
+          type: string
+          format: date-time
+          title: As Of
+        horizon_minutes:
+          type: integer
+          exclusiveMinimum: 0.0
+          title: Horizon Minutes
+        model_version:
+          type: string
+          title: Model Version
+        points:
+          items:
+            $ref: '#/components/schemas/ForecastPoint'
+          type: array
+          title: Points
+        summary:
+          anyOf:
+          - $ref: '#/components/schemas/ForecastSummary'
+          - type: 'null'
+      additionalProperties: false
+      type: object
+      required:
+      - as_of
+      - horizon_minutes
+      - model_version
+      - points
+      title: ForecastResponse
     ForecastSummary:
       properties:
         horizon_minutes:
@@ -972,6 +1104,35 @@ components:
       - operational_buffer_cents
       - model_version
       title: ForecastSummary
+    FourTierPortfolioSnapshot:
+      properties:
+        timestamp:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Timestamp
+        tier0:
+          $ref: '#/components/schemas/Tier0Snapshot'
+        tier1:
+          $ref: '#/components/schemas/Tier1Snapshot'
+        tier2:
+          $ref: '#/components/schemas/Tier2Snapshot'
+        tier3:
+          $ref: '#/components/schemas/Tier3Snapshot'
+        overdraft:
+          $ref: '#/components/schemas/OverdraftSnapshot'
+        aggregates:
+          $ref: '#/components/schemas/AggregatesSnapshot'
+      additionalProperties: false
+      type: object
+      required:
+      - tier0
+      - tier1
+      - tier2
+      - tier3
+      - overdraft
+      - aggregates
+      title: FourTierPortfolioSnapshot
     HealthStatus:
       properties:
         status:
@@ -990,6 +1151,53 @@ components:
       - database
       - timestamp
       title: HealthStatus
+    HistoryResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/SimulationSnapshot'
+          type: array
+          title: Items
+      additionalProperties: false
+      type: object
+      required:
+      - items
+      title: HistoryResponse
+    OverdraftSnapshot:
+      properties:
+        borrowing_outstanding_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Borrowing Outstanding Cents
+        financing_rate_bps:
+          type: integer
+          maximum: 10000.0
+          minimum: 0.0
+          title: Financing Rate Bps
+        financing_cost_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Financing Cost Cents
+        liability_status:
+          type: string
+          enum:
+          - ACTIVE
+          - CLEARED
+          title: Liability Status
+        is_active:
+          type: boolean
+          title: Is Active
+      additionalProperties: false
+      type: object
+      required:
+      - borrowing_outstanding_cents
+      - financing_rate_bps
+      - financing_cost_cents
+      - liability_status
+      - is_active
+      title: OverdraftSnapshot
     PerformanceReport:
       properties:
         run_id:
@@ -1150,6 +1358,12 @@ components:
           additionalProperties: true
           type: object
           title: Parameters
+        effective_step:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: Effective Step
       additionalProperties: false
       type: object
       required:
@@ -1199,6 +1413,24 @@ components:
           anyOf:
           - $ref: '#/components/schemas/DecisionRecord'
           - type: 'null'
+        status:
+          type: string
+          title: Status
+          default: READY
+        policy:
+          anyOf:
+          - $ref: '#/components/schemas/TreasuryPolicy'
+          - type: 'null'
+        deployable_surplus_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Deployable Surplus Cents
+          default: 0
+        four_tier:
+          anyOf:
+          - $ref: '#/components/schemas/FourTierPortfolioSnapshot'
+          - type: 'null'
       additionalProperties: false
       type: object
       required:
@@ -1229,6 +1461,331 @@ components:
       - strategy
       - metrics
       title: StrategyResult
+    Tier0Snapshot:
+      properties:
+        tier:
+          type: integer
+          title: Tier
+          default: 0
+        name:
+          type: string
+          title: Name
+          default: Operating Cash Buffer
+        checking_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Checking Cents
+        required_reserve_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Required Reserve Cents
+        operational_buffer_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Operational Buffer Cents
+        deployable_surplus_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Deployable Surplus Cents
+        reserve_deficit_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Reserve Deficit Cents
+        immediate_liquidity_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Immediate Liquidity Cents
+        status:
+          type: string
+          enum:
+          - BALANCED
+          - SURPLUS
+          - DEFICIT
+          title: Status
+      additionalProperties: false
+      type: object
+      required:
+      - checking_cents
+      - required_reserve_cents
+      - operational_buffer_cents
+      - deployable_surplus_cents
+      - reserve_deficit_cents
+      - immediate_liquidity_cents
+      - status
+      title: Tier0Snapshot
+    Tier1Snapshot:
+      properties:
+        tier:
+          type: integer
+          title: Tier
+          default: 1
+        id:
+          type: string
+          title: Id
+          default: REPO-1
+        name:
+          type: string
+          title: Name
+          default: Overnight Repo
+        principal_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Principal Cents
+        repo_apy_bps:
+          type: integer
+          maximum: 10000.0
+          minimum: 0.0
+          title: Repo Apy Bps
+        repo_apy_decimal:
+          type: string
+          title: Repo Apy Decimal
+        accrued_interest_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Accrued Interest Cents
+        realized_interest_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Realized Interest Cents
+        status:
+          type: string
+          enum:
+          - LOCKED
+          - MATURED
+          - REDEEMED
+          title: Status
+        entry_window_open:
+          type: boolean
+          title: Entry Window Open
+        early_redemption_allowed:
+          type: boolean
+          title: Early Redemption Allowed
+        early_break_fee_bps:
+          type: integer
+          maximum: 10000.0
+          minimum: 0.0
+          title: Early Break Fee Bps
+        break_fee_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Break Fee Cents
+        net_redeemable_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Net Redeemable Cents
+        immediate_liquidity_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Immediate Liquidity Cents
+        entry_time:
+          type: string
+          title: Entry Time
+          default: '17:00'
+        maturity_time:
+          type: string
+          title: Maturity Time
+          default: 08:00
+        maturity_timestamp:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Maturity Timestamp
+      additionalProperties: false
+      type: object
+      required:
+      - principal_cents
+      - repo_apy_bps
+      - repo_apy_decimal
+      - accrued_interest_cents
+      - realized_interest_cents
+      - status
+      - entry_window_open
+      - early_redemption_allowed
+      - early_break_fee_bps
+      - break_fee_cents
+      - net_redeemable_cents
+      - immediate_liquidity_cents
+      title: Tier1Snapshot
+    Tier2Snapshot:
+      properties:
+        tier:
+          type: integer
+          title: Tier
+          default: 2
+        id:
+          type: string
+          title: Id
+          default: BOND-SOV-1
+        name:
+          type: string
+          title: Name
+          default: Sovereign Bonds
+        notional_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Notional Cents
+        quantity:
+          type: number
+          title: Quantity
+        acquisition_price:
+          type: string
+          title: Acquisition Price
+        current_price:
+          type: string
+          title: Current Price
+        market_value_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Market Value Cents
+        ytm_bps:
+          type: integer
+          maximum: 10000.0
+          minimum: 0.0
+          title: Ytm Bps
+        ytm_decimal:
+          type: string
+          title: Ytm Decimal
+        modified_duration:
+          type: number
+          title: Modified Duration
+        liquidation_haircut_bps:
+          type: integer
+          maximum: 10000.0
+          minimum: 0.0
+          title: Liquidation Haircut Bps
+        haircut_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Haircut Cents
+        realized_pnl_cents:
+          type: integer
+          title: Realized Pnl Cents
+        unrealized_pnl_cents:
+          type: integer
+          title: Unrealized Pnl Cents
+        available_liquidity_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Available Liquidity Cents
+        liquidity_status:
+          type: string
+          title: Liquidity Status
+          default: 2-DAY_SETTLEMENT_OR_HAIRCUT
+      additionalProperties: false
+      type: object
+      required:
+      - notional_cents
+      - quantity
+      - acquisition_price
+      - current_price
+      - market_value_cents
+      - ytm_bps
+      - ytm_decimal
+      - modified_duration
+      - liquidation_haircut_bps
+      - haircut_cents
+      - realized_pnl_cents
+      - unrealized_pnl_cents
+      - available_liquidity_cents
+      title: Tier2Snapshot
+    Tier3Snapshot:
+      properties:
+        tier:
+          type: integer
+          title: Tier
+          default: 3
+        id:
+          type: string
+          title: Id
+          default: EQ-IDX-1
+        name:
+          type: string
+          title: Name
+          default: Growth Equities
+        quantity:
+          type: number
+          title: Quantity
+        acquisition_price:
+          type: string
+          title: Acquisition Price
+        current_price:
+          type: string
+          title: Current Price
+        market_value_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Market Value Cents
+        cost_basis_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Cost Basis Cents
+        volatility_bps:
+          type: integer
+          maximum: 10000.0
+          minimum: 0.0
+          title: Volatility Bps
+        volatility_decimal:
+          type: string
+          title: Volatility Decimal
+        emergency_slippage_bps:
+          type: integer
+          maximum: 10000.0
+          minimum: 0.0
+          title: Emergency Slippage Bps
+        slippage_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Slippage Cents
+        realized_pnl_cents:
+          type: integer
+          title: Realized Pnl Cents
+        unrealized_pnl_cents:
+          type: integer
+          title: Unrealized Pnl Cents
+        available_liquidity_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Available Liquidity Cents
+        liquidity_status:
+          type: string
+          title: Liquidity Status
+          default: MARKET_VOLATILITY_AND_SLIPPAGE
+      additionalProperties: false
+      type: object
+      required:
+      - quantity
+      - acquisition_price
+      - current_price
+      - market_value_cents
+      - cost_basis_cents
+      - volatility_bps
+      - volatility_decimal
+      - emergency_slippage_bps
+      - slippage_cents
+      - realized_pnl_cents
+      - unrealized_pnl_cents
+      - available_liquidity_cents
+      title: Tier3Snapshot
     TransactionRecord:
       properties:
         transaction_id:
@@ -1285,6 +1842,18 @@ components:
       - source
       - scenario
       title: TransactionRecord
+    TransactionsResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/TransactionRecord'
+          type: array
+          title: Items
+      additionalProperties: false
+      type: object
+      required:
+      - items
+      title: TransactionsResponse
     TreasuryPolicy:
       properties:
         risk_percentile:

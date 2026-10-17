@@ -1,0 +1,171 @@
+{
+  "request_id": "four-tier-example-001",
+  "portfolio": {
+    "as_of": "2026-01-01T17:00:00",
+    "timestamp_basis": "timezone_unspecified",
+    "currency": "USD",
+    "cash": {
+      "instrument": "TIER0_CASH",
+      "available_cents": 100000000,
+      "annual_yield_pct": 0
+    },
+    "repos": [
+      {
+        "instrument": "TIER1_REPO",
+        "position_id": "repo-1",
+        "principal_cents": 20000000,
+        "entered_at": "2026-01-01T17:00:00",
+        "matures_at": "2026-01-02T08:00:00",
+        "entry_apy_pct": "4.308",
+        "early_break_allowed": true,
+        "early_break_fee_pct": "0.5",
+        "estimated_interest_cents": 1475
+      }
+    ],
+    "bonds": [
+      {
+        "position_id": "bond-1",
+        "index_units": "1000",
+        "cost_basis_cents": 10000000,
+        "observed_price_index": "99.845",
+        "marked_at": "2026-01-01T17:00:00",
+        "market_value_cents": 9984500,
+        "instrument": "TIER2_BOND",
+        "matures_at": "2028-01-01T17:00:00",
+        "tenor_years": 2,
+        "annual_yield_pct": "4.881",
+        "modified_duration_years": "1.92",
+        "liquidation_haircut_pct": "2"
+      }
+    ],
+    "equities": [
+      {
+        "position_id": "equity-1",
+        "index_units": "20",
+        "cost_basis_cents": 10000000,
+        "observed_price_index": "4954.89",
+        "marked_at": "2026-01-01T17:00:00",
+        "market_value_cents": 9909780,
+        "instrument": "TIER3_EQUITY",
+        "annual_volatility_pct": "18.0",
+        "emergency_sale_slippage_pct": "15"
+      }
+    ],
+    "overdraft": {
+      "instrument": "OVERDRAFT",
+      "principal_cents": 0,
+      "accrued_financing_cost_cents": 0,
+      "annual_apr_pct": "12.0",
+      "credit_limit_cents": 50000000
+    },
+    "market_rates": {
+      "observed_at": "2026-01-01T17:00:00",
+      "repo_apy_pct": "4.308",
+      "bond_yield_pct": "4.881",
+      "equity_volatility_pct": "18.0",
+      "overdraft_apr_pct": "12.0"
+    },
+    "market_prices": {
+      "observed_at": "2026-01-01T17:00:00",
+      "bond_price_index": "99.845",
+      "bond_modified_duration_years": "1.92",
+      "equity_index_price": "4954.89"
+    },
+    "realized_costs": {
+      "liquidation_fee_cents": 0,
+      "repo_break_fee_cents": 0,
+      "transaction_cost_cents": 0,
+      "funding_cost_cents": 0,
+      "market_loss_cents": 0
+    }
+  },
+  "history": [
+    {
+      "timestamp": "2026-01-01T16:00:00",
+      "deposits_usd": "15575194.12",
+      "withdrawals_usd": "14150610.98",
+      "net_flow_usd": "1424583.14",
+      "repo_sweep_window_open": false,
+      "repo_sweep_mature": false,
+      "tier1_repo_rate_apy": "4.309",
+      "tier2_bond_yield_pct": "4.872",
+      "tier2_bond_price_index": "99.861",
+      "tier2_bond_mod_duration": "1.92",
+      "tier3_stock_index_price": "4948.71",
+      "tier3_stock_volatility_pct": "18.0",
+      "tier1_early_redemption_haircut_pct": "0.5",
+      "tier2_bond_liquidation_haircut_pct": "2.0",
+      "tier3_stock_liquidation_haircut_pct": "15.0",
+      "emergency_overdraft_penalty_apr_pct": "12.0"
+    },
+    {
+      "timestamp": "2026-01-01T17:00:00",
+      "deposits_usd": "13143306.97",
+      "withdrawals_usd": "14653559.74",
+      "net_flow_usd": "-1510252.76",
+      "repo_sweep_window_open": true,
+      "repo_sweep_mature": false,
+      "tier1_repo_rate_apy": "4.308",
+      "tier2_bond_yield_pct": "4.881",
+      "tier2_bond_price_index": "99.845",
+      "tier2_bond_mod_duration": "1.92",
+      "tier3_stock_index_price": "4954.89",
+      "tier3_stock_volatility_pct": "18.0",
+      "tier1_early_redemption_haircut_pct": "0.5",
+      "tier2_bond_liquidation_haircut_pct": "2.0",
+      "tier3_stock_liquidation_haircut_pct": "15.0",
+      "emergency_overdraft_penalty_apr_pct": "12.0"
+    }
+  ],
+  "policy": {
+    "minimum_liquid_reserve_cents": 80000000,
+    "operational_buffer_cents": 1000000,
+    "max_estimated_loss_cents": 5000000,
+    "overdraft_allowed": true,
+    "max_overdraft_cents": 50000000,
+    "exposure_constraints": [
+      {
+        "instrument": "TIER0_CASH",
+        "minimum_fraction": "0",
+        "maximum_fraction": "1"
+      },
+      {
+        "instrument": "TIER1_REPO",
+        "minimum_fraction": "0",
+        "maximum_fraction": "0.5"
+      },
+      {
+        "instrument": "TIER2_BOND",
+        "minimum_fraction": "0",
+        "maximum_fraction": "0.5"
+      },
+      {
+        "instrument": "TIER3_EQUITY",
+        "minimum_fraction": "0",
+        "maximum_fraction": "0.5"
+      }
+    ],
+    "bond_risk_method": "observed_index_with_separate_duration_stress"
+  },
+  "metadata": {
+    "model_version": "fixture-contract-example",
+    "generated_at": "2026-01-01T17:00:00",
+    "training_data_through": "2026-01-01T17:00:00",
+    "granularity_hours": 1,
+    "net_flow_target": "source_net_flow_usd",
+    "uncertainty_status": "not_evaluated",
+    "evaluation_reference": null,
+    "notes": [
+      "Illustrative contract fixture; estimates are supplied examples, not backtest metrics."
+    ]
+  },
+  "forecast": [
+    {
+      "start_at": "2026-01-01T18:00:00",
+      "predicted_deposits_cents": 600000000,
+      "predicted_withdrawals_cents": 600000000,
+      "predicted_net_flow_cents": 0,
+      "supplied_uncertainty_buffer_cents": 1000000
+    }
+  ]
+}

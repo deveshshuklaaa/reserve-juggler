@@ -1,0 +1,166 @@
+{
+  "request_id": "four-tier-example-001",
+  "as_of": "2026-01-01T17:00:00",
+  "action": "REBALANCE",
+  "recommendation_only": true,
+  "execution_status": "NOT_EXECUTED",
+  "feasible": true,
+  "allocation_budget_cents": 139894280,
+  "targets": [
+    {
+      "instrument": "TIER0_CASH",
+      "target_cents": 90000000
+    },
+    {
+      "instrument": "TIER1_REPO",
+      "target_cents": 30000000
+    },
+    {
+      "instrument": "TIER2_BOND",
+      "target_cents": 9984500
+    },
+    {
+      "instrument": "TIER3_EQUITY",
+      "target_cents": 9909780
+    }
+  ],
+  "target_overdraft_principal_cents": 0,
+  "required_liquid_reserve_cents": 80000000,
+  "trades": [
+    {
+      "trade_id": "proposed-repo-entry",
+      "instrument": "TIER1_REPO",
+      "action": "ENTER_REPO",
+      "principal_cents": 10000000,
+      "index_units": null,
+      "position_id": null,
+      "earliest_execution_at": "2026-01-01T17:00:00",
+      "expected_settlement_at": "2026-01-01T17:00:00",
+      "expected_maturity_at": "2026-01-02T08:00:00",
+      "expected_costs": {
+        "liquidation_fee_cents": 0,
+        "repo_break_fee_cents": 0,
+        "transaction_cost_cents": 0,
+        "funding_cost_cents": 0,
+        "market_loss_cents": 0
+      },
+      "reason": "Example: allocate $100k at the observed 17:00 entry window while retaining $900k cash.",
+      "recommendation_only": true,
+      "execution_status": "NOT_EXECUTED"
+    }
+  ],
+  "expected_costs": {
+    "liquidation_fee_cents": 0,
+    "repo_break_fee_cents": 0,
+    "transaction_cost_cents": 0,
+    "funding_cost_cents": 0,
+    "market_loss_cents": 0
+  },
+  "estimated_market_risk_loss_cents": 1700000,
+  "instrument_returns": [
+    {
+      "instrument": "TIER0_CASH",
+      "horizon_hours": 15,
+      "expected_income_cents": 0,
+      "expected_price_change_cents": 0,
+      "expected_costs": {
+        "liquidation_fee_cents": 0,
+        "repo_break_fee_cents": 0,
+        "transaction_cost_cents": 0,
+        "funding_cost_cents": 0,
+        "market_loss_cents": 0
+      },
+      "estimated_stress_loss_cents": 0,
+      "estimate_basis": "Operational cash has zero yield.",
+      "realized": false
+    },
+    {
+      "instrument": "TIER1_REPO",
+      "horizon_hours": 15,
+      "expected_income_cents": 2213,
+      "expected_price_change_cents": 0,
+      "expected_costs": {
+        "liquidation_fee_cents": 0,
+        "repo_break_fee_cents": 0,
+        "transaction_cost_cents": 0,
+        "funding_cost_cents": 0,
+        "market_loss_cents": 0
+      },
+      "estimated_stress_loss_cents": 150000,
+      "estimate_basis": "Illustrative constant observed APY over actual 15 hours, ACT/365; floating rates may change.",
+      "realized": false
+    },
+    {
+      "instrument": "TIER2_BOND",
+      "horizon_hours": 15,
+      "expected_income_cents": 0,
+      "expected_price_change_cents": 0,
+      "expected_costs": {
+        "liquidation_fee_cents": 0,
+        "repo_break_fee_cents": 0,
+        "transaction_cost_cents": 0,
+        "funding_cost_cents": 0,
+        "market_loss_cents": 0
+      },
+      "estimated_stress_loss_cents": 200000,
+      "estimate_basis": "No price forecast supplied; mark-to-market is the observed index; duration stress is separate.",
+      "realized": false
+    },
+    {
+      "instrument": "TIER3_EQUITY",
+      "horizon_hours": 15,
+      "expected_income_cents": 0,
+      "expected_price_change_cents": 0,
+      "expected_costs": {
+        "liquidation_fee_cents": 0,
+        "repo_break_fee_cents": 0,
+        "transaction_cost_cents": 0,
+        "funding_cost_cents": 0,
+        "market_loss_cents": 0
+      },
+      "estimated_stress_loss_cents": 1500000,
+      "estimate_basis": "Zero expected change is an illustrative assumption, not guaranteed income.",
+      "realized": false
+    }
+  ],
+  "exposure_constraints": [
+    {
+      "instrument": "TIER0_CASH",
+      "minimum_fraction": "0",
+      "maximum_fraction": "1"
+    },
+    {
+      "instrument": "TIER1_REPO",
+      "minimum_fraction": "0",
+      "maximum_fraction": "0.5"
+    },
+    {
+      "instrument": "TIER2_BOND",
+      "minimum_fraction": "0",
+      "maximum_fraction": "0.5"
+    },
+    {
+      "instrument": "TIER3_EQUITY",
+      "minimum_fraction": "0",
+      "maximum_fraction": "0.5"
+    }
+  ],
+  "metadata": {
+    "model_version": "fixture-contract-example",
+    "generated_at": "2026-01-01T17:00:00",
+    "training_data_through": "2026-01-01T17:00:00",
+    "granularity_hours": 1,
+    "net_flow_target": "source_net_flow_usd",
+    "uncertainty_status": "not_evaluated",
+    "evaluation_reference": null,
+    "notes": [
+      "Illustrative contract fixture; estimates are supplied examples, not backtest metrics."
+    ]
+  },
+  "explanations": [
+    "Contract illustration only; no optimizer was run and no orders were executed.",
+    "Target cash 90000000 cents exceeds supplied required reserve 80000000 cents.",
+    "Proposed repo principal 10000000 cents matures at next-day 08:00; no fixed 24-hour lock.",
+    "Bond and equity allocations use observed index marks; overdraft is a separate borrowing liability."
+  ]
+}
