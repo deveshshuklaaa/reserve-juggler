@@ -244,6 +244,8 @@ strong {
   display: none;
 }
 
+.icon-button.mobile-menu { display: none; }
+
 .header-status {
   display: flex;
   align-items: center;
@@ -4623,7 +4625,9 @@ main:has(.landing-page) {
 
 @media (max-width: 760px) {
   .global-header-inner { height: 64px; padding-inline: 18px; }
-  .mobile-menu { display: inline-flex; z-index: 60; }
+  .icon-button.mobile-menu { display: inline-flex; flex: 0 0 40px; z-index: 60; }
+  .global-header-inner .header-status { margin-left: auto; padding: 8px; }
+  .header-status > span:last-child { display: none; }
   .global-navigation { display: none; }
   .navigation-open {
     display: flex;

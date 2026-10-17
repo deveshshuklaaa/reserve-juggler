@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { requestJson } from '../src/api/http';
 import { createRealApi } from '../src/api/treasuryApi';
 import { createMockApi } from '../src/api/mockTreasuryApi';
-import { validateSnapshot } from '../src/api/validation';
+import { validateSnapshot, validateItems, validateForecast } from '../src/api/validation';
 import { createEngine, snapshot } from '../src/mocks/mockEngine';
 afterEach(() => vi.unstubAllGlobals());
 
@@ -22,6 +22,18 @@ describe('API boundary', () => {
     await expect(requestJson('/test')).rejects.toMatchObject({ status: 409, message: 'stale step' });
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
     await expect(requestJson('/test')).rejects.toMatchObject({ code: 'NETWORK_ERROR' });
+  });
+  it('preserves Member 2 error_code and message, including unimplemented services', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ error_code: 'NOT_IMPLEMENTED', message: 'Simulation service not implemented.', details: {} }), { status: 501 })));
+    await expect(createRealApi().createRun({})).rejects.toMatchObject({ status: 501, code: 'NOT_IMPLEMENTED', message: 'Simulation service not implemented.' });
+  });
+  it('accepts backend array collections and nullable summary-only forecasts without inventing points', () => {
+    expect(validateItems([{ step: 0 }])).toEqual({ items: [{ step: 0 }] });
+    expect(validateForecast(null)).toBeNull();
+    const summary = { model_version: 'supplied-model', peak_shortfall_cents: 100, uncertainty_buffer_cents: 20, operational_buffer_cents: 30 };
+    expect(validateForecast(summary)).toEqual(summary);
+    expect(validateForecast(summary)).not.toHaveProperty('points');
+    expect(validateSnapshot({ ...snapshot(createEngine()), required_reserve_cents: null }).required_reserve_cents).toBeNull();
   });
   it('rejects invalid JSON and invalid financial units', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('<html>not JSON</html>')));

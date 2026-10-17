@@ -20,3 +20,16 @@ References: https://www.apple.com/ and the user's supplied SONOTYPE prompt.
 The Command Center now opens with a full-height product introduction before a simulation exists. It uses oversized typography, an animated original treasury illustration, and a long scrolling story whose pinned visual switches between liquidity, stress testing, and strategy comparison. Each graphic is marked as simulated or illustrative; the strategy preview has no preset winner. A final call to action starts the same mock or real API workflow as the header control.
 
 After a run starts, the detailed Command Center remains available with its balances, charts, transactions, decisions, and position terms. The story uses normal page scrolling, works at mobile widths, and reduces animation when the operating system requests less motion.
+
+## Full-screen scene update — 2026-10-18
+
+The updated landing page uses four full-width presentation scenes with scroll-linked
+scale/translation, animated light fields and flow paths, chapter indicators, and a
+reading progress line. The document owns scroll snapping; taller interactive panels
+retain normal scrolling. Mobile navigation stays within the viewport. Reduced-motion
+preferences disable scene transforms and snapping; the canvas draws a static frame
+and pauses when the page is hidden.
+
+The strategy introduction makes no return or safety guarantees. The landing sandbox
+is an explicitly labeled frontend illustration with integer-cent arithmetic and no
+executed trades. See MEMBER1_INTEGRATION_STATUS.md for the quantitative data boundary.

@@ -1,0 +1,40 @@
+/* Native scrolling remains available for long panels, touch and keyboard users. */
+html.treasury-presentation { scroll-snap-type: y proximity; scroll-padding-top: 124px; }
+.landing-experience .apple-fullscreen-window { display: block; padding: 0; min-height: 0; opacity: 1; transform: none; transition: none; will-change: auto; scroll-margin-top: 0; overflow: visible; }
+.landing-experience .presentation-surface { position: relative; isolation: isolate; overflow: clip; min-height: calc(100svh - 124px); padding: clamp(44px, 6vh, 80px) max(28px, calc((100vw - 1320px) / 2)); background: #fbfdff; transform: translate3d(0, var(--scene-shift, 0px), 0) scale(var(--scene-scale, 1)); border-radius: var(--scene-radius, 0px); transform-origin: center top; }
+.landing-experience .presentation-body { position: relative; z-index: 1; width: 100%; max-width: 1320px; margin: auto; }
+.presentation-atmosphere { position: absolute; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+.presentation-light { position: absolute; width: 65vw; height: 65vw; border-radius: 50%; background: radial-gradient(circle, #cae5ff80, transparent 68%); animation: presentation-drift 18s ease-in-out infinite alternate; }
+.presentation-light.light-one { top: -35%; right: -20%; }.presentation-light.light-two { bottom: -50%; left: -25%; background: radial-gradient(circle, #c4d6fa66, transparent 68%); animation-delay: -9s; }
+.presentation-atmosphere svg { position: absolute; inset: 0; width: 100%; height: 100%; fill: none; stroke: #0071e3; stroke-width: 1; opacity: .13; }
+.presentation-atmosphere path { stroke-dasharray: 12 20; animation: presentation-current 32s linear infinite; }
+.presentation-atmosphere path:nth-child(2) { animation-direction: reverse; opacity: .6; }
+.presentation-number { position: absolute; right: 3%; bottom: -9%; font-size: clamp(220px, 32vw, 600px); line-height: 1; font-weight: 800; letter-spacing: -.09em; color: #0071e306; }
+.landing-experience .window-sandbox-section .presentation-surface { background: #f1f6fc; }
+.landing-experience .landing-story-compact .presentation-surface { background: #fafbfe; }
+.landing-experience .landing-finale-screen .presentation-surface { background: #edf5ff; display: grid; place-items: center; }
+.landing-experience .landing-finale-screen .presentation-light { background: radial-gradient(circle, #a8d2ff66, transparent 67%); }
+.landing-experience .landing-opening .presentation-body { display: grid; grid-template-columns: 1.05fr 1fr; align-items: center; min-height: calc(100svh - 250px); gap: 16px 40px; }
+.landing-experience .landing-opening-copy { text-align: left; margin: 0; width: 100%; }
+.landing-experience .landing-opening h1 { font-size: clamp(74px, 7.8vw, 132px); letter-spacing: -.065em; }
+.landing-experience .hero-tagline { font-size: clamp(18px, 1.6vw, 23px); max-width: 550px; margin-left: 0; }
+.landing-experience .landing-opening-actions { justify-content: flex-start; flex-wrap: wrap; }
+.landing-experience .hero-stat-row { gap: 20px; padding: 18px; justify-content: space-between; }
+.landing-experience .hero-stat-item { align-items: flex-start; text-align: left; }
+.landing-experience .stat-num { font-size: 30px; }
+.landing-experience .stat-caption { font-size: 10px; }
+.landing-experience .rj-prism-stage { width: 100%; min-width: 0; margin: 0; }
+.landing-experience .landing-scroll-cue { grid-column: 1 / -1; position: relative; inset: auto; margin: 24px auto 0; }
+.landing-experience .finale-content-box { max-width: 1050px; }
+.landing-experience .finale-content-box h2 { font-size: clamp(64px, 7.2vw, 108px); }
+.landing-experience .window-in-view .simple-card { animation: presentation-card-in .9s cubic-bezier(.16,1,.3,1) both; }
+.landing-experience .window-in-view .simple-card:nth-child(2) { animation-delay: .12s; }
+.landing-experience .window-in-view .simple-card:nth-child(3) { animation-delay: .24s; }
+.presentation-progress { position: fixed; left: 0; right: 0; top: 68px; height: 2px; background: #0071e3; z-index: 54; transform: scaleX(var(--presentation-progress,0)); transform-origin: left; pointer-events: none; }
+.tracker-dot:focus-visible .tracker-tooltip { opacity: 1; transform: none; }
+@keyframes presentation-drift { to { transform: translate3d(-8%, 12%, 0) scale(1.12); } }
+@keyframes presentation-current { to { stroke-dashoffset: -640; } }
+@keyframes presentation-card-in { from { transform: translateY(36px) rotateX(4deg); } to { transform: none; } }
+@media (max-width: 1050px) { .landing-experience .landing-opening .presentation-body { grid-template-columns: 1fr; }.landing-experience .landing-opening-copy { max-width: 760px; margin: auto; text-align: center; }.landing-experience .hero-tagline { margin-inline: auto; }.landing-experience .landing-opening-actions { justify-content: center; }.landing-experience .rj-prism-stage { max-width: 750px; margin: auto; } }
+@media (max-width: 760px) { html.treasury-presentation { scroll-padding-top: 64px; }.landing-experience .presentation-surface { min-height: calc(100svh - 64px); padding: 42px 20px; }.landing-experience .landing-opening h1 { font-size: clamp(62px, 15vw, 94px); }.landing-experience .hero-stat-row { flex-direction: row; flex-wrap: wrap; gap: 16px; }.landing-experience .stat-num { font-size: 25px; }.landing-experience .hero-stat-item { flex: 1 1 110px; }.landing-experience .finale-content-box h2 { font-size: clamp(47px, 11vw, 80px); }.presentation-progress { top: 64px; }.presentation-light { width: 130vw; height: 130vw; }.landing-experience .landing-scroll-cue { margin-top: 24px; } }
+@media (prefers-reduced-motion: reduce) { html.treasury-presentation { scroll-snap-type: none; }.landing-experience .presentation-surface { transform: none; border-radius: 0; }.presentation-light, .presentation-atmosphere path, .landing-experience .window-in-view .simple-card { animation: none; } }

@@ -31,7 +31,7 @@ describe('three-screen frontend workflow', () => {
     expect(screen.getByRole('heading', { name: /Compare the paths/ })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /Open Command Center/ }));
     await screen.findByRole('heading', { name: /Treasury Command Center/ });
-    expect(screen.getByTitle('$20,000,000.00')).toBeInTheDocument();
+    expect(screen.getAllByTitle('$20,000,000.00').length).toBeGreaterThan(0);
   });
   it('opens the mobile navigation with keyboard focus and closes on Escape', async () => {
     const { user } = renderApp();
@@ -47,7 +47,7 @@ describe('three-screen frontend workflow', () => {
   });
   it('loads the exact API balances and distinguishes actual from forecast', async () => {
     const { user } = renderApp(); await start(user);
-    expect(screen.getByTitle('$20,000,000.00')).toBeInTheDocument();
+    expect(screen.getAllByTitle('$20,000,000.00').length).toBeGreaterThan(0);
     expect(screen.getByText('Realized interest')).toBeInTheDocument();
     expect(screen.getByRole('img', { name: /Solid: observed/ })).toHaveTextContent('Actual net flow, Forecast net flow');
     expect(screen.getByText(/Mock environment/)).toBeInTheDocument();

@@ -38,7 +38,7 @@ export default function TreasuryDashboard() {
       {snapshot.alerts?.map((alert, index) => <Alert key={`${snapshot.step}-${index}`} tone={alert.severity === 'CRITICAL' ? 'danger' : alert.severity === 'WARNING' ? 'warning' : 'info'}>{alert.severity} — {alert.message}</Alert>)}
       <section id="four-tier-section" className="story-section" aria-label="Four-tier portfolio architecture"><div data-story-reveal>
       <div className="section-intro"><div><span className="eyebrow">02 / Institutional Capital Architecture</span><h2>Four-Tier Capital Engine.</h2></div><span className="model-caption">Multi-asset framework across Cash, Repo, Sovereign Bonds, and Equities</span></div>
-      <FourTierPortfolio snapshot={snapshot} />
+      <FourTierPortfolio snapshot={snapshot} mode={sim.mode} />
       </div></section>
       <section id="intelligence" className="story-section" aria-label="Treasury intelligence"><div data-story-reveal>
       <div className="section-intro"><div><span className="eyebrow">03 / Intelligence</span><h2>Movement, made clear.</h2></div><span className="model-caption">{snapshot.forecast?.model_version ?? 'Model unavailable'}<br />{sim.mode === 'mock' ? 'Deterministic development model' : 'Backend forecasting model'}</span></div>

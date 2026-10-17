@@ -4,6 +4,8 @@ import { useSimulation } from '../context/SimulationContext';
 import { Button } from './ui';
 import RJQuantumPrism from './RJQuantumPrism';
 import InteractiveSandbox from './InteractiveSandbox';
+import PresentationScene from './PresentationScene';
+import './presentation.css';
 
 const windows = [
   { id: 'window-hero', num: '01', label: 'Overview' },
@@ -18,41 +20,57 @@ export default function LandingExperience() {
   const [activeWindow, setActiveWindow] = useState('window-hero');
 
   useEffect(() => {
-    if (typeof window === 'undefined' || !('IntersectionObserver' in window)) return undefined;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          const id = entry.target.id;
-          if (entry.isIntersecting) {
-            entry.target.classList.add('window-in-view');
-            entry.target.classList.remove('window-scrolled-past');
-            setActiveWindow(id);
-          } else if (entry.boundingClientRect.top < 0) {
-            entry.target.classList.add('window-scrolled-past');
-            entry.target.classList.remove('window-in-view');
-          } else {
-            entry.target.classList.remove('window-in-view', 'window-scrolled-past');
-          }
-        });
-      },
-      { threshold: 0.1 }
-    );
-
-    document.querySelectorAll('.apple-fullscreen-window').forEach((w) => observer.observe(w));
-
-    return () => observer.disconnect();
+    const element = root.current;
+    const sections = [...element.querySelectorAll('.apple-fullscreen-window')];
+    const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
+    document.documentElement.classList.add('treasury-presentation');
+    let frame = 0;
+    const clamp = (value) => Math.max(0, Math.min(1, value));
+    const update = () => {
+      frame = 0;
+      const height = window.innerHeight;
+      const header = window.innerWidth <= 760 ? 64 : 124;
+      let selected = sections[0];
+      sections.forEach((section) => {
+        const rect = section.getBoundingClientRect();
+        const entering = clamp((rect.top - header) / (height - header));
+        const leaving = clamp((height * .28 - rect.bottom) / (height * .28));
+        section.style.setProperty('--scene-shift', `${preference.matches ? 0 : entering * 70 - leaving * 25}px`);
+        section.style.setProperty('--scene-scale', preference.matches ? '1' : String(1 - entering * .035 - leaving * .018));
+        section.style.setProperty('--scene-radius', `${preference.matches ? 0 : entering * 38}px`);
+        const visible = rect.top < height * .8 && rect.bottom > header;
+        section.classList.toggle('window-in-view', visible);
+        if (rect.top <= height * .5) selected = section;
+      });
+      setActiveWindow(selected.id);
+      const rect = element.getBoundingClientRect();
+      const progress = clamp(-rect.top / Math.max(1, element.offsetHeight - height));
+      element.style.setProperty('--presentation-progress', progress.toFixed(4));
+    };
+    const schedule = () => { if (!frame) frame = window.requestAnimationFrame(update); };
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    preference.addEventListener('change', schedule);
+    update();
+    return () => {
+      window.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', schedule);
+      preference.removeEventListener('change', schedule);
+      window.cancelAnimationFrame(frame);
+      document.documentElement.classList.remove('treasury-presentation');
+    };
   }, []);
 
   const scrollToWindow = (id) => {
     const target = document.getElementById(id);
     if (target) {
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      target.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
     }
   };
 
   return (
     <div className="landing-experience" ref={root}>
+      <div className="presentation-progress" aria-hidden="true" />
       {/* Floating Apple Window Navigator (Desktop) */}
       <nav className="apple-scroll-tracker" aria-label="Page section navigation">
         <div className="tracker-rail">
@@ -66,6 +84,7 @@ export default function LandingExperience() {
                 onClick={() => scrollToWindow(win.id)}
                 aria-label={`Jump to ${win.label}`}
                 title={win.label}
+                aria-current={isActive ? 'step' : undefined}
               >
                 <span className="tracker-dot-pip" />
                 <span className="tracker-tooltip">
@@ -93,11 +112,11 @@ export default function LandingExperience() {
       </div>
 
       {/* Window 1: Full-Screen Hero Experience */}
-      <section className="apple-fullscreen-window landing-opening window-in-view" id="window-hero" aria-labelledby="landing-title">
+      <PresentationScene number="01" className="landing-opening window-in-view" id="window-hero" aria-labelledby="landing-title">
         <div className="landing-opening-copy">
           <div className="hero-pill-badge">
             <Sparkles size={14} className="text-blue" />
-            <span>SIMPLE AUTOMATED CASH AUTOPILOT</span>
+            <span>INTELLIGENT TREASURY AUTOPILOT</span>
           </div>
 
           <h1 id="landing-title">
@@ -106,7 +125,7 @@ export default function LandingExperience() {
           </h1>
 
           <p className="hero-tagline">
-            Keep enough cash for daily needs, protect your emergency reserves, and automatically earn 5.2% on the rest. No spreadsheets. No idle cash.
+            See your liquidity. Explore every trade-off. Put your treasury strategy to the test.
           </p>
 
           <div className="landing-opening-actions">
@@ -121,21 +140,21 @@ export default function LandingExperience() {
           {/* Clean, Simple Metrics Bar */}
           <div className="hero-stat-row">
             <div className="hero-stat-item">
-              <span className="stat-label">Available Cash</span>
+              <span className="stat-label">Demo capital</span>
               <strong className="stat-num">$20.0M</strong>
-              <small className="stat-caption">Ready to spend immediately</small>
+              <small className="stat-caption">Simulated starting balance</small>
             </div>
             <div className="hero-stat-divider" />
             <div className="hero-stat-item">
-              <span className="stat-label">Annual Yield</span>
-              <strong className="stat-num">5.20%</strong>
-              <small className="stat-caption">Earned automatically</small>
+              <span className="stat-label">Capital tiers</span>
+              <strong className="stat-num">04</strong>
+              <small className="stat-caption">Cash. Repo. Bonds. Equities.</small>
             </div>
             <div className="hero-stat-divider" />
             <div className="hero-stat-item">
-              <span className="stat-label">Safety Buffer</span>
-              <strong className="stat-num">99.4%</strong>
-              <small className="stat-caption">Protected from surprises</small>
+              <span className="stat-label">One workspace</span>
+              <strong className="stat-num">03</strong>
+              <small className="stat-caption">Monitor. Stress. Compare.</small>
             </div>
           </div>
         </div>
@@ -146,14 +165,14 @@ export default function LandingExperience() {
         {/* Smooth scroll prompt to Window 2 */}
         <div className="landing-scroll-cue">
           <a href="#interactive-lab" className="window-scroll-prompt">
-            <span>Scroll to test the live simulator</span>
+            <span>Scroll to explore the mock simulator</span>
             <ArrowDown size={15} />
           </a>
         </div>
-      </section>
+      </PresentationScene>
 
       {/* Window 2: Full-Screen Hands-On Simulator Playground */}
-      <section className="apple-fullscreen-window window-sandbox-section" id="interactive-lab" aria-label="Interactive Sandbox Simulator">
+      <PresentationScene number="02" className="window-sandbox-section" id="interactive-lab" aria-label="Interactive Sandbox Simulator">
         <InteractiveSandbox />
 
         {/* Smooth scroll prompt to Window 3 */}
@@ -163,65 +182,65 @@ export default function LandingExperience() {
             <ArrowDown size={15} />
           </a>
         </div>
-      </section>
+      </PresentationScene>
 
       {/* Window 3: Full-Screen Strategy Comparison Arena */}
-      <section className="apple-fullscreen-window landing-story-compact" id="landing-story" aria-label="Explore Reserve Juggler">
+      <PresentationScene number="03" className="landing-story-compact" id="landing-story" aria-label="Explore Reserve Juggler">
         <div className="story-compact-header">
-          <span className="apple-kicker">THREE SIMPLE CHOICES</span>
+          <span className="apple-kicker">ONE SCENARIO. THREE STRATEGIES.</span>
           <h2>
             Compare the paths.<br />
-            <span>See how automated treasury puts idle cash to work.</span>
+            <span>Let the results decide.</span>
           </h2>
           <p>
-            Traditional banks leave cash sitting idle or lock it up with early break penalties. Reserve Juggler balances both automatically.
+            Compare liquidity, estimated income, and funding costs on the same simulated cash flows.
           </p>
         </div>
 
         {/* Clean 3-Card Comparison Grid */}
         <div className="simple-comparison-grid">
           <div className="simple-card">
-            <div className="simple-card-badge">Traditional Banking</div>
+            <div className="simple-card-badge">Baseline 01</div>
             <div className="simple-card-icon icon-muted">
               <Banknote size={22} />
             </div>
-            <h3>1. All Cash</h3>
-            <div className="simple-card-num">0.0% APY</div>
-            <p>Your money sits in a basic checking account. 100% available, but loses value to inflation every single month.</p>
+            <h3>Static reserve</h3>
+            <div className="simple-card-num">Fixed.</div>
+            <p>A consistent cash buffer. A clear starting point for comparison.</p>
             <ul className="simple-card-bullets">
-              <li><CheckCircle2 size={15} className="text-muted" /> Instant withdrawals</li>
-              <li><span className="bullet-cross">✕</span> $0 annual interest earned</li>
-              <li><span className="bullet-cross">✕</span> High opportunity cost</li>
+              <li><CheckCircle2 size={15} className="text-muted" /> Fixed reserve policy</li>
+              <li><CheckCircle2 size={15} className="text-muted" /> Shared scenario and seed</li>
+              <li><CheckCircle2 size={15} className="text-muted" /> Inspect the cost of idle cash</li>
             </ul>
           </div>
 
           <div className="simple-card">
-            <div className="simple-card-badge">Fixed Deposit</div>
+            <div className="simple-card-badge">Baseline 02</div>
             <div className="simple-card-icon icon-amber">
               <ShieldCheck size={22} />
             </div>
-            <h3>2. Locked Vault</h3>
-            <div className="simple-card-num">2.4% APY</div>
-            <p>You lock money into fixed terms. You earn a modest return, but get hit with penalties if an unexpected bill arrives.</p>
+            <h3>Reactive reserve</h3>
+            <div className="simple-card-num">Respond.</div>
+            <p>Adjust to observed cash movements as liquidity needs change.</p>
             <ul className="simple-card-bullets">
-              <li><CheckCircle2 size={15} className="text-muted" /> Modest interest income</li>
-              <li><span className="bullet-cross">✕</span> Early withdrawal penalties</li>
-              <li><span className="bullet-cross">✕</span> Inflexible during cash crunches</li>
+              <li><CheckCircle2 size={15} className="text-muted" /> Observed flow signals</li>
+              <li><CheckCircle2 size={15} className="text-muted" /> Redemption costs included</li>
+              <li><CheckCircle2 size={15} className="text-muted" /> Track reserve breaches</li>
             </ul>
           </div>
 
           <div className="simple-card is-highlight">
-            <div className="simple-card-badge highlight-badge">Recommended Autopilot</div>
+            <div className="simple-card-badge highlight-badge">Forecast-led strategy</div>
             <div className="simple-card-icon icon-blue">
               <TrendingUp size={22} />
             </div>
-            <h3>3. Reserve Juggler</h3>
-            <div className="simple-card-num highlight-num">5.20% APY</div>
-            <p>The best of both worlds. Automatically sweeps surplus into yield, and instantly protects checking when withdrawals surge.</p>
+            <h3>Reserve Juggler</h3>
+            <div className="simple-card-num highlight-num">Anticipate.</div>
+            <p>Use forecasts and liquidity constraints to evaluate the next allocation.</p>
             <ul className="simple-card-bullets">
-              <li><CheckCircle2 size={15} className="text-green" /> <strong>+$482,000</strong> net extra gain</li>
-              <li><CheckCircle2 size={15} className="text-green" /> Zero early redemption fees</li>
-              <li><CheckCircle2 size={15} className="text-green" /> 100% automated cash defense</li>
+              <li><CheckCircle2 size={15} className="text-green" /> Explainable recommendations</li>
+              <li><CheckCircle2 size={15} className="text-green" /> Liquidity and risk constraints</li>
+              <li><CheckCircle2 size={15} className="text-green" /> No preset winning strategy</li>
             </ul>
           </div>
         </div>
@@ -233,10 +252,10 @@ export default function LandingExperience() {
             <ArrowDown size={15} />
           </a>
         </div>
-      </section>
+      </PresentationScene>
 
       {/* Window 4: Full-Screen Finale & One-Click Launch */}
-      <section className="apple-fullscreen-window landing-finale-screen" id="window-finale" aria-label="Launch Reserve Juggler Simulation">
+      <PresentationScene number="04" className="landing-finale-screen" id="window-finale" aria-label="Launch Reserve Juggler Simulation">
         <div className="finale-content-box">
           <span className="apple-kicker">READY WHEN YOU ARE</span>
           <h2>
@@ -244,7 +263,7 @@ export default function LandingExperience() {
             <span>of cash management.</span>
           </h2>
           <p>
-            Launch an interactive simulation with $20M in demo funds. Test liquidity shocks, watch autonomous sweeps, and inspect the live mathematical proof.
+            Start with $20M in simulated cash. Explore the Command Center, Shock Lab, and Strategy Arena.
           </p>
 
           <div className="finale-action-group">
@@ -256,10 +275,10 @@ export default function LandingExperience() {
           <div className="finale-perks">
             <span><CheckCircle2 size={14} className="text-green" /> 100% Free Demo</span>
             <span><CheckCircle2 size={14} className="text-green" /> Zero Real Funds</span>
-            <span><CheckCircle2 size={14} className="text-green" /> Instant 2-Second Setup</span>
+            <span><CheckCircle2 size={14} className="text-green" /> Reproducible Scenarios</span>
           </div>
         </div>
-      </section>
+      </PresentationScene>
     </div>
   );
 }

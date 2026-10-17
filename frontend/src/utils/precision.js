@@ -9,12 +9,16 @@
  */
 export function formatDecimal(value, fractionDigits = 2) {
   if (value == null || value === '') return '—';
-  const num = typeof value === 'number' ? value : Number(value);
-  if (!Number.isFinite(num)) return '—';
-  return num.toLocaleString('en-US', {
-    minimumFractionDigits: fractionDigits,
-    maximumFractionDigits: fractionDigits,
-  });
+  if (!Number.isInteger(fractionDigits) || fractionDigits < 0 || fractionDigits > 20) throw new RangeError('Invalid decimal precision.');
+  const match = String(value).match(/^([+-]?)(\d+)(?:\.(\d+))?$/);
+  if (!match) return '—';
+  const [, sign, whole, fraction = ''] = match;
+  const scale = 10n ** BigInt(fractionDigits);
+  let scaled = BigInt(whole) * scale + BigInt(fraction.slice(0, fractionDigits).padEnd(fractionDigits, '0') || '0');
+  if (Number(fraction[fractionDigits] ?? 0) >= 5) scaled += 1n;
+  const integer = (scaled / scale).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const decimal = fractionDigits ? `.${(scaled % scale).toString().padStart(fractionDigits, '0')}` : '';
+  return `${sign === '-' && scaled !== 0n ? '-' : ''}${integer}${decimal}`;
 }
 
 /**
@@ -30,18 +34,17 @@ export function parseDecimalString(str, fallback = 0) {
  * Formats rate or percentage from either basis points or high-precision decimal strings.
  * Does not truncate high-precision decimals into coarse integer bps.
  */
-export function formatRateDecimal(value, digits = 2) {
+export function formatRateDecimal(value, digits = 2, unit = 'percent') {
   if (value == null) return '—';
-  if (typeof value === 'string' && value.includes('.')) {
-    const num = Number(value);
-    return Number.isFinite(num) ? `${num.toFixed(digits)}%` : `${value}%`;
+  if (!['percent', 'bps'].includes(unit)) throw new TypeError('Explicit rate unit must be percent or bps.');
+  if (unit === 'bps') {
+    if (!Number.isSafeInteger(value)) throw new TypeError('Basis points must be integer.');
+    const negative = value < 0 ? '-' : '';
+    const absolute = BigInt(Math.abs(value));
+    value = `${negative}${absolute / 100n}.${(absolute % 100n).toString().padStart(2, '0')}`;
   }
-  if (typeof value === 'number') {
-    // If > 50, likely bps (e.g. 520 -> 5.20%)
-    if (value > 50) return `${(value / 100).toFixed(digits)}%`;
-    return `${value.toFixed(digits)}%`;
-  }
-  return String(value);
+  const formatted = formatDecimal(value, digits);
+  return formatted === '—' ? formatted : `${formatted}%`;
 }
 
 /**
