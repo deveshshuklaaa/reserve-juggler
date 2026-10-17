@@ -32,6 +32,22 @@ from .four_tier import (
     FourTierRecommendationRequest, AllocationTarget, TradeRecommendation,
     InstrumentReturnEstimate, PortfolioRecommendation, recommend_portfolio_allocation,
 )
+from .hourly_forecasting import (
+    ForecastResolution,
+    HourlyCashFlowBucket,
+    HourlyForecastConfig,
+    HourlyForecastResult,
+    SUPPORTED_HOURLY_HORIZONS,
+    build_hourly_feature_matrix,
+    compute_hourly_lag_features,
+    compute_hourly_rolling_features,
+    extract_hourly_calendar_features,
+    forecast_hourly_cashflows,
+    hourly_rolling_mean_forecast,
+    hourly_seasonal_naive_forecast,
+    load_organizer_dataset,
+    validate_hourly_forecast_inputs,
+)
 
 __all__ = [
     "CashFlowBucket", "ForecastPoint", "ForecastResult", "TreasuryContext",
@@ -52,4 +68,9 @@ __all__ = [
     "FourTierRiskPolicy", "ForecastRiskMetadata", "HourlyForecastPoint",
     "FourTierRecommendationRequest", "AllocationTarget", "TradeRecommendation",
     "InstrumentReturnEstimate", "PortfolioRecommendation", "recommend_portfolio_allocation",
+    "ForecastResolution", "HourlyCashFlowBucket", "HourlyForecastConfig", "HourlyForecastResult",
+    "SUPPORTED_HOURLY_HORIZONS", "hourly_rolling_mean_forecast", "hourly_seasonal_naive_forecast",
+    "forecast_hourly_cashflows", "extract_hourly_calendar_features", "compute_hourly_lag_features",
+    "compute_hourly_rolling_features", "build_hourly_feature_matrix", "load_organizer_dataset",
+    "validate_hourly_forecast_inputs",
 ]

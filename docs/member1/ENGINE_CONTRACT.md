@@ -462,3 +462,85 @@ estimates, and stress amounts are explicitly examples, not evaluated metrics.
 
 See [Member 2 integration](MEMBER2_INTEGRATION.md) and
 [Member 3 frontend fields](MEMBER3_FRONTEND_FIELDS.md).
+
+## RJ-M1-07 Official hourly forecast foundation
+
+Native hourly forecasting and causal feature engineering for the organizer dataset.
+Preserves existing 15-minute synthetic forecasting (`forecast_cashflows`, `CashFlowBucket`, `ForecastResult`) without alteration.
+
+### Core Contracts and Configuration
+
+| Model / Enum | Fields and interpretation |
+| --- | --- |
+| `ForecastResolution` | `HOURLY = "1h"`, `QUARTER_HOURLY = "15m"` |
+| `HourlyCashFlowBucket` | `timestamp`, `deposits_usd`, `withdrawals_usd`, `net_flow_usd`; property helpers for integer cents (`deposits_cents`, `withdrawals_cents`, `net_flow_cents`) |
+| `HourlyForecastConfig` | `resolution="1h"`, `horizon_hours` (1, 3, 6, 15, 24), `model_version`, `rolling_window_hours=24`, `season_hours=24`, `uncertainty_multiplier=1.0`, `uncertainty_status="provisional_uncalibrated"` |
+| `HourlyForecastResult` | `generated_at`, `model_version`, `resolution="1h"`, `horizon_hours`, `points: tuple[HourlyForecastPoint, ...]`, `metadata: ForecastRiskMetadata`; helper properties for totals and path vectors |
+| `SUPPORTED_HOURLY_HORIZONS` | `(1, 3, 6, 15, 24)` hours |
+
+### Public Hourly Forecasting Signatures
+
+```python
+forecast_hourly_cashflows(
+    history: Sequence[OrganizerHourlyObservation | HourlyCashFlowBucket],
+    *,
+    as_of: datetime,
+    horizon_hours: int = 24,
+    model_version: str = "hourly-seasonal-naive-v1",
+    config: HourlyForecastConfig | None = None,
+    start_at: datetime | None = None,
+) -> HourlyForecastResult
+
+hourly_rolling_mean_forecast(
+    history: Sequence[Any],
+    *,
+    as_of: datetime,
+    horizon_hours: int = 24,
+    window_hours: int = 24,
+    start_at: datetime | None = None,
+    model_version: str = "hourly-rolling-mean-v1",
+    uncertainty_multiplier: Decimal | float = Decimal("1.0"),
+) -> HourlyForecastResult
+
+hourly_seasonal_naive_forecast(
+    history: Sequence[Any],
+    *,
+    as_of: datetime,
+    horizon_hours: int = 24,
+    season_hours: int = 24,
+    start_at: datetime | None = None,
+    model_version: str = "hourly-seasonal-naive-v1",
+    uncertainty_multiplier: Decimal | float = Decimal("1.0"),
+) -> HourlyForecastResult
+```
+
+### Baseline Behavior and Fallback Governance
+
+1. **Separate Inflows and Outflows**: Deposits and withdrawals are forecasted separately. Predictions are strictly non-negative integer cents.
+2. **Causality**: Strictly causal. No future data leakage. History timestamps must be strictly ordered and $\le \text{as\_of}$.
+3. **No Synthetic Splitting**: Hourly observations are never split or interpolated into fabricated quarter-hour records.
+4. **Horizons**: Explicitly supports 1-hour, 3-hour, 6-hour, 15-hour (overnight repo 17:00 to 08:00 next day), and 24-hour (daily cycle) horizons.
+5. **Path Output**: Returns a complete ordered sequence of `HourlyForecastPoint` models, directly satisfying `FourTierRecommendationRequest.forecast`.
+6. **Safe Short-History Fallback**:
+   - If history is empty: returns 0-flow forecast path with 0 uncertainty.
+   - If history has fewer observations than `season_hours` (e.g. < 24h): seasonal-naive automatically falls back to rolling mean over all available observations.
+
+### Causal Hourly Feature Engineering
+
+```python
+extract_hourly_calendar_features(dt: datetime) -> dict[str, Any]
+compute_hourly_lag_features(observations: Sequence[Any], lags=(1, 2, 3, 24, 168), fill_value=None) -> list[dict[str, Any]]
+compute_hourly_rolling_features(observations: Sequence[Any], windows=(3, 6, 24, 168), strictly_prior=True) -> list[dict[str, Any]]
+build_hourly_feature_matrix(observations: Sequence[Any], lags=(1, 2, 3, 24, 168), windows=(3, 6, 24, 168), strictly_prior=True) -> list[dict[str, Any]]
+```
+
+- **Calendar Features**: `hour_of_day` (0-23), `day_of_week` (0-6), `is_weekend` (0/1), cyclical `sin/cos` representations. Naive hourly datetimes only.
+- **Lag Features**: Lags 1h, 2h, 3h, 24h (same hour on previous day), and 168h (same hour in previous week when available).
+- **Rolling Features**: Rolling means and sample standard deviations (volatility) over 3h, 6h, 24h, and 168h windows. `strictly_prior=True` prevents same-step lookahead.
+
+### Read-Only Organizer Dataset Loader
+
+```python
+load_organizer_dataset(source: str | Path | TextIO, *, limit: int | None = None) -> tuple[OrganizerHourlyObservation, ...]
+```
+Read-only adapter for organizer CSV rows. Preserves native Decimal scale and unspecified timezones. Does not duplicate or overwrite Member 2's loader.

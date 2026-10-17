@@ -165,3 +165,12 @@ def build_feature_matrix(
         }
         matrix.append(row)
     return matrix
+
+
+# Native hourly feature extraction (RJ-M1-07)
+from .hourly_forecasting import (
+    build_hourly_feature_matrix,
+    compute_hourly_lag_features,
+    compute_hourly_rolling_features,
+    extract_hourly_calendar_features,
+)

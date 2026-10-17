@@ -8,6 +8,51 @@
 
 ## Task Log
 
+### [RJ-M1-07] Official Hourly Forecast Foundation
+- **Status**: COMPLETED
+- **Scope**: Adapted the quantitative forecasting foundation to natively support the
+  organizer's hourly dataset without losing compatibility with the separate synthetic
+  15-minute demo. Implemented explicit temporal resolution, organizer hourly cash-flow
+  buckets, causal hourly time features, rolling-mean and seasonal-naive baselines,
+  separate deposit and withdrawal forecasts, multi-step horizons (1h, 3h, 6h, 15h, 24h),
+  complete pathwise outputs, and safe short-history fallback.
+- **Resolution & Configuration**: Introduced `ForecastResolution` enum (`"1h"`, `"15m"`)
+  and `HourlyForecastConfig` for explicit granularity, horizon, window, and uncertainty
+  multiplier specification.
+- **Organizer Data Support**: Implemented `HourlyCashFlowBucket` model and local
+  read-only `load_organizer_dataset` CSV adapter. Retains native Decimal USD values and
+  integer cents without altering source scale or inferring timezones.
+- **Causal Feature Engineering**: Built strictly causal hourly feature extractors:
+  - `extract_hourly_calendar_features`: hour of day (0-23), day of week (0-6), weekend
+    flag (0/1), cyclical sin/cos encodings. Naive hourly datetimes only.
+  - `compute_hourly_lag_features`: Lags 1h, 2h, 3h, 24h (same hour on previous day),
+    and 168h (same hour in previous week).
+  - `compute_hourly_rolling_features`: Rolling averages and sample standard deviations
+    (volatility) over 3h, 6h, 24h, and 168h windows. `strictly_prior=True` prevents
+    lookahead leakage.
+  - `build_hourly_feature_matrix`: Combines calendar, lag, and rolling statistics.
+- **Hourly Baselines**:
+  - `hourly_rolling_mean_forecast`: Rolling-mean prediction of separate deposits and
+    withdrawals over requested horizon with empirical net-flow standard deviation uncertainty.
+  - `hourly_seasonal_naive_forecast`: 24-hour daily seasonal baseline matching exact
+    hour of day from previous cycle, with empirical residual uncertainty.
+  - `forecast_hourly_cashflows`: Unified entry point supporting arbitrary models and
+    configurations.
+- **Horizons & Invariants**: Validated for 1-hour, 3-hour, 6-hour, 15-hour (overnight
+  repo 17:00-08:00), and 24-hour (daily cycle) horizons. Full path output returns
+  ordered `HourlyForecastPoint` items with non-negative predicted deposits and withdrawals.
+- **Safe Fallback**: Empty history falls back to 0-flow path; history below seasonal
+  cycle (< 24h) safely falls back to rolling mean over available observations.
+- **Integration**: `HourlyForecastResult.points` directly satisfies
+  `FourTierRecommendationRequest.forecast`.
+- **Preservation**: Original 15-minute synthetic forecasting (`forecast_cashflows`,
+  `CashFlowBucket`, `ForecastResult`), pipeline, and demo remain 100% operational.
+- **Tests**: Full suite 265 passed (237 previous tests preserved; 28 new tests).
+  Command: `$env:PYTHONPATH=".;backend"; uv run --with pytest --with fastapi --with pydantic --with httpx --with sqlalchemy --with pydantic-settings pytest tests/ -q`
+- **Commit**: `feat(forecast): support native hourly treasury forecasting`
+- **Push Target**: `origin/feat/treasury-intelligence`
+- **Next Task**: Await explicit assignment; stop after RJ-M1-07.
+
 ### [RJ-M1-06] Four-Tier Contract Migration
 - **Status**: COMPLETED
 - **Scope**: Added immutable four-tier contracts for exact organizer observations,
