@@ -1,4 +1,4 @@
-﻿from fastapi import FastAPI
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Request
 from fastapi.exceptions import RequestValidationError
@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 import logging
 from app.database import engine, Base
-from app.routers import health, treasury, transactions, simulation
+from app.routers import health, treasury, transactions, simulation, simulation_v1
 from app.routers import runs
 
 # Create schema tables if not exist (ensures standalone testing works instantly)
@@ -34,6 +34,7 @@ app.include_router(health.router)
 
 # Domain Routers
 app.include_router(runs.router, prefix="/api/v1")
+app.include_router(simulation_v1.router, include_in_schema=False)
 
 # Existing dashboard clients keep working while they migrate to /api/v1.
 app.include_router(treasury.router, include_in_schema=False)
