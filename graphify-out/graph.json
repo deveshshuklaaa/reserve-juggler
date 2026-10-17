@@ -9497,6 +9497,18 @@
       "type": "external"
     },
     {
+      "id": "importlib_util",
+      "label": "importlib_util",
+      "_origin": "semantic",
+      "community": 4,
+      "community_name": "test_contract_reconciliation.py",
+      "external": true,
+      "file_type": "concept",
+      "norm_label": "importlib_util",
+      "source_file": "",
+      "type": "external"
+    },
+    {
       "id": "inspect",
       "label": "inspect",
       "_origin": "semantic",
@@ -9589,17 +9601,6 @@
       "external": true,
       "file_type": "concept",
       "norm_label": "math",
-      "source_file": "",
-      "type": "external"
-    },
-    {
-      "id": "importlib_util",
-      "label": "importlib_util",
-      "community": 4,
-      "community_name": "test_contract_reconciliation.py",
-      "external": true,
-      "file_type": "concept",
-      "norm_label": "importlib_util",
       "source_file": "",
       "type": "external"
     }
@@ -27893,5 +27894,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "87a82173e100a717155af23738ecc915658c8bf2"
+  "built_from": "Resolved RJ-M1-06 working tree; committed with both audited histories and the canonical portfolio contracts"
 }

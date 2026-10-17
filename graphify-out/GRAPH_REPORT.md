@@ -9,8 +9,8 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `87a82173`
-- Run `git rev-parse HEAD` and compare to check if the graph is stale.
+- Built from the resolved RJ-M1-06 working tree; committed with the reconciliation.
+- Contract source checkpoint: `af368058`; the audited second history is `974154e`.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
