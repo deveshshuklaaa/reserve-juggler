@@ -1,20 +1,90 @@
-import { ArrowDown, ArrowRight, CheckCircle2, Sparkles, TrendingUp, ShieldCheck, Banknote } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { ArrowDown, ArrowRight, CheckCircle2, Sparkles, TrendingUp, ShieldCheck, Banknote, Shield, Zap } from 'lucide-react';
 import { useSimulation } from '../context/SimulationContext';
 import { Button } from './ui';
 import RJQuantumPrism from './RJQuantumPrism';
+import InteractiveSandbox from './InteractiveSandbox';
+
+const windows = [
+  { id: 'window-hero', num: '01', label: 'Overview' },
+  { id: 'interactive-lab', num: '02', label: 'Interactive Lab' },
+  { id: 'landing-story', num: '03', label: 'Strategy Arena' },
+  { id: 'window-finale', num: '04', label: 'Launch Simulation' },
+];
 
 export default function LandingExperience() {
   const { createRun, busy } = useSimulation();
+  const root = useRef(null);
+  const [activeWindow, setActiveWindow] = useState('window-hero');
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('IntersectionObserver' in window)) return undefined;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const id = entry.target.id;
+          if (entry.isIntersecting) {
+            entry.target.classList.add('window-in-view');
+            entry.target.classList.remove('window-scrolled-past');
+            setActiveWindow(id);
+          } else if (entry.boundingClientRect.top < 0) {
+            entry.target.classList.add('window-scrolled-past');
+            entry.target.classList.remove('window-in-view');
+          } else {
+            entry.target.classList.remove('window-in-view', 'window-scrolled-past');
+          }
+        });
+      },
+      { threshold: 0.25 }
+    );
+
+    document.querySelectorAll('.apple-fullscreen-window').forEach((w) => observer.observe(w));
+
+    return () => observer.disconnect();
+  }, []);
+
+  const scrollToWindow = (id) => {
+    const target = document.getElementById(id);
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   return (
-    <div className="landing-experience">
+    <div className="landing-experience" ref={root}>
+      {/* Floating Apple Window Navigator (Desktop) */}
+      <nav className="apple-scroll-tracker" aria-label="Page section navigation">
+        <div className="tracker-rail">
+          {windows.map((win) => {
+            const isActive = activeWindow === win.id;
+            return (
+              <button
+                key={win.id}
+                type="button"
+                className={`tracker-dot ${isActive ? 'is-active' : ''}`}
+                onClick={() => scrollToWindow(win.id)}
+                aria-label={`Jump to ${win.label}`}
+                title={win.label}
+              >
+                <span className="tracker-dot-pip" />
+                <span className="tracker-tooltip">
+                  <small>{win.num}</small> {win.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+
       {/* Apple Sub-Navigation Bar Ribbon */}
       <div className="apple-subnav-ribbon">
         <div className="subnav-inner">
           <span className="subnav-title">Reserve Juggler</span>
           <div className="subnav-links">
-            <a href="#window-hero" className="active-link">Overview</a>
-            <a href="#landing-story">Compare Paths</a>
+            <a href="#window-hero" className={activeWindow === 'window-hero' ? 'active-link' : ''}>Overview</a>
+            <a href="#interactive-lab" className={activeWindow === 'interactive-lab' ? 'active-link' : ''}>Interactive Lab</a>
+            <a href="#landing-story" className={activeWindow === 'landing-story' ? 'active-link' : ''}>Compare Paths</a>
             <Button variant="primary" busy={busy} onClick={() => createRun()} className="subnav-cta">
               Create simulation <ArrowRight size={14} />
             </Button>
@@ -22,8 +92,8 @@ export default function LandingExperience() {
         </div>
       </div>
 
-      {/* Hero Window: Compact, Crisp, Friendly */}
-      <section className="apple-window landing-opening window-in-view" id="window-hero" aria-labelledby="landing-title">
+      {/* Window 1: Full-Screen Hero Experience */}
+      <section className="apple-fullscreen-window landing-opening window-in-view" id="window-hero" aria-labelledby="landing-title">
         <div className="landing-opening-copy">
           <div className="hero-pill-badge">
             <Sparkles size={14} className="text-blue" />
@@ -73,17 +143,30 @@ export default function LandingExperience() {
         {/* 3D Sapphire Glass Monolith with Kinetic Wave Streams */}
         <RJQuantumPrism />
 
-        {/* Smooth scroll cue */}
+        {/* Smooth scroll prompt to Window 2 */}
         <div className="landing-scroll-cue">
-          <a href="#landing-story" className="window-scroll-prompt">
-            <span>Compare the 3 strategies below</span>
+          <a href="#interactive-lab" className="window-scroll-prompt">
+            <span>Scroll to test the live simulator</span>
             <ArrowDown size={15} />
           </a>
         </div>
       </section>
 
-      {/* Section 2: Compact, Friendly Comparison Story */}
-      <section className="apple-window landing-story-compact window-in-view" id="landing-story" aria-label="Explore Reserve Juggler">
+      {/* Window 2: Full-Screen Hands-On Simulator Playground */}
+      <section className="apple-fullscreen-window window-sandbox-section" id="interactive-lab" aria-label="Interactive Sandbox Simulator">
+        <InteractiveSandbox />
+
+        {/* Smooth scroll prompt to Window 3 */}
+        <div className="landing-scroll-cue">
+          <a href="#landing-story" className="window-scroll-prompt">
+            <span>Scroll to compare strategy returns</span>
+            <ArrowDown size={15} />
+          </a>
+        </div>
+      </section>
+
+      {/* Window 3: Full-Screen Strategy Comparison Arena */}
+      <section className="apple-fullscreen-window landing-story-compact" id="landing-story" aria-label="Explore Reserve Juggler">
         <div className="story-compact-header">
           <span className="apple-kicker">THREE SIMPLE CHOICES</span>
           <h2>
@@ -100,7 +183,7 @@ export default function LandingExperience() {
           <div className="simple-card">
             <div className="simple-card-badge">Traditional Banking</div>
             <div className="simple-card-icon icon-muted">
-              <Banknote size={20} />
+              <Banknote size={22} />
             </div>
             <h3>1. All Cash</h3>
             <div className="simple-card-num">0.0% APY</div>
@@ -115,7 +198,7 @@ export default function LandingExperience() {
           <div className="simple-card">
             <div className="simple-card-badge">Fixed Deposit</div>
             <div className="simple-card-icon icon-amber">
-              <ShieldCheck size={20} />
+              <ShieldCheck size={22} />
             </div>
             <h3>2. Locked Vault</h3>
             <div className="simple-card-num">2.4% APY</div>
@@ -130,7 +213,7 @@ export default function LandingExperience() {
           <div className="simple-card is-highlight">
             <div className="simple-card-badge highlight-badge">Recommended Autopilot</div>
             <div className="simple-card-icon icon-blue">
-              <TrendingUp size={20} />
+              <TrendingUp size={22} />
             </div>
             <h3>3. Reserve Juggler</h3>
             <div className="simple-card-num highlight-num">5.20% APY</div>
@@ -143,12 +226,38 @@ export default function LandingExperience() {
           </div>
         </div>
 
-        {/* Final Quick Launch */}
-        <div className="story-compact-cta">
-          <Button variant="primary" busy={busy} onClick={() => createRun()} className="apple-hero-btn">
-            Create simulation <ArrowRight size={18} />
-          </Button>
-          <span className="simple-note">Simulated data · No real funds · USD · Instant 2-second setup</span>
+        {/* Smooth scroll prompt to Window 4 */}
+        <div className="landing-scroll-cue">
+          <a href="#window-finale" className="window-scroll-prompt">
+            <span>Scroll to start your simulation</span>
+            <ArrowDown size={15} />
+          </a>
+        </div>
+      </section>
+
+      {/* Window 4: Full-Screen Finale & One-Click Launch */}
+      <section className="apple-fullscreen-window landing-finale-screen" id="window-finale" aria-label="Launch Reserve Juggler Simulation">
+        <div className="finale-content-box">
+          <span className="apple-kicker">READY WHEN YOU ARE</span>
+          <h2>
+            Experience the future<br />
+            <span>of cash management.</span>
+          </h2>
+          <p>
+            Launch an interactive simulation with $20M in demo funds. Test liquidity shocks, watch autonomous sweeps, and inspect the live mathematical proof.
+          </p>
+
+          <div className="finale-action-group">
+            <Button variant="primary" busy={busy} onClick={() => createRun()} className="apple-hero-btn">
+              Create simulation <ArrowRight size={18} />
+            </Button>
+          </div>
+
+          <div className="finale-perks">
+            <span><CheckCircle2 size={14} className="text-green" /> 100% Free Demo</span>
+            <span><CheckCircle2 size={14} className="text-green" /> Zero Real Funds</span>
+            <span><CheckCircle2 size={14} className="text-green" /> Instant 2-Second Setup</span>
+          </div>
         </div>
       </section>
     </div>

@@ -1563,11 +1563,20 @@ main:has(.landing-page) {
   transform: translateX(0);
 }
 
-/* Apple Window Sections & Scroll Entrance/Exit Transitions */
+/* Apple Full-Screen Window Sections & Theatrical Keynote Transitions */
+.apple-fullscreen-window,
 .apple-window {
+  min-height: calc(100vh - 64px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: clamp(48px, 8vh, 84px) max(24px, calc((100vw - 1280px) / 2));
+  position: relative;
   scroll-margin-top: 56px;
+  box-sizing: border-box;
   opacity: 0.15;
-  transform: translateY(44px) scale(0.975);
+  transform: translateY(48px) scale(0.975);
   filter: blur(5px);
   transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
               transform 0.85s cubic-bezier(0.16, 1, 0.3, 1),
@@ -1575,16 +1584,80 @@ main:has(.landing-page) {
   will-change: transform, opacity, filter;
 }
 
+.apple-fullscreen-window.window-in-view,
 .apple-window.window-in-view {
   opacity: 1;
   transform: translateY(0) scale(1);
   filter: blur(0px);
 }
 
+.apple-fullscreen-window.window-scrolled-past,
 .apple-window.window-scrolled-past {
-  opacity: 0.25;
-  transform: translateY(-30px) scale(0.97);
+  opacity: 0.22;
+  transform: translateY(-32px) scale(0.97);
   filter: blur(3px);
+}
+
+.window-sandbox-section {
+  width: 100%;
+}
+
+/* Landing Finale Screen */
+.landing-finale-screen {
+  text-align: center;
+}
+
+.finale-content-box {
+  max-width: 780px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.finale-content-box h2 {
+  font-size: clamp(38px, 5.5vw, 68px);
+  font-weight: 750;
+  letter-spacing: -0.045em;
+  line-height: 1.05;
+  color: #1d1d1f;
+  margin: 12px 0 18px;
+}
+
+.finale-content-box h2 span {
+  color: var(--blue);
+}
+
+.finale-content-box p {
+  font-size: 19px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  max-width: 600px;
+  margin-bottom: 32px;
+}
+
+.finale-perks {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  margin-top: 24px;
+  font-size: 14px;
+  font-weight: 550;
+  color: var(--text-secondary);
+}
+
+.finale-perks span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 768px) {
+  .finale-perks {
+    flex-direction: column;
+    gap: 12px;
+  }
 }
 
 /* Scroll Cues between Windows */
