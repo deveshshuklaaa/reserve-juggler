@@ -1,5 +1,11 @@
 # Quantitative engine contract v1
 
+Release authority: read the RJ-M1-14 clarification at the end and the current
+MEMBER2_INTEGRATION.md / MEMBER3_FRONTEND_FIELDS.md handoffs for canonical
+portfolio consumers. Earlier single-vault and four_tier examples are compatibility
+contracts, not interchangeable canonical portfolio schemas. See FINAL_AUDIT.md
+for measured validation and unresolved integration boundaries.
+
 **Canonical boundary (2026-10-18):** The reviewed portfolio model definitions from
 `1fcff80` are inputs for liquidity risk and the RJ-M1-11 optimizer. The portfolio
 recommendation function now dispatches additive optimizer requests with explicit
@@ -1145,21 +1151,21 @@ evaluate_hourly_forecast_models(
     history: Sequence[Any],
     *,
     horizons: Sequence[int] = (1, 3, 6, 15, 24),
-    train_ratio: float = 0.60,
-    val_ratio: float = 0.20,
+    train_ratio: float = 0.70,
+    val_ratio: float = 0.15,
     eval_stride: int = 12,
     algorithms: Sequence[str] = ("hist_gradient_boosting",),
     random_state: int = 42,
 ) -> tuple[HourlyModelEvaluationReport, ...]
 ```
 
-`HourlyModelEvaluationReport` fields (all financial metrics in exact Decimal USD):
+`HourlyModelEvaluationReport` fields (USD errors rounded to cents after numerical model evaluation, serialized as Decimal strings):
 - `algorithm`: Machine learning algorithm evaluated (`"hist_gradient_boosting"` or `"random_forest"`).
 - `horizon_hours`: Multi-hour forecast path length ($H \in \{1, 3, 6, 15, 24\}$).
 - `train_cutoff`, `test_start`, `test_end`: Strict chronological evaluation window boundaries.
-- `train_sample_count`, `test_sample_count`: Non-overlapping sample sizes.
-- `mae_deposits_usd`, `rmse_deposits_usd`: Pointwise deposit error.
-- `mae_withdrawals_usd`, `rmse_withdrawals_usd`: Pointwise withdrawal error.
+- `train_sample_count`: training feature/target pairs; `test_sample_count`: evaluated rolling paths (horizons can overlap).
+- `mae_deposits_usd`: Pointwise deposit MAE (no deposit RMSE field).
+- `mae_withdrawals_usd`: Pointwise withdrawal MAE (no withdrawal RMSE field).
 - `mae_net_usd`, `rmse_net_usd`: Pointwise net cash flow error ($\text{net} = \text{deposits} - \text{withdrawals}$).
 - `cumulative_net_mae_usd`: Cumulative net flow forecast error over the entire $H$-hour path.
 - `peak_shortfall_mae_usd`: Maximum cumulative liquidity shortfall prediction error.
@@ -1304,3 +1310,60 @@ forecast_hourly_cashflows()                                              build_d
    - Stressed liquidation proceeds under haircuts (2% bond, 15% equity) drop to $67,193,946.82.
    - Confirms mark-to-market accuracy and strict prohibition of guaranteed equity return.
 
+
+## RJ-M1-14 Final release contract clarification
+
+The canonical portfolio, order, reserve and allocation schemas are explicitly
+imported from `treasury_intelligence.portfolio`; recommendation implementation is
+`optimizer.recommend_four_tier_allocation(AllocationOptimizerRequest)`.
+Older `four_tier.py` contracts and legacy UTC vault APIs remain supported; root
+aliases are mixed for compatibility. Do not interchange model families implicitly.
+The older envelope-only recommendation function still refuses to invent missing
+reward/unit assumptions. See MEMBER2_INTEGRATION.md for the working boundary.
+
+Hourly forecast outputs still describe `deposits_minus_withdrawals`, not the
+independent source net_flow_usd. Copy point fields explicitly into canonical hourly
+points and preserve actual target metadata separately. Canonical metadata's
+source-net-only restriction is a known unresolved integration boundary. Historical
+hours remain timezone-unspecified; publication/availability semantics are external.
+Missing hours are rejected rather than silently interpreted as contiguous lags.
+Explicit seasonal start times now align to target timestamps; if no historical
+seasonal match exists, the baseline uses the last known observation.
+
+ML artifact training_cutoff now includes validation observations used for residual
+calibration, survives serialization, and must not exceed inference as_of. Training
+and evaluation remain chronological. Error metrics use numerical estimates rounded
+to cent-valued Decimal strings, not arbitrary-precision ML. Net error is derived-net
+error; peak-shortfall evaluation is hour-end netting, not realized payout failure.
+Actual results are in MODEL_EVALUATION_REPORT.md and RELEASE_RESULTS.json.
+
+Monte Carlo model `multi-asset-block-mc-v1.1` fixes asset conservation and endpoint
+cash accounting. Endpoint cash equals opening cash plus simulated deposits minus
+withdrawals/extra obligations plus eligible repo receipts and hypothetical sale
+proceeds plus new borrowing. Sold assets and settled repo claims are removed from
+remaining asset value once. Opening liabilities plus new principal and incremental
+financing are subtracted; borrowing principal cancels its cash receipt in NAV.
+Old booked financing is not charged twice. Full permitted hypothetical sales are
+stress analysis, not execution or optimizer-selected trades. Only settlements by
+horizon end count. Negative endpoint cash indicates an unfunded obligation.
+
+Scenario weights have an exact finite-decimal unit sum (last weight is the residual
+for repeating fractions). All hourly market innovations, including the first
+sampled change, enter adverse block price stress. Per-position loss rounding is
+consistent with the liquidity engine; summary monetary means use Decimal half-up.
+Percentile NAV is the adverse lower-tail counterpart of loss percentile rank.
+Current source APR or the latest available history APR supplies new borrowing cost;
+there is no invented 12% fallback. Existing principal also incurs its contractual
+APR over the modeled horizon. Full-horizon financing is conservative, not execution
+accounting. Neither bond YTM nor equity expected return is realized cash income.
+
+Scenario-quantile reserve already incorporates uncertainty: net_drain_cents holds
+the selected scenario peak requirement and uncertainty_buffer_cents is zero.
+Operational buffer/floor is separate. Bootstrap weights are model probabilities,
+not measured real-world failure rates or guaranteed confidence coverage. Portfolio
+downside includes operational flows and hypothetical fees; market-only loss is a
+separate metric. No database, trading or frontend behavior is added by this audit.
+
+FINAL_AUDIT.md records release findings, limitations and standalone instructions;
+TESTING_REPORT.md records complete verification, and the two integration handoffs
+supersede conflicting older field examples for canonical consumers.

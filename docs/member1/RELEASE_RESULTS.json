@@ -1,0 +1,333 @@
+{
+  "dataset_sha256_before": "2e7c1d2e5b678e9975250211e7e0017022049c510e1dd90cd7f29e931837b0c5",
+  "dataset_sha256_after": "2e7c1d2e5b678e9975250211e7e0017022049c510e1dd90cd7f29e931837b0c5",
+  "row_count": 8760,
+  "source_field_count": 16,
+  "source_start": "2026-01-01T00:00:00",
+  "source_end": "2026-12-31T23:00:00",
+  "versions": {
+    "pydantic": "2.13.4",
+    "scikit-learn": "1.9.0"
+  },
+  "configuration": {
+    "train_ratio": "0.70",
+    "validation_ratio": "0.15",
+    "stride": 24,
+    "seed": 42,
+    "net_target": "deposits_minus_withdrawals",
+    "peak_metric": "hour-end cumulative drain, not intrahour payout failure",
+    "paths_may_overlap": true,
+    "training_rows": 6132,
+    "validation_end_exclusive": 7446,
+    "calibration_cutoff": "2026-11-07T05:00:00"
+  },
+  "evaluation": [
+    {
+      "model_version": "hourly-hist-gradient-boosting-v1",
+      "algorithm": "hist_gradient_boosting",
+      "baseline_model_version": "hourly-seasonal-naive-v1",
+      "train_cutoff": "2026-09-13T11:00:00",
+      "test_start": "2026-11-07T06:00:00",
+      "test_end": "2026-12-31T23:00:00",
+      "train_sample_count": 1270,
+      "test_sample_count": 55,
+      "horizon_hours": 1,
+      "mae_deposits_usd": "1611444.08",
+      "mae_withdrawals_usd": "1859903.56",
+      "mae_net_usd": "2137786.63",
+      "rmse_net_usd": "3057268.98",
+      "cumulative_net_mae_usd": "2137786.63",
+      "peak_shortfall_mae_usd": "339668.44",
+      "baseline_mae_net_usd": "2511495.05",
+      "baseline_rmse_net_usd": "3948590.31",
+      "baseline_cumulative_net_mae_usd": "2511495.05",
+      "baseline_peak_shortfall_mae_usd": "661324.02",
+      "net_mae_improvement_pct": "14.88",
+      "net_rmse_improvement_pct": "22.57",
+      "cumulative_net_mae_improvement_pct": "14.88",
+      "peak_shortfall_mae_improvement_pct": "48.64",
+      "notes": [
+        "Chronological split: train=70%, val=15%, test=15%",
+        "Out-of-sample evaluation on 55 paths of 1 hours each",
+        "Net metrics target deposits minus withdrawals, not independent source net_flow_usd.",
+        "Peak-shortfall metric uses hour-end netting; liquidity reserve separately debits withdrawals before deposits."
+      ],
+      "net_flow_target": "deposits_minus_withdrawals"
+    },
+    {
+      "model_version": "hourly-hist-gradient-boosting-v1",
+      "algorithm": "hist_gradient_boosting",
+      "baseline_model_version": "hourly-seasonal-naive-v1",
+      "train_cutoff": "2026-09-13T11:00:00",
+      "test_start": "2026-11-07T06:00:00",
+      "test_end": "2026-12-31T23:00:00",
+      "train_sample_count": 1270,
+      "test_sample_count": 55,
+      "horizon_hours": 3,
+      "mae_deposits_usd": "1795659.74",
+      "mae_withdrawals_usd": "3096266.65",
+      "mae_net_usd": "2943170.44",
+      "rmse_net_usd": "3649718.36",
+      "cumulative_net_mae_usd": "8583333.3",
+      "peak_shortfall_mae_usd": "729130.14",
+      "baseline_mae_net_usd": "2679713.37",
+      "baseline_rmse_net_usd": "4434040.59",
+      "baseline_cumulative_net_mae_usd": "7149693.91",
+      "baseline_peak_shortfall_mae_usd": "1431681.88",
+      "net_mae_improvement_pct": "-9.83",
+      "net_rmse_improvement_pct": "17.69",
+      "cumulative_net_mae_improvement_pct": "-20.05",
+      "peak_shortfall_mae_improvement_pct": "49.07",
+      "notes": [
+        "Chronological split: train=70%, val=15%, test=15%",
+        "Out-of-sample evaluation on 55 paths of 3 hours each",
+        "Net metrics target deposits minus withdrawals, not independent source net_flow_usd.",
+        "Peak-shortfall metric uses hour-end netting; liquidity reserve separately debits withdrawals before deposits."
+      ],
+      "net_flow_target": "deposits_minus_withdrawals"
+    },
+    {
+      "model_version": "hourly-hist-gradient-boosting-v1",
+      "algorithm": "hist_gradient_boosting",
+      "baseline_model_version": "hourly-seasonal-naive-v1",
+      "train_cutoff": "2026-09-13T11:00:00",
+      "test_start": "2026-11-07T06:00:00",
+      "test_end": "2026-12-31T23:00:00",
+      "train_sample_count": 1270,
+      "test_sample_count": 55,
+      "horizon_hours": 6,
+      "mae_deposits_usd": "1865991.21",
+      "mae_withdrawals_usd": "3496859.72",
+      "mae_net_usd": "3238219.17",
+      "rmse_net_usd": "4523191.79",
+      "cumulative_net_mae_usd": "12806169.25",
+      "peak_shortfall_mae_usd": "3340400.46",
+      "baseline_mae_net_usd": "3330653.79",
+      "baseline_rmse_net_usd": "5700581.32",
+      "baseline_cumulative_net_mae_usd": "17359989.54",
+      "baseline_peak_shortfall_mae_usd": "5574174.23",
+      "net_mae_improvement_pct": "2.78",
+      "net_rmse_improvement_pct": "20.65",
+      "cumulative_net_mae_improvement_pct": "26.23",
+      "peak_shortfall_mae_improvement_pct": "40.07",
+      "notes": [
+        "Chronological split: train=70%, val=15%, test=15%",
+        "Out-of-sample evaluation on 55 paths of 6 hours each",
+        "Net metrics target deposits minus withdrawals, not independent source net_flow_usd.",
+        "Peak-shortfall metric uses hour-end netting; liquidity reserve separately debits withdrawals before deposits."
+      ],
+      "net_flow_target": "deposits_minus_withdrawals"
+    },
+    {
+      "model_version": "hourly-hist-gradient-boosting-v1",
+      "algorithm": "hist_gradient_boosting",
+      "baseline_model_version": "hourly-seasonal-naive-v1",
+      "train_cutoff": "2026-09-13T11:00:00",
+      "test_start": "2026-11-07T06:00:00",
+      "test_end": "2026-12-31T23:00:00",
+      "train_sample_count": 1270,
+      "test_sample_count": 55,
+      "horizon_hours": 15,
+      "mae_deposits_usd": "2047208.83",
+      "mae_withdrawals_usd": "3171231.24",
+      "mae_net_usd": "2398612.28",
+      "rmse_net_usd": "3617603.77",
+      "cumulative_net_mae_usd": "17607962.32",
+      "peak_shortfall_mae_usd": "9558303.88",
+      "baseline_mae_net_usd": "2894189.67",
+      "baseline_rmse_net_usd": "4789682.81",
+      "baseline_cumulative_net_mae_usd": "32331320.86",
+      "baseline_peak_shortfall_mae_usd": "20726228.54",
+      "net_mae_improvement_pct": "17.12",
+      "net_rmse_improvement_pct": "24.47",
+      "cumulative_net_mae_improvement_pct": "45.54",
+      "peak_shortfall_mae_improvement_pct": "53.88",
+      "notes": [
+        "Chronological split: train=70%, val=15%, test=15%",
+        "Out-of-sample evaluation on 55 paths of 15 hours each",
+        "Net metrics target deposits minus withdrawals, not independent source net_flow_usd.",
+        "Peak-shortfall metric uses hour-end netting; liquidity reserve separately debits withdrawals before deposits."
+      ],
+      "net_flow_target": "deposits_minus_withdrawals"
+    },
+    {
+      "model_version": "hourly-hist-gradient-boosting-v1",
+      "algorithm": "hist_gradient_boosting",
+      "baseline_model_version": "hourly-seasonal-naive-v1",
+      "train_cutoff": "2026-09-13T11:00:00",
+      "test_start": "2026-11-07T06:00:00",
+      "test_end": "2026-12-31T23:00:00",
+      "train_sample_count": 1270,
+      "test_sample_count": 54,
+      "horizon_hours": 24,
+      "mae_deposits_usd": "1905121.61",
+      "mae_withdrawals_usd": "2839502.93",
+      "mae_net_usd": "1982263.63",
+      "rmse_net_usd": "3105491.35",
+      "cumulative_net_mae_usd": "19522952.59",
+      "peak_shortfall_mae_usd": "11894570.57",
+      "baseline_mae_net_usd": "2267089.05",
+      "baseline_rmse_net_usd": "3949205.06",
+      "baseline_cumulative_net_mae_usd": "32944237.59",
+      "baseline_peak_shortfall_mae_usd": "22510780.0",
+      "net_mae_improvement_pct": "12.56",
+      "net_rmse_improvement_pct": "21.36",
+      "cumulative_net_mae_improvement_pct": "40.74",
+      "peak_shortfall_mae_improvement_pct": "47.16",
+      "notes": [
+        "Chronological split: train=70%, val=15%, test=15%",
+        "Out-of-sample evaluation on 54 paths of 24 hours each",
+        "Net metrics target deposits minus withdrawals, not independent source net_flow_usd.",
+        "Peak-shortfall metric uses hour-end netting; liquidity reserve separately debits withdrawals before deposits."
+      ],
+      "net_flow_target": "deposits_minus_withdrawals"
+    }
+  ],
+  "demo_passed": true,
+  "demo_summary": "================================================================================\nRESERVE JUGGLER \u2014 MEMBER 1 FOUR-TIER QUANTITATIVE ENGINE DEMO (RJ-M1-13)\n================================================================================\nExecution Time: 2026-10-18T01:43:12.894167\nOrganizer Dataset Source: C:\\Users\\Arvind Shekhawat\\Downloads\\treasury_4tier_dataset.csv\nAvailable Native Hourly Observations: 8760\nAll 4 Scenarios Passed: True\n--------------------------------------------------------------------------------\nSCENARIO 1: ALLOWED REPO SWEEP AT 17:00\nDecision Time: 2026-01-02 17:00:00 (Repo Window Open: True)\nStarting Cash: $400,000,000.00\nRequired Liquid Reserve: $146,607,437.64\nSurplus Cash Swept into Tier 1 Overnight Repo: $253,392,562.36\nRepo APY: 4.272% | Expected Income: $18,535.83\nExecution: 2026-01-02 17:00:00 -> Scheduled Maturity: 2026-01-03 08:00:00 (15 hours)\nStatus: Feasible=True, Action=INVEST, Orders=1\n--------------------------------------------------------------------------------\nSCENARIO 2: REPO ENTRY UNAVAILABLE AT 10:00\nDecision Time: 2026-01-03 10:00:00 (Repo Window Open: False)\nStarting Cash: $250,000,000.00\nRequired Reserve: $234,070,830.05\nRepo Investment Eligibility: STRICTLY REJECTED (Window only opens at 17:00 daily)\nAction: HOLD | Repo Orders Recommended: 0\nOutcome: Capital safely held in operational cash; no invalid overnight sweep proposed.\n--------------------------------------------------------------------------------\nSCENARIO 3: STRESSED LIQUIDITY SHORTAGE\nDecision Time: 2026-01-02 17:00:00\nImmediate Cash Balance: $5,000,000.00\nMandatory Required Reserve: $146,607,437.64\nProjected Net Cash Drain: $145,607,437.64\nLiquidity Deficit / Funding Gap: $141,607,437.64\nEngine Summary Action: WARNING (Canonical Action: LIQUIDITY_WARNING)\nFeasible: False | Recommended Orders: 0\nSafety Guarantee: No speculative investments proposed during severe liquidity deficit.\n--------------------------------------------------------------------------------\nSCENARIO 4: PORTFOLIO MARKET DECLINE REVALUATION\nDecision Time: 2026-01-02 17:00:00\nInitial Net Portfolio Value: $69,934,960.00\nBond Shock: -2.0% ($99.473 -> $97.48354) | Value Drop: -$198,946.00\nEquity Shock: -10.0% ($4993.83 -> $4494.44700) | Value Drop: -$998,766.00\nRevalued Stressed Net Portfolio Value: $68,737,248.00\nTotal Direct Portfolio Wealth Loss: -$1,197,712.00\nStressed Liquidation Value (after 2% bond and 15% equity haircuts): $67,193,946.82\nEquity Return Discipline: Zero guaranteed equity yield awarded. Risk model strictly accounts for market drawdowns.\n--------------------------------------------------------------------------------\nDEMO SUITE COMPLETE \u2014 ALL CONTRACTS AND CONSTRAINTS SATISFIED.\n================================================================================",
+  "demo_scenarios": [
+    {
+      "id": "scenario_1_repo_sweep",
+      "summary_action": "INVEST",
+      "required_reserve_cents": 14660743764,
+      "estimated_income_cents": 1853583,
+      "targets_cents": [
+        14660743764,
+        25339256236,
+        0,
+        0
+      ],
+      "orders": [
+        {
+          "time_basis": "UNSPECIFIED",
+          "run_id": "00000000-0000-0000-0000-000000000001",
+          "source_type": "ORGANIZER_HISTORICAL",
+          "dataset_id": "treasury_4tier_dataset:sha256:2e7c1d2e5b678e9975250211e7e0017022049c510e1dd90cd7f29e931837b0c5",
+          "source_observation_timestamp": "2026-01-02T17:00:00",
+          "id": "f6ecd9e3-034e-5796-a5e4-ee8ec4bdafff",
+          "as_of": "2026-01-02T17:00:00",
+          "recommendation_only": true,
+          "action": "INVEST_REPO",
+          "tier": 1,
+          "position_id": null,
+          "amount_cents": 25339256236,
+          "quantity": null,
+          "estimated_cost_cents": 0,
+          "expected_proceeds_cents": null,
+          "reason": "Candidate INVEST_REPO: gross_cents=25339256236; immediate_cost_cents=0; net_proceeds_cents=None; recommendation only",
+          "execution_status": "NOT_EXECUTED",
+          "earliest_execution_at": "2026-01-02T17:00:00",
+          "expected_settlement_at": "2026-01-02T17:00:00",
+          "expected_maturity_at": "2026-01-03T08:00:00",
+          "expected_costs": {
+            "liquidation_fee_cents": 0,
+            "repo_break_fee_cents": 0,
+            "transaction_cost_cents": 0,
+            "funding_cost_cents": 0
+          }
+        }
+      ],
+      "calculations": {
+        "as_of": "2026-01-02T17:00:00",
+        "repo_sweep_window_open": true,
+        "quoted_repo_rate_apy": "4.272",
+        "starting_cash_usd": 400000000.0,
+        "required_reserve_usd": 146607437.64,
+        "net_drain_usd": 145607437.64,
+        "uncertainty_buffer_usd": 0.0,
+        "recommended_action": "INVEST",
+        "tier0_target_usd": 146607437.64,
+        "tier1_target_usd": 253392562.36,
+        "orders": [
+          {
+            "action": "INVEST_REPO",
+            "amount_usd": 253392562.36,
+            "execution": "2026-01-02T17:00:00",
+            "maturity": "2026-01-03T08:00:00"
+          }
+        ],
+        "estimated_income_usd": 18535.83
+      }
+    },
+    {
+      "id": "scenario_2_repo_unavailable",
+      "summary_action": "HOLD",
+      "required_reserve_cents": 23407083005,
+      "estimated_income_cents": 0,
+      "targets_cents": [
+        25000000000,
+        0,
+        0,
+        0
+      ],
+      "orders": [],
+      "calculations": {
+        "as_of": "2026-01-03T10:00:00",
+        "repo_sweep_window_open": false,
+        "hour_of_day": 10,
+        "starting_cash_usd": 250000000.0,
+        "required_reserve_usd": 234070830.05,
+        "tier0_target_usd": 250000000.0,
+        "tier1_target_usd": 0.0,
+        "recommended_action": "HOLD",
+        "reason": "HOLD: objective_cents=0.0; cash_cents=25000000000; reserve_cents=23407083005; stress_loss_cents=0; highest scoring feasible generated plan"
+      }
+    },
+    {
+      "id": "scenario_3_liquidity_shortage",
+      "summary_action": "WARNING",
+      "required_reserve_cents": 14660743764,
+      "estimated_income_cents": 0,
+      "targets_cents": [
+        500000000,
+        0,
+        0,
+        0
+      ],
+      "orders": [],
+      "calculations": {
+        "as_of": "2026-01-02T17:00:00",
+        "starting_cash_usd": 5000000.0,
+        "required_reserve_usd": 146607437.64,
+        "funding_gap_usd": 141607437.64,
+        "net_drain_usd": 145607437.64,
+        "action": "WARNING",
+        "feasible": false,
+        "reason": "WARNING: objective_cents=None; cash_cents=500000000; reserve_cents=14660743764; stress_loss_cents=0; no generated plan satisfies the constraints"
+      }
+    },
+    {
+      "id": "scenario_4_market_decline",
+      "summary_action": "HOLD",
+      "required_reserve_cents": 0,
+      "estimated_income_cents": 0,
+      "targets_cents": [
+        5000000000,
+        0,
+        974835400,
+        898889400
+      ],
+      "orders": [],
+      "calculations": {
+        "baseline_bond_price_index": "99.473",
+        "stressed_bond_price_index": "97.48354",
+        "bond_price_change_pct": "-2.0%",
+        "baseline_bond_market_value_usd": 9947300.0,
+        "stressed_bond_market_value_usd": 9748354.0,
+        "bond_market_loss_usd": 198946.0,
+        "baseline_equity_index_price": "4993.83",
+        "stressed_equity_index_price": "4494.44700",
+        "equity_price_change_pct": "-10.0%",
+        "baseline_equity_market_value_usd": 9987660.0,
+        "stressed_equity_market_value_usd": 8988894.0,
+        "equity_market_loss_usd": 998766.0,
+        "total_portfolio_loss_usd": 1197712.0,
+        "baseline_portfolio_nav_usd": 69934960.0,
+        "stressed_portfolio_nav_usd": 68737248.0,
+        "baseline_liquidatable_proceeds_usd": 68237865.0,
+        "stressed_liquidatable_proceeds_usd": 67193946.82,
+        "haircut_liquidation_loss_usd": 1043918.18
+      }
+    }
+  ]
+}

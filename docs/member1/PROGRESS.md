@@ -8,6 +8,35 @@
 
 ## Task Log
 
+### [RJ-M1-14] Final quantitative engine audit
+- **Status**: COMPLETED ? Member 1 release audit; integration limitations remain explicit.
+- **Material fixes**: Monte Carlo asset conservation/endpoint cash, repo claim removal,
+  borrowing cash/liability symmetry and financing, exact scenario weights, first-hour
+  market innovations and Decimal summary rounding; chronological ML artifact cutoff
+  guards; hourly seasonal target alignment/gap rejection; demo YTM assumption and
+  unpaid financing liabilities. Legacy functionality and history preserved.
+- **Tests**: Original full suite 416 passed (36.44s); final full suite **428 passed
+  (36.23s)**; targeted forecasting/risk/demo suite 73 passed; explicit final cutoff
+  and liability regressions 2 passed. `git diff --check` passed.
+- **Measured evaluation**: Full 8,760-row source, chronological 70/15/15 split,
+  HistGradientBoosting seed 42, stride 24. Net MAE improvement vs seasonal naive:
+  1h +14.88%, 3h -9.83%, 6h +2.78%, 15h +17.12%, 24h +12.56%.
+  Metrics target deposits-minus-withdrawals; no source-net/strategy-profit claim.
+- **Demo**: Legacy and four-tier standalone pipelines completed; all four new
+  scenarios pass. Corrected 17:00 example reserves $146,607,437.64 and recommends
+  $253,392,562.36 repo principal / $18,535.83 estimated interest; NOT_EXECUTED.
+- **Artifacts**: Final ENGINE_CONTRACT, refreshed Member 2/3 handoffs, FINAL_AUDIT,
+  TESTING_REPORT, MODEL_EVALUATION_REPORT, RELEASE_RESULTS.json, actual demo stdout,
+  and reproducible run_release_validation.py.
+- **Integrity**: Official CSV remains 8,760 native hourly rows / 16 source fields;
+  SHA256 unchanged: 2e7c1d2e5b678e9975250211e7e0017022049c510e1dd90cd7f29e931837b0c5.
+- **Integration blockers**: Older four_tier and canonical portfolio families coexist;
+  canonical metadata source-net-only vs current derived-net forecasting requires
+  explicit handling. Row availability is unspecified. Member 2 execution adapter
+  and Member 3 wiring are not certified. See FINAL_AUDIT.md; no teammate files changed.
+- **Commit subject**: `test(engine): finalize four-tier quantitative validation`.
+- **Next**: STOP; await an explicitly assigned task.
+
 ### [RJ-M1-13] Official Four-Tier Engine Demo
 - **Status**: COMPLETED
 - **Scope**: Implemented standalone official four-tier demonstration pipeline

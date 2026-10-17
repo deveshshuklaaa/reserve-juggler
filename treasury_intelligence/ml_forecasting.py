@@ -7,7 +7,7 @@ Implements TASK RJ-M1-09:
 4. Multi-step forecast paths for 1, 3, 6, 15, and 24-hour horizons.
 5. Strict prevention of future realized observations during multi-step forecasting.
 6. Chronological train/validation/test splits (no shuffling, no future lookahead).
-7. Evaluation and comparison against rolling-mean and seasonal-naive baselines.
+7. Evaluation and comparison against the seasonal-naive baseline.
 8. Calculation of MAE, RMSE, and cumulative multi-hour forecast errors.
 9. Measurement of maximum cumulative liquidity-shortfall prediction errors.
 10. Explicit reporting of model version, training cutoff, test period, sample counts, and metrics.
@@ -131,6 +131,12 @@ def extract_ml_features_for_step(
     Calendar features for the target time are deterministic future astronomical clock values.
     Market quotes are the most recent observed quotes known at `as_of`.
     """
+    validate_hourly_forecast_inputs(history, as_of=as_of, horizon_hours=1)
+    if not isinstance(step_h, int) or isinstance(step_h, bool) or step_h <= 0:
+        raise ValueError("step_h must be a positive integer")
+    if start_at is not None and (start_at.tzinfo is not None or start_at.minute
+            or start_at.second or start_at.microsecond or start_at < as_of):
+        raise ValueError("start_at must be a naive hourly timestamp at or after as_of")
     if start_at is None:
         target_dt = as_of + timedelta(hours=step_h)
     else:
@@ -149,7 +155,7 @@ def extract_ml_features_for_step(
     n = len(history)
     if n == 0:
         return [float(step_h), float(target_hour), float(target_dow), target_is_weekend,
-                sin_target_hour, cos_target_hour, sin_target_day, cos_target_day] + [0.0] * 15
+                sin_target_hour, cos_target_hour, sin_target_day, cos_target_day] + [0.0] * 16
 
     extracted = [_extract_amounts(o) for o in history]
     d_usds = [x[0] for x in extracted]
@@ -161,7 +167,8 @@ def extract_ml_features_for_step(
     # Since step_h in [1, 24], (step_h - 24) is in [-23, 0], which is <= 0 (in the past <= as_of).
     # In the history array ending at index n - 1 (at as_of), that index is:
     # idx = (n - 1) + (step_h - 24) = n - 25 + step_h.
-    idx_sn = n - 25 + step_h
+    last_timestamp = _get_timestamp(history[-1])
+    idx_sn = n - 1 + int((target_dt - timedelta(hours=24) - last_timestamp) / timedelta(hours=1))
     if 0 <= idx_sn < n:
         sn_dep = d_usds[idx_sn]
         sn_wtd = w_usds[idx_sn]
@@ -170,7 +177,7 @@ def extract_ml_features_for_step(
         sn_wtd = w_usds[-1]
 
     # Weekly seasonal naive (168h prior to target time)
-    idx_w168 = n - 169 + step_h
+    idx_w168 = n - 1 + int((target_dt - timedelta(hours=168) - last_timestamp) / timedelta(hours=1))
     if 0 <= idx_w168 < n:
         sn_w168_dep = d_usds[idx_w168]
         sn_w168_wtd = w_usds[idx_w168]
@@ -277,6 +284,9 @@ class HourlyCashFlowMLModel:
         n = len(history)
         if n < 24:
             raise ValueError(f"insufficient history for ML training: {n} observations (need at least 24)")
+        validate_hourly_forecast_inputs(history, as_of=_get_timestamp(history[-1]), horizon_hours=1)
+        if stride <= 0 or not horizons or any(h <= 0 for h in horizons):
+            raise ValueError("stride and training horizons must be positive")
 
         X_train: list[list[float]] = []
         yd_train: list[float] = []
@@ -318,6 +328,9 @@ class HourlyCashFlowMLModel:
 
         # Calibrate residual uncertainty on validation split if supplied
         if validation_history and len(validation_history) >= 24:
+            validate_hourly_forecast_inputs(validation_history, as_of=_get_timestamp(validation_history[-1]), horizon_hours=1)
+            if _get_timestamp(validation_history[0]) <= self.training_cutoff:
+                raise ValueError("validation history must follow training history chronologically")
             combined_history = tuple(history) + tuple(validation_history)
             val_start_idx = len(history)
             val_n = len(combined_history)
@@ -348,6 +361,11 @@ class HourlyCashFlowMLModel:
         else:
             self.validation_residual_std_cents = 1000000
 
+        # Calibration residuals are learned data too: this cutoff controls when
+        # the complete fitted artifact may first be used in historical replay.
+        self.training_cutoff = (_get_timestamp(validation_history[-1])
+                                if validation_history and len(validation_history) >= 24 else timestamps[-1])
+
         return self
 
     def predict_path(
@@ -360,6 +378,9 @@ class HourlyCashFlowMLModel:
         """Predict non-negative deposits, withdrawals, and uncertainty buffer for horizon."""
         if not self.is_fitted:
             raise RuntimeError("cannot predict with an unfitted ML model; fit() or load() first")
+        validate_hourly_forecast_inputs(history, as_of=as_of, horizon_hours=horizon_hours)
+        if self.training_cutoff is None or self.training_cutoff > as_of:
+            raise ValueError("fitted model training/calibration cutoff exceeds decision as_of")
 
         if start_at is None:
             if history and getattr(history[-1], "timestamp", getattr(history[-1], "start_at", None)) == as_of:
@@ -520,7 +541,7 @@ def hourly_ml_forecast(
     metadata = ForecastRiskMetadata(
         model_version=model_version,
         generated_at=as_of,
-        training_data_through=last_ts,
+        training_data_through=ml_model.training_cutoff,
         granularity_hours=1,
         net_flow_target="deposits_minus_withdrawals",
         uncertainty_status="provisional_uncalibrated",
@@ -572,6 +593,7 @@ class HourlyModelEvaluationReport(FourTierContract):
     cumulative_net_mae_improvement_pct: ExactDecimal
     peak_shortfall_mae_improvement_pct: ExactDecimal
     notes: tuple[Name, ...] = ()
+    net_flow_target: Literal["deposits_minus_withdrawals"] = "deposits_minus_withdrawals"
 
 
 def evaluate_hourly_forecast_models(
@@ -593,6 +615,11 @@ def evaluate_hourly_forecast_models(
     n = len(history)
     if n < 72:
         raise ValueError(f"evaluation requires at least 72 observations, got {n}")
+    validate_hourly_forecast_inputs(history, as_of=_get_timestamp(history[-1]), horizon_hours=1)
+    if not (0 < train_ratio < 1 and 0 <= val_ratio < 1 and train_ratio + val_ratio < 1):
+        raise ValueError("chronological split ratios must leave nonempty training and test partitions")
+    if eval_stride <= 0 or not horizons or any(h <= 0 for h in horizons):
+        raise ValueError("evaluation stride and horizons must be positive")
 
     # Chronological partition
     train_end = int(n * train_ratio)
@@ -750,6 +777,8 @@ def evaluate_hourly_forecast_models(
                 notes=(
                     f"Chronological split: train={train_ratio:.0%}, val={val_ratio:.0%}, test={1.0 - train_ratio - val_ratio:.0%}",
                     f"Out-of-sample evaluation on {sample_count} paths of {H} hours each",
+                    "Net metrics target deposits minus withdrawals, not independent source net_flow_usd.",
+                    "Peak-shortfall metric uses hour-end netting; liquidity reserve separately debits withdrawals before deposits.",
                 ),
             )
             reports.append(report)

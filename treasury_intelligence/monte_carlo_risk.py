@@ -5,7 +5,7 @@ strictly causal historical block bootstrap sampling of forecast residuals and
 market innovations. Connects directly to canonical FourTierLiquidityRiskRequest.
 """
 from datetime import datetime, timedelta
-from decimal import Decimal, ROUND_CEILING, ROUND_FLOOR, localcontext
+from decimal import Decimal, ROUND_CEILING, ROUND_FLOOR, ROUND_HALF_UP, localcontext
 import math
 import random
 from typing import Annotated, Any, Literal, Sequence
@@ -46,7 +46,7 @@ from .portfolio import (
 )
 from .types import Contract
 
-MONTE_CARLO_RISK_MODEL_VERSION = "multi-asset-block-mc-v1"
+MONTE_CARLO_RISK_MODEL_VERSION = "multi-asset-block-mc-v1.1"
 
 
 class PercentileSummary(Contract):
@@ -185,10 +185,10 @@ def generate_multi_asset_scenarios(
             f"hourly observations prior to {as_of}, got {len(valid_history)}"
         )
 
-    # Validate history continuity and ordering
+    # Seasonal lags are hourly offsets, so missing hours cannot be skipped.
     for i in range(1, len(valid_history)):
-        if valid_history[i].timestamp <= valid_history[i - 1].timestamp:
-            raise ValueError("history observations must be strictly chronologically ordered")
+        if valid_history[i].timestamp - valid_history[i - 1].timestamp != timedelta(hours=1):
+            raise ValueError("history observations must be contiguous and chronologically ordered hourly rows")
 
     # Precompute historical 24h seasonal residuals for cash flows
     dep_residuals = []
@@ -210,6 +210,9 @@ def generate_multi_asset_scenarios(
 
     # Probability per scenario: exact Decimal
     prob = Decimal("1") / Decimal(scenario_count)
+    with localcontext() as ctx:
+        ctx.prec = 80
+        final_probability = Decimal(1) - prob * (scenario_count - 1)
 
     scenarios = []
     for i in range(scenario_count):
@@ -243,12 +246,12 @@ def generate_multi_asset_scenarios(
 
         # 2. Market stress over the block
         # Bond drawdown over block
-        bond_start = block[0].tier2_bond_price_index
+        bond_start = valid_history[start_idx - 1].tier2_bond_price_index
         bond_min = min(obs.tier2_bond_price_index for obs in block)
         bond_dd_pct = max(Decimal(0), (1 - bond_min / bond_start) * 100)
 
         # Equity drawdown over block
-        equity_start = block[0].tier3_stock_index_price
+        equity_start = valid_history[start_idx - 1].tier3_stock_index_price
         equity_min = min(obs.tier3_stock_index_price for obs in block)
         equity_dd_pct = max(Decimal(0), (1 - equity_min / equity_start) * 100)
 
@@ -264,7 +267,7 @@ def generate_multi_asset_scenarios(
         scenarios.append(
             LiquidityScenario(
                 scenario_id=scenario_id,
-                probability=prob,
+                probability=prob if i < scenario_count - 1 else final_probability,
                 forecast=tuple(sim_points),
                 market_stress=market_stress,
             )
@@ -324,6 +327,9 @@ def simulate_multi_asset_monte_carlo_risk(
         obligations=obligations,
         available_overdraft_credit_cents=available_overdraft_credit_cents,
         operational_buffer_cents=operational_buffer_cents,
+        modeled_overdraft_apr_pct=(portfolio.market_rates.overdraft_apr_pct if portfolio.market_rates
+            else next((o.emergency_overdraft_penalty_apr_pct for o in reversed(history)
+                       if o.timestamp <= portfolio.as_of), None)),
     )
     risk_result = calculate_four_tier_liquidity_risk(risk_request)
 
@@ -352,12 +358,9 @@ def simulate_multi_asset_monte_carlo_risk(
     scen_result_map = {sr.scenario_id: sr for sr in risk_result.scenarios}
 
     # APR for overdraft
-    apr = policy.max_overdraft_cents  # check policy or rates
     overdraft_apr = risk_request.modeled_overdraft_apr_pct
     if overdraft_apr is None and portfolio.market_rates is not None:
         overdraft_apr = portfolio.market_rates.overdraft_apr_pct
-    if overdraft_apr is None:
-        overdraft_apr = Decimal("12.0")  # fallback default APR
 
     end_time = nominal_forecast[planning_horizon_hours - 1].start_at + timedelta(hours=1)
     span = end_time - portfolio.as_of
@@ -372,19 +375,20 @@ def simulate_multi_asset_monte_carlo_risk(
 
         # Market losses per tier
         # Bond loss
-        bond_loss = _cost(bond_0, scenario.market_stress.bond_drawdown_pct)
+        sales = _liquidations(risk_request, scenario.market_stress)
+        bond_loss = sum(s.modeled_market_loss_cents for s in sales if s.tier == 2)
         bond_losses.append(bond_loss)
 
         # Equity loss
-        equity_loss = _cost(equity_0, scenario.market_stress.equity_drawdown_pct)
+        equity_loss = sum(s.modeled_market_loss_cents for s in sales if s.tier == 3)
         equity_losses.append(equity_loss)
 
         total_market_loss = bond_loss + equity_loss
         total_market_losses.append(total_market_loss)
 
         # Forced liquidations and costs
-        sales = _liquidations(risk_request, scenario.market_stress)
-        liq_cost = sum(s.liquidation_cost_cents for s in sales if s.permitted)
+        executed_sales = tuple(s for s in sales if s.permitted and s.available_at <= end_time)
+        liq_cost = sum(s.liquidation_cost_cents for s in executed_sales)
         liquidation_costs.append(liq_cost)
 
         # Overdraft draw and financing
@@ -396,16 +400,32 @@ def simulate_multi_asset_monte_carlo_risk(
 
         od_cost = 0
         if draw > 0:
+            if overdraft_apr is None:
+                raise ValueError("overdraft APR is required to model positive borrowing costs")
             od_cost = int((Decimal(draw) * overdraft_apr * micros / (100 * 365 * 86400 * 1_000_000)).to_integral_value(rounding=ROUND_CEILING))
+        # Existing principal also incurs financing; previously booked costs remain
+        # in opening liabilities and are not charged twice or compounded.
+        od_cost += sum(int((Decimal(o.outstanding_principal_cents) * o.apr_pct * micros
+                           / (100 * 365 * 86400 * 1_000_000)).to_integral_value(rounding=ROUND_CEILING))
+                       for o in portfolio.overdrafts)
         overdraft_costs.append(od_cost)
 
         # Revalue ending portfolio state:
         # Net cash change: cash_0 minus cumulative cash flow demand
         # Ending cash after operational flows and liquidations
-        sim_ending_cash = cash_0 - sr.peak_cash_requirement_cents + sum(s.net_proceeds_cents for s in sales if s.permitted)
-        sim_repo_value = repo_0  # repo claim preserved (or matured into cash)
+        _, ending_path = _events(risk_request, scenario.forecast, liquidations=executed_sales)
+        sim_ending_cash = ending_path[-1].projected_cash_cents + draw
+        # A settled claim is removed when its cash receipt is credited. Full
+        # hypothetical market sales likewise remove the corresponding asset.
+        redeemed = {s.position_id for s in executed_sales if s.tier == 1}
+        settled = {s.position_id for s in repo_settlements
+                   if not s.already_in_cash and s.available_at <= end_time}
+        sim_repo_value = repo_0 - sum(r.market_value_cents for r in portfolio.repo_positions
+                                     if r.id in redeemed | settled)
         sim_bond_value = max(0, bond_0 - bond_loss)
         sim_equity_value = max(0, equity_0 - equity_loss)
+        sim_bond_value -= sum(s.stressed_value_cents for s in executed_sales if s.tier == 2)
+        sim_equity_value -= sum(s.stressed_value_cents for s in executed_sales if s.tier == 3)
         sim_liab = liab_0 + draw + od_cost
 
         sim_npv = sim_ending_cash + sim_repo_value + sim_bond_value + sim_equity_value - sim_liab
@@ -432,7 +452,7 @@ def simulate_multi_asset_monte_carlo_risk(
     def make_percentile_summary(pct: float) -> PercentileSummary:
         pct_dec = Decimal(str(int(pct * 100)))
         # For portfolio value: quantile from worst (1 - pct) so that higher stress shows lower value
-        val_idx = max(0, min(n - 1, math.floor((1 - pct) * n)))
+        val_idx = max(0, min(n - 1, n - math.ceil(pct * n)))
         return PercentileSummary(
             percentile=pct_dec,
             peak_requirement_cents=_quantile_val(peak_reqs_sorted, pct),
@@ -455,18 +475,18 @@ def simulate_multi_asset_monte_carlo_risk(
     # Market risk summary
     market_risk = MarketRiskSummary(
         tier2_bond_initial_value_cents=bond_0,
-        tier2_bond_mean_loss_cents=int(sum(bond_losses) / n),
+        tier2_bond_mean_loss_cents=int((Decimal(sum(bond_losses)) / n).to_integral_value(rounding=ROUND_HALF_UP)),
         tier2_bond_loss_p90_cents=_quantile_val(bond_losses_sorted, 0.90),
         tier2_bond_loss_p95_cents=_quantile_val(bond_losses_sorted, 0.95),
         tier2_bond_loss_p99_cents=_quantile_val(bond_losses_sorted, 0.99),
         tier2_bond_max_loss_cents=bond_losses_sorted[-1],
         tier3_equity_initial_value_cents=equity_0,
-        tier3_equity_mean_loss_cents=int(sum(equity_losses) / n),
+        tier3_equity_mean_loss_cents=int((Decimal(sum(equity_losses)) / n).to_integral_value(rounding=ROUND_HALF_UP)),
         tier3_equity_loss_p90_cents=_quantile_val(equity_losses_sorted, 0.90),
         tier3_equity_loss_p95_cents=_quantile_val(equity_losses_sorted, 0.95),
         tier3_equity_loss_p99_cents=_quantile_val(equity_losses_sorted, 0.99),
         tier3_equity_max_loss_cents=equity_losses_sorted[-1],
-        total_market_loss_mean_cents=int(sum(total_market_losses) / n),
+        total_market_loss_mean_cents=int((Decimal(sum(total_market_losses)) / n).to_integral_value(rounding=ROUND_HALF_UP)),
         total_market_loss_p95_cents=_quantile_val(total_market_losses_sorted, 0.95),
         total_market_loss_max_cents=total_market_losses_sorted[-1],
     )
@@ -478,13 +498,13 @@ def simulate_multi_asset_monte_carlo_risk(
     shortfall_prob_after = (Decimal(shortfall_count_after) / Decimal(n)).quantize(Decimal("0.0001"))
 
     shortfall_dist = ShortfallDistributionSummary(
-        mean_shortfall_before_liquidation_cents=int(sum(shortfalls_before) / n),
+        mean_shortfall_before_liquidation_cents=int((Decimal(sum(shortfalls_before)) / n).to_integral_value(rounding=ROUND_HALF_UP)),
         p90_shortfall_before_liquidation_cents=_quantile_val(shortfalls_before_sorted, 0.90),
         p95_shortfall_before_liquidation_cents=_quantile_val(shortfalls_before_sorted, 0.95),
         p99_shortfall_before_liquidation_cents=_quantile_val(shortfalls_before_sorted, 0.99),
         max_shortfall_before_liquidation_cents=shortfalls_before_sorted[-1],
         shortfall_probability_before_liquidation=shortfall_prob_before,
-        mean_shortfall_after_liquidation_cents=int(sum(shortfalls_after) / n),
+        mean_shortfall_after_liquidation_cents=int((Decimal(sum(shortfalls_after)) / n).to_integral_value(rounding=ROUND_HALF_UP)),
         p95_shortfall_after_liquidation_cents=_quantile_val(shortfalls_after_sorted, 0.95),
         max_shortfall_after_liquidation_cents=shortfalls_after_sorted[-1],
         shortfall_probability_after_liquidation=shortfall_prob_after,
@@ -495,10 +515,10 @@ def simulate_multi_asset_monte_carlo_risk(
     # Portfolio downside risk summary
     portfolio_downside = PortfolioDownsideRiskSummary(
         initial_net_portfolio_value_cents=init_npv,
-        expected_net_portfolio_value_cents=int(sum(portfolio_values) / n),
-        p90_portfolio_value_cents=portfolio_values_sorted[max(0, math.floor(0.10 * n))],
-        p95_portfolio_value_cents=portfolio_values_sorted[max(0, math.floor(0.05 * n))],
-        p99_portfolio_value_cents=portfolio_values_sorted[max(0, math.floor(0.01 * n))],
+        expected_net_portfolio_value_cents=int((Decimal(sum(portfolio_values)) / n).to_integral_value(rounding=ROUND_HALF_UP)),
+        p90_portfolio_value_cents=portfolio_values_sorted[max(0, n - math.ceil(0.90 * n))],
+        p95_portfolio_value_cents=portfolio_values_sorted[max(0, n - math.ceil(0.95 * n))],
+        p99_portfolio_value_cents=portfolio_values_sorted[max(0, n - math.ceil(0.99 * n))],
         worst_case_portfolio_value_cents=portfolio_values_sorted[0],
         p90_downside_loss_cents=_quantile_val(downside_losses_sorted, 0.90),
         p95_downside_loss_cents=_quantile_val(downside_losses_sorted, 0.95),
@@ -511,6 +531,7 @@ def simulate_multi_asset_monte_carlo_risk(
         "Cash flows modeled using 24h seasonal forecast residual innovations; negative flows clipped to zero.",
         "Market stress captures contemporaneous bond price index and equity index drawdowns within each block.",
         "Scenario probabilities represent empirical relative frequencies, not guaranteed real-world confidence intervals.",
+        "NAV is a hypothetical full permitted-liquidation stress endpoint, not a trade recommendation or realized account; negative cash denotes unfunded obligations.",
         "Required reserve derived directly from scenario quantile peak cash requirement under FourTierReserveResult.",
     )
 

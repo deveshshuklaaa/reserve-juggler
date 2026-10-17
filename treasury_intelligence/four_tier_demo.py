@@ -205,7 +205,7 @@ def build_demo_portfolio_state(
     t2_value = sum(b.current_market_value_cents or 0 for b in bond_positions)
     t3_value = sum(q.current_market_value_cents or 0 for q in equity_positions)
     total_val = cash_cents + t1_value + t2_value + t3_value
-    liabilities = sum(o.outstanding_principal_cents for o in overdrafts)
+    liabilities = sum(o.outstanding_principal_cents + o.outstanding_financing_cost_cents for o in overdrafts)
     net_val = total_val - liabilities
 
     immediately_avail = cash_cents
@@ -283,7 +283,7 @@ def create_demo_reward_model(
             ),
             AssetRewardAssumption(
                 tier=2,
-                expected_income_pct=obs.tier2_bond_yield_pct,
+                expected_income_pct=Decimal("0"),  # Quoted YTM is not a contractual cash coupon.
                 expected_price_return_pct=Decimal("0"),
                 stress_loss_pct=bond_stress_loss_pct,
                 forced_liquidation_probability=Decimal("0"),

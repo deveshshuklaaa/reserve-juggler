@@ -146,3 +146,21 @@ def test_demo_deterministic_reproducibility(observations):
     assert res_a == res_b
     assert res_a.tier1_repo_target_cents == res_b.tier1_repo_target_cents
     assert res_a.estimated_income_cents == res_b.estimated_income_cents
+
+
+def test_demo_bond_quote_is_not_horizon_cash_income(observations):
+    from treasury_intelligence.four_tier_demo import create_demo_reward_model
+    rewards = create_demo_reward_model(observations[41], holding_hours=15, risk_aversion=Decimal(1))
+    assert next(a for a in rewards.assets if a.tier == 2).expected_income_pct == 0
+
+
+def test_demo_builder_includes_unpaid_financing_liability(observations):
+    from treasury_intelligence.portfolio import OverdraftLiability
+    from treasury_intelligence.four_tier_demo import build_demo_portfolio_state
+    raw = json.loads((Path(__file__).parent / 'fixtures' / 'canonical_liquidity_portfolio.json').read_text())['overdrafts'][0]
+    raw.update(source_observation_timestamp=observations[41].timestamp.isoformat(),
+               paid_financing_cost_cents=10, outstanding_financing_cost_cents=10)
+    state = build_demo_portfolio_state(observations[41], cash_cents=50_000,
+                                     overdrafts=(OverdraftLiability.model_validate(raw),))
+    assert state.valuation.liabilities_cents == 10_010
+    assert state.valuation.net_portfolio_value_cents == 39_990

@@ -1,0 +1,233 @@
+
+================================================================================
+      RESERVE JUGGLER -- STANDALONE QUANTITATIVE TREASURY ENGINE DEMO
+      Member 1 Pure Python Pipeline: Historical Cash Flows -> Decision
+================================================================================
+Timestamp (as_of UTC): 2026-10-17T12:00:00+00:00
+Uncertainty Governance: PROVISIONAL UNCALIBRATED POLICY
+  Note: Forecast uncertainty is policy-configured and marked provisional.
+  Full empirical calibration will be established in future model evaluations.
+================================================================================
+
+[SCENARIO 1: NORMAL OPERATION]
+--------------------------------------------------------------------------------
+  * Checking Balance     : $520,000.00
+  * Forecast Model       : baseline-v1 (4 path intervals)
+  * Forecast Net Flows   : Inflow $800,000.00 | Outflow $600,000.00
+  * Peak Shortfall       : $140,000.00
+  * Uncertainty Buffer   : $225,439.05 [PROVISIONAL]
+  * Operational Buffer   : $150,000.00
+  * Required Reserve     : $515,439.05
+  >>> RECOMMENDATION     : HOLD
+  * Structured Rationale : checking_cents=52000000; peak_shortfall_cents=14000000; uncertainty_buffer_cents=22543905; operational_buffer_cents=15000000; required_reserve_cents=51543905; surplus_cents=456095; within tolerance_bps=500.
+
+[SCENARIO 2: VALID SAFE SWEEP]
+--------------------------------------------------------------------------------
+  * Checking Balance     : $3,500,000.00
+  * Forecast Model       : baseline-v1 (4 path intervals)
+  * Forecast Net Flows   : Inflow $800,000.00 | Outflow $600,000.00
+  * Peak Shortfall       : $140,000.00
+  * Uncertainty Buffer   : $225,439.05 [PROVISIONAL]
+  * Operational Buffer   : $200,000.00
+  * Required Reserve     : $565,439.05
+  >>> RECOMMENDATION     : SWEEP
+  >>> ALLOCATION AMOUNT  : $2,800,000.00 (Target Vault: treasury_repo_liquid)
+  * Structured Rationale : checking_cents=350000000; peak_shortfall_cents=14000000; uncertainty_buffer_cents=22543905; operational_buffer_cents=20000000; required_reserve_cents=56543905; surplus_cents=293456095; sweep_cap_cents=280000000; candidate_cents=280000000; holding_minutes=1440; expected_yield_cents=40274; penalty_cents=0; transaction_cost_cents=5000; opportunity_cost_cents=0; expected_net_benefit_cents=35274; checking_after_cents=69995000; recommendation only; expected returns are not realized.
+
+[SCENARIO 3: HIGH-WITHDRAWAL STRESS]
+--------------------------------------------------------------------------------
+  * Checking Balance     : $150,000.00
+  * Forecast Model       : stress-scenario-v1 (2 path intervals)
+  * Forecast Net Flows   : Inflow $150,000.00 | Outflow $1,000,000.00
+  * Peak Shortfall       : $950,000.00
+  * Uncertainty Buffer   : $352,800.00 [PROVISIONAL]
+  * Operational Buffer   : $200,000.00
+  * Required Reserve     : $1,502,800.00
+  >>> RECOMMENDATION     : WITHDRAW
+  >>> ALLOCATION AMOUNT  : $1,352,850.00 (Target Vault: treasury_repo_liquid)
+  * Structured Rationale : checking_cents=15000000; peak_shortfall_cents=95000000; uncertainty_buffer_cents=35280000; operational_buffer_cents=20000000; required_reserve_cents=150280000; deficit_cents=135280000; gross_redemption_cents=135285000; penalty_cents=0; transaction_cost_cents=5000; net_proceeds_cents=135280000; checking_after_cents=150280000; immediate liquidity takes precedence over yield.
+
+[SCENARIO 4: LOCKED VAULT INSUFFICIENT LIQUIDITY]
+--------------------------------------------------------------------------------
+  * Checking Balance     : $100,000.00
+  * Forecast Model       : emergency-drain-v1 (1 path intervals)
+  * Forecast Net Flows   : Inflow $50,000.00 | Outflow $800,000.00
+  * Peak Shortfall       : $800,000.00
+  * Uncertainty Buffer   : $294,000.00 [PROVISIONAL]
+  * Operational Buffer   : $250,000.00
+  * Required Reserve     : $1,344,000.00
+  >>> RECOMMENDATION     : LIQUIDITY_WARNING
+  * Structured Rationale : checking_cents=10000000; peak_shortfall_cents=80000000; uncertainty_buffer_cents=29400000; operational_buffer_cents=25000000; required_reserve_cents=134400000; deficit_cents=124400000; accessible_net_cents=0; unfunded_cents=124400000; no single immediately redeemable vault covers deficit; multi-vault funding requires a separate plan.
+
+[SCENARIO 5: SUCCESSFUL HOLD]
+--------------------------------------------------------------------------------
+  * Checking Balance     : $1,020,000.00
+  * Forecast Model       : balanced-v1 (1 path intervals)
+  * Forecast Net Flows   : Inflow $500,000.00 | Outflow $800,000.00
+  * Peak Shortfall       : $800,000.00
+  * Uncertainty Buffer   : $0.00 [PROVISIONAL]
+  * Operational Buffer   : $200,000.00
+  * Required Reserve     : $1,000,000.00
+  >>> RECOMMENDATION     : HOLD
+  * Structured Rationale : checking_cents=102000000; peak_shortfall_cents=80000000; uncertainty_buffer_cents=0; operational_buffer_cents=20000000; required_reserve_cents=100000000; surplus_cents=2000000; within tolerance_bps=500.
+
+================================================================================
+6. JSON SERIALIZATION DEMONSTRATION
+================================================================================
+Sample Output (Scenario 2: Valid Safe Sweep JSON payload):
+
+{
+  "scenario_name": "Scenario 2: Valid Safe Sweep",
+  "context": {
+    "as_of": "2026-10-17T12:00:00Z",
+    "currency": "USD",
+    "checking_balance_cents": 350000000,
+    "vaults": [
+      {
+        "vault_id": "treasury_repo_liquid",
+        "balance_cents": 100000000,
+        "withdrawable_cents": 100000000,
+        "annual_yield_bps": 525,
+        "withdrawal_delay_minutes": 0
+      }
+    ]
+  },
+  "forecast": {
+    "generated_at": "2026-10-17T12:00:00Z",
+    "model_version": "baseline-v1",
+    "points": [
+      {
+        "start_at": "2026-10-17T12:00:00Z",
+        "end_at": "2026-10-17T12:15:00Z",
+        "inflow_cents": 15000000,
+        "outflow_cents": 12000000,
+        "uncertainty_cents": 2875498
+      },
+      {
+        "start_at": "2026-10-17T12:15:00Z",
+        "end_at": "2026-10-17T12:30:00Z",
+        "inflow_cents": 22000000,
+        "outflow_cents": 17000000,
+        "uncertainty_cents": 2875498
+      },
+      {
+        "start_at": "2026-10-17T12:30:00Z",
+        "end_at": "2026-10-17T12:45:00Z",
+        "inflow_cents": 18000000,
+        "outflow_cents": 13000000,
+        "uncertainty_cents": 2875498
+      },
+      {
+        "start_at": "2026-10-17T12:45:00Z",
+        "end_at": "2026-10-17T13:00:00Z",
+        "inflow_cents": 25000000,
+        "outflow_cents": 18000000,
+        "uncertainty_cents": 2875498
+      }
+    ]
+  },
+  "policy": {
+    "base_buffer_cents": 20000000,
+    "uncertainty_multiplier_bps": 19600,
+    "tolerance_bps": 500,
+    "min_transfer_cents": 5000000,
+    "max_allocation_bps": 8000,
+    "sweep_window_open": true,
+    "sweep_cap_cents": null,
+    "holding_minutes": 1440,
+    "vault_terms": [
+      {
+        "vault_id": "treasury_repo_liquid",
+        "maturity_at": null,
+        "early_redemption_allowed": true,
+        "early_redemption_penalty_bps": 0,
+        "early_redemption_fixed_fee_cents": 0,
+        "sweep_eligible": true,
+        "transaction_cost_cents": 5000,
+        "opportunity_cost_cents": 0
+      }
+    ]
+  },
+  "reserve": {
+    "as_of": "2026-10-17T12:00:00Z",
+    "net_drain_cents": 14000000,
+    "uncertainty_buffer_cents": 22543905,
+    "base_buffer_cents": 20000000,
+    "required_reserve_cents": 56543905
+  },
+  "decision": {
+    "as_of": "2026-10-17T12:00:00Z",
+    "recommendation_only": true,
+    "action": "SWEEP",
+    "amount_cents": 280000000,
+    "vault_id": "treasury_repo_liquid",
+    "reserve": {
+      "as_of": "2026-10-17T12:00:00Z",
+      "net_drain_cents": 14000000,
+      "uncertainty_buffer_cents": 22543905,
+      "base_buffer_cents": 20000000,
+      "required_reserve_cents": 56543905
+    },
+    "reason": "checking_cents=350000000; peak_shortfall_cents=14000000; uncertainty_buffer_cents=22543905; operational_buffer_cents=20000000; required_reserve_cents=56543905; surplus_cents=293456095; sweep_cap_cents=280000000; candidate_cents=280000000; holding_minutes=1440; expected_yield_cents=40274; penalty_cents=0; transaction_cost_cents=5000; opportunity_cost_cents=0; expected_net_benefit_cents=35274; checking_after_cents=69995000; recommendation only; expected returns are not realized."
+  },
+  "uncertainty_status": "provisional_uncalibrated",
+  "uncertainty_note": "Provisional uncalibrated uncertainty policy; not validated against empirical model evaluation.",
+  "executed_at": "2026-10-17T12:00:00Z"
+}
+================================================================================
+[OK] Verification: JSON serialization and deserialization round-trip passed with 100% fidelity.
+================================================================================
+
+================================================================================
+RESERVE JUGGLER � MEMBER 1 FOUR-TIER QUANTITATIVE ENGINE DEMO (RJ-M1-13)
+================================================================================
+Execution Time: 2026-10-18T01:43:12.894167
+Organizer Dataset Source: C:\Users\Arvind Shekhawat\Downloads\treasury_4tier_dataset.csv
+Available Native Hourly Observations: 8760
+All 4 Scenarios Passed: True
+--------------------------------------------------------------------------------
+SCENARIO 1: ALLOWED REPO SWEEP AT 17:00
+Decision Time: 2026-01-02 17:00:00 (Repo Window Open: True)
+Starting Cash: $400,000,000.00
+Required Liquid Reserve: $146,607,437.64
+Surplus Cash Swept into Tier 1 Overnight Repo: $253,392,562.36
+Repo APY: 4.272% | Expected Income: $18,535.83
+Execution: 2026-01-02 17:00:00 -> Scheduled Maturity: 2026-01-03 08:00:00 (15 hours)
+Status: Feasible=True, Action=INVEST, Orders=1
+--------------------------------------------------------------------------------
+SCENARIO 2: REPO ENTRY UNAVAILABLE AT 10:00
+Decision Time: 2026-01-03 10:00:00 (Repo Window Open: False)
+Starting Cash: $250,000,000.00
+Required Reserve: $234,070,830.05
+Repo Investment Eligibility: STRICTLY REJECTED (Window only opens at 17:00 daily)
+Action: HOLD | Repo Orders Recommended: 0
+Outcome: Capital safely held in operational cash; no invalid overnight sweep proposed.
+--------------------------------------------------------------------------------
+SCENARIO 3: STRESSED LIQUIDITY SHORTAGE
+Decision Time: 2026-01-02 17:00:00
+Immediate Cash Balance: $5,000,000.00
+Mandatory Required Reserve: $146,607,437.64
+Projected Net Cash Drain: $145,607,437.64
+Liquidity Deficit / Funding Gap: $141,607,437.64
+Engine Summary Action: WARNING (Canonical Action: LIQUIDITY_WARNING)
+Feasible: False | Recommended Orders: 0
+Safety Guarantee: No speculative investments proposed during severe liquidity deficit.
+--------------------------------------------------------------------------------
+SCENARIO 4: PORTFOLIO MARKET DECLINE REVALUATION
+Decision Time: 2026-01-02 17:00:00
+Initial Net Portfolio Value: $69,934,960.00
+Bond Shock: -2.0% ($99.473 -> $97.48354) | Value Drop: -$198,946.00
+Equity Shock: -10.0% ($4993.83 -> $4494.44700) | Value Drop: -$998,766.00
+Revalued Stressed Net Portfolio Value: $68,737,248.00
+Total Direct Portfolio Wealth Loss: -$1,197,712.00
+Stressed Liquidation Value (after 2% bond and 15% equity haircuts): $67,193,946.82
+Equity Return Discipline: Zero guaranteed equity yield awarded. Risk model strictly accounts for market drawdowns.
+--------------------------------------------------------------------------------
+DEMO SUITE COMPLETE � ALL CONTRACTS AND CONSTRAINTS SATISFIED.
+================================================================================
+1 55 2137786.63 2511495.05 14.88
+3 55 2943170.44 2679713.37 -9.83
+6 55 3238219.17 3330653.79 2.78
+15 55 2398612.28 2894189.67 17.12
+24 54 1982263.63 2267089.05 12.56
+Source SHA256 unchanged: 2e7c1d2e5b678e9975250211e7e0017022049c510e1dd90cd7f29e931837b0c5

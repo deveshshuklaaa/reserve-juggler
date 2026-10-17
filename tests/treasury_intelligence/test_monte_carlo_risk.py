@@ -474,3 +474,89 @@ def test_forced_liquidation_and_overdraft_costs(hourly_series_168):
     # Overdraft financing cost is non-negative
     assert res.p95_summary.overdraft_cost_cents >= 0
 
+
+@pytest.mark.parametrize('scenario_count', [3, 7])
+def test_non_power_of_ten_scenario_weights_are_exact(hourly_series_168, scenario_count):
+    from decimal import localcontext
+    scenarios = generate_multi_asset_scenarios(hourly_series_168, make_forecast(NOW),
+        as_of=NOW, scenario_count=scenario_count)
+    with localcontext() as ctx:
+        ctx.prec = 100
+        assert sum(s.probability for s in scenarios) == Decimal(1)
+
+
+def test_monte_carlo_rejects_missing_historical_hours(hourly_series_168):
+    with pytest.raises(ValueError, match='contiguous'):
+        generate_multi_asset_scenarios(hourly_series_168[:30] + hourly_series_168[31:],
+            make_forecast(NOW), as_of=NOW)
+
+
+def test_stress_nav_conserves_assets_and_uses_ending_flows(hourly_series_168, monkeypatch):
+    import treasury_intelligence.monte_carlo_risk as mc
+    from treasury_intelligence.liquidity_risk import LiquidityScenario, MarketStress
+    portfolio = make_portfolio(cash=50_000_000, repo=0, bond=20_000_000, equity=10_000_000)
+    # A large temporary withdrawal is fully replenished by the final deposit.
+    path = tuple(p.HourlyForecastPoint(time_basis='UNSPECIFIED', start_at=NOW + timedelta(hours=h),
+        predicted_deposits_cents=40_000_000 if h == 23 else 0,
+        predicted_withdrawals_cents=40_000_000 if h == 0 else 0,
+        predicted_net_flow_cents=40_000_000 if h == 23 else -40_000_000 if h == 0 else 0,
+        supplied_uncertainty_buffer_cents=0)
+        for h in range(24))
+    scenario = LiquidityScenario(scenario_id='conservation', probability=Decimal(1), forecast=path,
+        market_stress=MarketStress(bond_drawdown_pct=Decimal(2), equity_drawdown_pct=Decimal(10)))
+    monkeypatch.setattr(mc, 'generate_multi_asset_scenarios', lambda *a, **k: (scenario,))
+    result = mc.simulate_multi_asset_monte_carlo_risk(portfolio, hourly_series_168, path,
+        make_policy(allow_overdraft=False, max_overdraft_cents=0), scenario_count=1)
+    # Selling every permitted asset converts value to cash exactly once.
+    loss = 400_000 + 1_000_000
+    fees = 392_000 + 1_350_000
+    assert result.portfolio_downside.expected_net_portfolio_value_cents == 80_000_000 - loss - fees
+    assert result.portfolio_downside.max_downside_loss_cents == loss + fees
+
+
+def test_matured_repo_claim_removed_once_from_stress_nav(hourly_series_168, monkeypatch):
+    import treasury_intelligence.monte_carlo_risk as mc
+    from treasury_intelligence.liquidity_risk import LiquidityScenario, RepoCashSettlement
+    portfolio = make_portfolio(cash=50_000_000, repo=20_000_000, bond=0, equity=0)
+    path = tuple(p.HourlyForecastPoint(time_basis='UNSPECIFIED', start_at=NOW + timedelta(hours=h),
+        predicted_deposits_cents=0, predicted_withdrawals_cents=0, predicted_net_flow_cents=0,
+        supplied_uncertainty_buffer_cents=0)
+        for h in range(24))
+    scenario = LiquidityScenario(scenario_id='maturity', probability=Decimal(1), forecast=path)
+    monkeypatch.setattr(mc, 'generate_multi_asset_scenarios', lambda *a, **k: (scenario,))
+    repo = portfolio.repo_positions[0]
+    result = mc.simulate_multi_asset_monte_carlo_risk(portfolio, hourly_series_168, path,
+        make_policy(allow_early_repo_redemption=False), scenario_count=1,
+        repo_settlements=(RepoCashSettlement(time_basis='UNSPECIFIED', position_id=repo.id,
+            available_at=repo.scheduled_maturity_at, amount_cents=repo.principal_cents),))
+    assert result.portfolio_downside.expected_net_portfolio_value_cents == 70_000_000
+
+
+def test_one_hour_market_scenario_includes_first_price_innovation(hourly_series_168):
+    history = tuple(o.model_copy(update={
+        'tier2_bond_price_index': Decimal(100 - i),
+        'tier3_stock_index_price': Decimal(100 - i)})
+        for i, o in enumerate(hourly_series_168[:30]))
+    scenarios = generate_multi_asset_scenarios(history, make_forecast(history[-1].timestamp, 1),
+        as_of=history[-1].timestamp, planning_horizon_hours=1, scenario_count=3)
+    assert all(s.market_stress.bond_drawdown_pct > 0 and s.market_stress.equity_drawdown_pct > 0
+               for s in scenarios)
+
+
+def test_existing_overdraft_financing_reduces_nav_once(hourly_series_168, monkeypatch):
+    import treasury_intelligence.monte_carlo_risk as mc
+    from treasury_intelligence.liquidity_risk import LiquidityScenario
+    portfolio = make_portfolio(cash=50_000_000, repo=0, bond=0, equity=0, debt=10_000_000)
+    path = tuple(p.HourlyForecastPoint(time_basis='UNSPECIFIED', start_at=NOW + timedelta(hours=h),
+        predicted_deposits_cents=0, predicted_withdrawals_cents=0, predicted_net_flow_cents=0,
+        supplied_uncertainty_buffer_cents=0) for h in range(24))
+    scenario = LiquidityScenario(scenario_id='debt', probability=Decimal(1), forecast=path)
+    monkeypatch.setattr(mc, 'generate_multi_asset_scenarios', lambda *a, **k: (scenario,))
+    result = mc.simulate_multi_asset_monte_carlo_risk(portfolio, hourly_series_168, path,
+        make_policy(), scenario_count=1)
+    from decimal import ROUND_CEILING
+    cost = int((Decimal(10_000_000) * portfolio.overdrafts[0].apr_pct / 100 / 365)
+               .to_integral_value(rounding=ROUND_CEILING))
+    assert result.p95_summary.overdraft_draw_cents == 0
+    assert result.p95_summary.overdraft_cost_cents == cost
+    assert result.portfolio_downside.expected_net_portfolio_value_cents == portfolio.valuation.net_portfolio_value_cents - cost
