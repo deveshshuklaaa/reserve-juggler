@@ -14,3 +14,9 @@ The user requested an Apple-inspired, more deliberate visual treatment while ret
 The mock ledger, API boundary, financial conventions and all three mandatory screens remain available. The expanded real API integration is still pending the backend contract.
 
 References: https://www.apple.com/ and the user's supplied SONOTYPE prompt.
+
+## First-visit presentation
+
+The Command Center now opens with a full-height product introduction before a simulation exists. It uses oversized typography, an animated original treasury illustration, and a long scrolling story whose pinned visual switches between liquidity, stress testing, and strategy comparison. Each graphic is marked as simulated or illustrative; the strategy preview has no preset winner. A final call to action starts the same mock or real API workflow as the header control.
+
+After a run starts, the detailed Command Center remains available with its balances, charts, transactions, decisions, and position terms. The story uses normal page scrolling, works at mobile widths, and reduces animation when the operating system requests less motion.

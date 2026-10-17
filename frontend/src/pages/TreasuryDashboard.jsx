@@ -6,6 +6,7 @@ import { Alert, Badge, Button, Empty, Loading, Metric, Panel } from '../componen
 import { Allocation, AuditLog, DecisionCard, TransactionFeed, VaultPositions } from '../components/Treasury';
 import { TimeChart } from '../components/Charts';
 import { ScrollStory } from '../components/ScrollStory';
+import LandingExperience from '../components/LandingExperience';
 import { exportCsv, money, rate, utc } from '../utils/format';
 
 export function StartState() {
@@ -24,8 +25,9 @@ export default function TreasuryDashboard() {
     ...(sim.forecast?.points ?? []).slice(0, horizon / 15).map((p) => ({ timestamp: p.timestamp, predicted: p.predicted_net_cents, band: [p.lower_cents, p.upper_cents] })),
   ], [sim.history, sim.forecast, horizon]);
   const exportReport = () => exportCsv('reserve-juggler-snapshot.csv', ['source', 'run_id', 'seed', 'step', 'timestamp_utc', 'checking_cents', 'vault_locked_cents', 'vault_redeemable_cents', 'reserve_cents', 'realized_interest_cents', 'net_benefit_cents'], [[sim.mode, snapshot.run_id, snapshot.seed, snapshot.step, snapshot.timestamp, snapshot.checking_cents, snapshot.vault_locked_cents, snapshot.vault_redeemable_cents, snapshot.required_reserve_cents, snapshot.realized_interest_cents, snapshot.net_benefit_cents]]);
-  return <div className="page-content"><div className="page-heading"><div><span className="eyebrow">Overview</span><h1>Treasury Command Center<span className="heading-period">.</span></h1><p>Capital, in focus.</p></div><Button variant="quiet" onClick={exportReport} disabled={!snapshot}><ArrowDownToLine size={15} />Export snapshot</Button></div>
-    {!snapshot ? sim.busy ? <Loading /> : <StartState /> : <>
+  return <div className={`page-content ${snapshot ? '' : 'landing-page'}`}>
+    {snapshot && <div className="page-heading"><div><span className="eyebrow">Overview</span><h1>Treasury Command Center<span className="heading-period">.</span></h1><p>Capital, in focus.</p></div><Button variant="quiet" onClick={exportReport}><ArrowDownToLine size={15} />Export snapshot</Button></div>}
+    {!snapshot ? sim.busy ? <Loading /> : <LandingExperience /> : <>
       <ScrollStory>
       <section id="position" className="story-section" aria-label="Liquidity overview"><div data-story-reveal>
       <div className="story-kicker"><span>01 / Position</span><span>Available liquidity</span></div>

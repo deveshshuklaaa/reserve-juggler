@@ -24,6 +24,15 @@ async function start(user) {
 }
 
 describe('three-screen frontend workflow', () => {
+  it('opens the first-visit story and enters the real dashboard from its main action', async () => {
+    const { user } = renderApp();
+    expect(screen.getByRole('heading', { name: 'Treasury, in motion.' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Explore the experience/ })).toHaveAttribute('href', '#landing-story');
+    expect(screen.getByRole('heading', { name: /Compare the paths/ })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /Open Command Center/ }));
+    await screen.findByRole('heading', { name: /Treasury Command Center/ });
+    expect(screen.getByTitle('$20,000,000.00')).toBeInTheDocument();
+  });
   it('opens the mobile navigation with keyboard focus and closes on Escape', async () => {
     const { user } = renderApp();
     const opener = screen.getByRole('button', { name: 'Open navigation' });
