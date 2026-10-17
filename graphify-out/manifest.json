@@ -324,15 +324,57 @@
     "semantic_hash": ""
   },
   "docs/organizer-data.md": {
-    "mtime": 1792251684.6616497,
-    "seen": 1792251772.997571,
-    "ast_hash": "37de9fcdfd0f8a661a270571713de346",
+    "mtime": 1792251886.747223,
+    "seen": 1792256657.897439,
+    "ast_hash": "16783128f56bbddc8ce7dc73495c7e49",
     "semantic_hash": ""
   },
   "The_Reserve_Juggler_Problem_Statement.pdf": {
     "mtime": 1792250170.9767287,
     "seen": 1792251772.9985716,
     "ast_hash": "46daa8e9d849cd8c78678b24dae44a83",
+    "semantic_hash": ""
+  },
+  "backend/app/persistence/__init__.py": {
+    "mtime": 1792255343.579868,
+    "seen": 1792256657.8842583,
+    "ast_hash": "66103106307b805508b516cf5bc59b82",
+    "semantic_hash": ""
+  },
+  "backend/app/persistence/migrations.py": {
+    "mtime": 1792256405.0459652,
+    "seen": 1792256657.8842583,
+    "ast_hash": "33753044796ce9f5dcc097cdb80d3f0f",
+    "semantic_hash": ""
+  },
+  "backend/app/persistence/models.py": {
+    "mtime": 1792256480.359743,
+    "seen": 1792256657.8842583,
+    "ast_hash": "ff31da25ca932da8400b216ad19c0019",
+    "semantic_hash": ""
+  },
+  "backend/app/persistence/repositories.py": {
+    "mtime": 1792256575.6845202,
+    "seen": 1792256657.8842583,
+    "ast_hash": "bc7400fb3682526e53f0f88ccaae8894",
+    "semantic_hash": ""
+  },
+  "tests/backend/test_persistence.py": {
+    "mtime": 1792256576.2152205,
+    "seen": 1792256657.8935018,
+    "ast_hash": "f94eecabad535955a2859c42a90463ca",
+    "semantic_hash": ""
+  },
+  "docs/four-tier-persistence.md": {
+    "mtime": 1792256769.2115889,
+    "seen": 1792256795.754283,
+    "ast_hash": "e487cde5dfb37eeacdae096b863fb45f",
+    "semantic_hash": ""
+  },
+  "scripts/sync-persistence-graph.py": {
+    "mtime": 1792256769.7448368,
+    "seen": 1792256795.7451935,
+    "ast_hash": "2b7c80c8e7d6fe0056f4a7eb52ea95fb",
     "semantic_hash": ""
   }
 }

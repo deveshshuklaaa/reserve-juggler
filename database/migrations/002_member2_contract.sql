@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS reserve_juggler_v1.simulation_runs (
         ('NORMAL', 'HIGH_WITHDRAWAL', 'LOW_DEPOSIT', 'SETTLEMENT_DELAY', 'LIQUIDITY_SHOCK')),
     status VARCHAR(32) NOT NULL,
     started_at TIMESTAMPTZ NOT NULL,
-    current_time TIMESTAMPTZ NOT NULL,
+    "current_time" TIMESTAMPTZ NOT NULL,
     current_step INTEGER NOT NULL DEFAULT 0 CHECK (current_step >= 0),
     duration_steps INTEGER NOT NULL CHECK (duration_steps > 0),
     initial_cash_cents BIGINT NOT NULL CHECK (initial_cash_cents >= 0),
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS reserve_juggler_v1.simulation_runs (
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CHECK (current_step <= duration_steps),
-    CHECK (current_time >= started_at)
+    CHECK ("current_time" >= started_at)
 );
 
 CREATE TABLE IF NOT EXISTS reserve_juggler_v1.transactions (
