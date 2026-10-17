@@ -1,4 +1,10 @@
-# Quantitative engine contract v1
+# Quantitative engine contracts: legacy v1 and four-tier v1
+
+RJ-M1-06 adds the authoritative organizer four-tier contracts in
+`treasury_intelligence.portfolio`; see the section at the end and
+[Member 2 field mapping](FOUR_TIER_HANDOFF.md). All earlier sections below describe
+the preserved **legacy generic-vault v1 pipeline only**. Its UTC, integer-rate-bps
+and forecasting defaults must not be imposed on the organizer's hourly data.
 
 Package: `treasury_intelligence`. Requires Python 3.10+ and Pydantic 2
 (`treasury_intelligence/requirements.txt`). No database, HTTP, or frontend imports.
@@ -303,3 +309,110 @@ Demonstrates five deterministic operational scenarios:
 6. Full JSON serialization and 100% round-trip validation.
 
 Uncertainty is explicitly marked as `provisional_uncalibrated`.
+
+## RJ-M1-06 — Authoritative organizer four-tier contracts
+
+The canonical definitions are `treasury_intelligence/portfolio.py`, exported from
+`treasury_intelligence`. There was no existing four-tier wire model on the Member 1
+branch at `c35da91`. The types were reconciled with Member 2's already committed
+four-tier storage at `52e58bc`, not independently redesigned. ORM storage models
+remain Member 2-owned; no ORM, database, HTTP or frontend imports are required.
+
+| Contract | Purpose |
+| --- | --- |
+| `PortfolioSource` | Run ID, source type, dataset ID, observation timestamp and explicit time basis |
+| `PositionLiquidity` | Immediate, locked, liquidatable or unavailable classification; separate available/locked/liquidatable amounts |
+| `CashPosition` | Tier 0 identity, cash balance, latest ledger reference, 0% APY and full immediate liquidity |
+| `RepoPosition` | Tier 1 principal, entry/maturity, supplied APY, status, redemption haircut/cost, accrued/realized interest and proceeds |
+| `BondPosition` | Tier 2 quantity, acquisition/current price indices, market value, supplied yield, modified duration, signed P&L and liquidation costs |
+| `EquityPosition` | Tier 3 quantity, acquisition/current indices, market value, volatility, signed P&L and slippage; no guaranteed-interest fields |
+| `TreasuryPosition` | Discriminated union keyed by integer tier 0/1/2/3 |
+| `OverdraftLiability` | Separate borrowing/outstanding/repaid principal, APR, financing cost and breach reference |
+| `PortfolioValuation` | Separate four-tier assets, repo principal/value, liquidity, restrictions, liabilities and signed net value |
+| `PortfolioState` | One current, consistently valued snapshot with typed instrument collections and liabilities |
+| `PortfolioTreasuryContext` | Alias of `PortfolioState`, not a second definition |
+| `FourTierTreasuryPolicy` | Reuses legacy buffer/limit units; adds explicit repo window, liquidation permissions and per-tier caps |
+| `FourTierReserveResult` | Reuses `ReserveResult` fields and component identity; explicit timestamp basis replaces blanket UTC |
+| `RecommendedOrder` | Typed instrument recommendation with caller-assigned ID, amount, optional quantity/cost/proceeds estimates and explanation |
+| `FourTierDecisionResult` | HOLD, ALLOCATE or LIQUIDITY_WARNING; ordered multi-instrument recommendations and supplied reserve |
+
+### Units, identity and time
+
+- Every money amount named `_cents` is a strict integer, rejecting floats, booleans
+  and numeric strings. Signed P&L, interest and net value are permitted; other cash,
+  asset, cost and principal amounts are nonnegative.
+- Market quantities, rates, indices and duration use finite `Decimal`. Python
+  accepts Decimal, decimal strings or integers; JSON uses decimal **strings** to
+  preserve precision. Binary floats, NaN and infinities are rejected. There is no
+  rounding or conversion to integer bps. `4.308` in `applicable_apy_pct` means
+  **4.308%**, matching the organizer CSV and Member 2's NUMERIC columns.
+- Percentage haircuts remain supplied Decimal percentages: organizer values are
+  0.5% repo, 2% bonds, 15% equities. They are required inputs, not silently substituted
+  defaults. Floating yields may be negative. Equity volatility is a risk input,
+  not a guaranteed return. Policy allocation caps/multipliers retain integer bps.
+- Position, liability, run and order identities use UUIDs compatible with Member 2.
+  IDs and record order are caller-supplied: no random defaults or implicit sorting.
+- Historical source type `ORGANIZER_HISTORICAL` requires dataset identity, naive
+  source timestamp and `time_basis="UNSPECIFIED"`. All event/valuation timestamps
+  on the same record preserve that basis. No timezone is guessed or attached.
+  Synthetic source type `SYNTHETIC` requires explicitly aware UTC timestamps,
+  `time_basis="UTC"` and no organizer observation reference.
+- Historical snapshots require `native_interval_seconds=3600`. The original
+  dataset's 8,760 hourly observations and supplied `net_flow_usd` remain authoritative;
+  this migration neither ingests/recomputes cash flows nor creates 15-minute rows.
+  `CashFlowBucket`/`ForecastResult` remain legacy UTC contracts; converting the
+  organizer source into them is **not** an approved adapter.
+
+### Snapshot and recommendation semantics
+
+`PortfolioState` is the only four-tier context. It contains current unsettled repo
+and open market positions; closed/redeemed records belong to history. Snapshot
+validation checks identity/source isolation, no future observations/acquisitions,
+current valuation completeness, tier totals, liquidity totals and minimum liability
+coverage. A maturity date is not a cash credit. Repo entry and maturity are explicit:
+17:00 to 08:00 next morning is a 15-hour representation, not a generic 24-hour vault.
+The schema checks ordering, not holiday calendars or automatic schedule execution.
+
+Portfolio gross assets are not available cash. Net value deducts liabilities and
+can be negative. Liquidatable value includes immediately available cash plus
+supplied potential net liquidation proceeds; it is **not additional cash** to add
+to available liquidity. Locked value can overlap liquidatable value (e.g. early
+break of repo). No partition identity between those liquidity categories is assumed.
+Snapshot validation reconciles supplied values; it never computes prices, returns,
+accrual, fees, trading decisions or accounting postings.
+
+`RecommendedOrder` supports INVEST_REPO, REDEEM_REPO, BUY_BONDS, SELL_BONDS,
+BUY_EQUITIES, SELL_EQUITIES, BORROW_OVERDRAFT and REPAY_OVERDRAFT. Action/tier must
+agree; selling/redemption/repayment must identify the existing position/liability.
+Buy/invest orders can omit position ID until the executor assigns the new position.
+Market quantity is optional and only valid for bonds/equities. `amount_cents` is
+the requested gross investment/redemption/market notional or borrowing/repayment
+principal; `estimated_cost_cents` is separate, and `expected_proceeds_cents` is an
+optional modeled net inflow, never a confirmed fill or realized income. A future
+executor must validate quantity/notional consistency against actual prices.
+
+`recommendation_only` is always boolean true. ALLOCATE requires one or more uniquely
+identified orders. HOLD and LIQUIDITY_WARNING require no orders. Orders and reserves
+must share the decision's time; sources/runs must agree. No execution-status or
+ledger mutation is implied. The caller must revalidate balances, reserve coverage,
+eligibility, settlement, costs and permissions before execution. This task adds no
+four-tier recommendation function or forecasting algorithm.
+
+### Compatibility decisions
+
+Legacy `TreasuryContext`, `VaultPosition`, `TreasuryPolicy`, `ReserveResult`,
+`DecisionResult`, `EvaluationResult`, `RiskScenarioResult` and `OptimizationResult`
+were inspected. Their fields and six public algorithm signatures are preserved.
+Only the old context/vault docstrings now explicitly identify them as legacy.
+The completed RJ-M1-05 pipeline continues to consume v1 inputs and return v1
+results. The new context is not flattened into `vaults`, and new order plans are
+not reduced to the legacy single-vault SWEEP/WITHDRAW result. Model evaluation,
+risk scenarios and optimization declarations remain deferred and do not acquire
+invented four-tier execution behavior.
+
+All new models are frozen, forbid unknown fields, and serialize with the existing
+Pydantic API. Nested collections are tuples (JSON arrays). Read
+`tests/treasury_intelligence/fixtures/four_tier_portfolio.json` as a **constructed
+contract example**, not an assertion of actual organizer market values or trades.
+JSON schemas are available with `model_json_schema()` and
+`TypeAdapter(TreasuryPosition).json_schema()`; no OpenAPI change is included.

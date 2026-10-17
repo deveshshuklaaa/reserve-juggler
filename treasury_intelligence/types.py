@@ -64,6 +64,7 @@ class ForecastResult(Contract):
 
 
 class VaultPosition(Contract):
+    """Legacy v1 vault only; never a substitute for repo, bonds or equities."""
     vault_id: Name
     balance_cents: Cents
     withdrawable_cents: Cents
@@ -78,6 +79,7 @@ class VaultPosition(Contract):
 
 
 class TreasuryContext(Contract):
+    """Legacy UTC/checking-plus-vault context; four-tier state uses PortfolioState."""
     as_of: datetime
     currency: Annotated[str, Field(strict=True, pattern=r"^[A-Z]{3}$")]
     checking_balance_cents: Cents

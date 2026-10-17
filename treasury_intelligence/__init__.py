@@ -24,6 +24,12 @@ from .forecasting import (
 from .policy import TreasuryDecisionPolicy, VaultTerms
 from .pipeline import TreasuryPipelineResult, run_treasury_pipeline
 from .demo import run_demo
+from .portfolio import (
+    PortfolioSource, PositionLiquidity, CashPosition, RepoPosition, BondPosition,
+    EquityPosition, TreasuryPosition, OverdraftLiability, PortfolioValuation,
+    PortfolioState, PortfolioTreasuryContext, TierAllocationLimit,
+    FourTierTreasuryPolicy, FourTierReserveResult, RecommendedOrder, FourTierDecisionResult,
+)
 
 __all__ = [
     "CashFlowBucket", "ForecastPoint", "ForecastResult", "TreasuryContext",
@@ -38,4 +44,8 @@ __all__ = [
     "build_feature_matrix", "rolling_mean_forecast", "seasonal_naive_forecast",
     "TreasuryDecisionPolicy", "VaultTerms",
     "TreasuryPipelineResult", "run_treasury_pipeline", "run_demo",
+    "PortfolioSource", "PositionLiquidity", "CashPosition", "RepoPosition", "BondPosition",
+    "EquityPosition", "TreasuryPosition", "OverdraftLiability", "PortfolioValuation",
+    "PortfolioState", "PortfolioTreasuryContext", "TierAllocationLimit",
+    "FourTierTreasuryPolicy", "FourTierReserveResult", "RecommendedOrder", "FourTierDecisionResult",
 ]

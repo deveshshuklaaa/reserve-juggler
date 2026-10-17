@@ -8,6 +8,46 @@
 
 ## Task Log
 
+### [RJ-M1-06] Four-Tier Contract Migration
+- **Status**: COMPLETED (contract-only; no RJ-M1-07 work).
+- **Inspected bases**: Member 1 `c35da91`; Member 2 four-tier persistence `52e58bc`.
+  Preserved both workstreams without merging/reimplementing persistence.
+- **Canonical contracts**: `treasury_intelligence/portfolio.py` defines typed
+  cash/repo/bond/equity positions, liquidity, overdraft liability, valuation,
+  portfolio source/state, four-tier policy/reserve and recommendation-only order
+  plans. `PortfolioTreasuryContext` is an alias of `PortfolioState`, not a second
+  portfolio definition. Package exports are additive.
+- **Compatibility**: Legacy generic-vault types/signatures and all algorithms are
+  unchanged apart from context/vault docstrings identifying their legacy scope.
+  Naive organizer timestamps remain UNSPECIFIED and hourly; explicitly UTC
+  synthetic timestamps remain UTC. Decimal percentage rates are not rounded to
+  integer bps. Strict cents, signed P&L, immutable models and forbidden extras.
+- **Member 2 handoff**: `FOUR_TIER_HANDOFF.md` maps the wire DTOs to existing tables
+  and separates view metadata from persisted fields. Verified six DTO field sets
+  against the actual ORM source at `52e58bc` using AST inspection, without ORM or
+  database imports. Repo market value maps separately to position valuations.
+- **Validation**: Source/run consistency, identities, tier/value/liquidity totals,
+  separate liability principal, timestamp basis/causality, Decimal precision,
+  discriminated union schemas, JSON round trips, deterministic serialization,
+  invalid financial inputs and explicit recommendation-vs-execution semantics.
+- **Tests**: New four-tier suite **90 passed**; all Member 1 tests **257 passed**;
+  complete branch suite **271 passed**; existing pipeline groups **9 passed**.
+  Commands (with `PYTHONPATH=.;backend`, `DATABASE_URL=sqlite:///:memory:`):
+  `python -m pytest tests/treasury_intelligence -q -p no:cacheprovider` and
+  `python -m pytest tests -q -p no:cacheprovider`.
+  Existing pytest-asyncio fixture-loop-scope deprecation warning is non-fatal.
+- **Boundaries**: No persistence, endpoints, frontend, forecasting algorithm,
+  pricing/trading/interest execution or integration adapter changes. No organizer
+  CSV is copied or edited. Public OpenAPI and Member 2 contracts are untouched.
+- **Open questions**: Index quantity/notional convention, fill/accrual rounding,
+  unpaid financing-cost treatment and the later four-tier algorithm/API adapter;
+  these are documented rather than implemented or inferred.
+- **Graphify**: Repository-level graph refreshed from actual Member 1 branch code;
+  no invented implemented link to Member 2's separate-branch persistence.
+- **Commit**: `feat(engine): add four-tier portfolio contracts` (hash in completion report).
+- **Push target**: `origin/feat/treasury-intelligence`; no history rewrite.
+- **Next task**: Await explicit assignment. Stop before RJ-M1-07.
+
 ### [RJ-M1-05] Standalone Treasury Decision Pipeline and Demo
 - **Status**: COMPLETED
 - **Scope**: Connected all Member 1 quantitative modules into an end-to-end pure Python
