@@ -8,6 +8,9 @@ export function createRealApi(baseUrl = '') {
   const post = (url, body, options) => get(url, { ...options, method: 'POST', body });
   return {
     mode: 'real',
+    createRunFromCashflows: async () => {
+      throw new ApiError('Live CSV ingestion awaits Member 2’s upload contract. No file has been sent.', { code: 'NOT_IMPLEMENTED', status: 501 });
+    },
     health: (options) => get('/health', options),
     createRun: async (body, options) => {
       const data = await post('/api/v1/runs', body, options);

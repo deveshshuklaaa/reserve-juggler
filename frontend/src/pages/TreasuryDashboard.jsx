@@ -8,11 +8,12 @@ import { TimeChart } from '../components/Charts';
 import { ScrollStory } from '../components/ScrollStory';
 import LandingExperience from '../components/LandingExperience';
 import FourTierPortfolio from '../components/FourTierPortfolio';
+import SimulationStart from '../components/SimulationStart';
 import { exportCsv, money, rate, utc } from '../utils/format';
 
 export function StartState() {
-  const { createRun, busy } = useSimulation();
-  return <Panel className="welcome-panel"><div className="welcome-copy"><span className="eyebrow">INTELLIGENT TREASURY AUTOPILOT</span><h2>Every dollar.<br /><span>A little smarter.</span></h2><p>Create a simulation to begin monitoring treasury activity. Observe cash flows, test liquidity shocks, and compare reserve strategies in one workspace.</p><Button variant="primary" busy={busy} onClick={() => createRun()}>Create simulation <ArrowRight size={15} /></Button><div className="welcome-details"><span>$20M initial checking</span><span>5% vault rate</span><span>15-minute steps</span></div></div><div className="welcome-sculpture" aria-hidden="true"><div className="sculpture-monolith"><div className="monolith-face"><span className="monolith-logo">RJ</span><span className="monolith-caption">CAPITAL IN BALANCE</span></div><div className="monolith-pulse-ring" /></div></div></Panel>;
+  const { openImport } = useSimulation();
+  return <SimulationStart onImport={openImport} />;
 }
 
 export default function TreasuryDashboard() {

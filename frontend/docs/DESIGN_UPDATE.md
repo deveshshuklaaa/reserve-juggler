@@ -46,3 +46,15 @@ restrained entrance and interaction feedback.
 A visible pause control stops decorative CSS animations and scene effects.
 System reduced-motion preferences also remove pinning, blur, and snapping. Motion
 never changes simulated financial results or starts a run.
+
+## Start states and CSV input
+
+Replaced the obsolete welcome markup (whose styles were missing) with a scoped,
+responsive card and animated capital-route illustration. Import controls appear
+on both empty workspace screens and the landing page. The import dialog supports
+keyboard focus, Escape, drag and drop, row-level validation, preview, and a template.
+See CSV_INPUT.md for supported formats and the live ingestion boundary.
+
+Scroll calculations now batch geometry reads before style writes. Scene blur is
+lighter on mobile, content resize updates pinned heights, and dashboard navigation
+uses a short opacity/position entrance without filtering the whole workspace.

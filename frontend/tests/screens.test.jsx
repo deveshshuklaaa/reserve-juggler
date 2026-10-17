@@ -24,6 +24,68 @@ async function start(user) {
 }
 
 describe('three-screen frontend workflow', () => {
+  it('preserves an existing run when CSV initialization fails and retries the same CSV', async () => {
+    const { user, api } = renderApp(); await start(user);
+    const generated = vi.spyOn(api, 'createRun');
+    const imported = vi.spyOn(api, 'createRunFromCashflows').mockRejectedValueOnce(new Error('CSV initialization interrupted.'));
+    await user.click(screen.getByRole('button', { name: 'Import cash flows' }));
+    await user.upload(screen.getByLabelText('Cash flow CSV file'), new File(['timestamp,inflow_cents,outflow_cents\n2026-10-17T08:00:00Z,100,0\n2026-10-17T08:15:00Z,100,0'], 'retry.csv', { type: 'text/csv' }));
+    await screen.findByText('retry.csv');
+    await user.click(screen.getByRole('button', { name: 'Start CSV simulation' }));
+    await screen.findByText(/The simulation could not start/);
+    await user.keyboard('{Escape}');
+    expect(screen.getAllByTitle('$20,000,000.00').length).toBeGreaterThan(0);
+    await user.click(screen.getByRole('button', { name: 'Retry initialization' }));
+    await screen.findByText('CSV replay');
+    expect(imported).toHaveBeenCalledTimes(2);
+    expect(imported.mock.calls[1][0].rows).toEqual(imported.mock.calls[0][0].rows);
+    expect(generated).not.toHaveBeenCalled();
+  });
+  it('previews a CSV then replays and compares its flows without a generated fallback', async () => {
+    const { user, api } = renderApp(undefined, '/strategy-arena');
+    const imported = vi.spyOn(api, 'createRunFromCashflows');
+    const generated = vi.spyOn(api, 'createRun');
+    await user.click(screen.getByRole('button', { name: 'Import cash flows' }));
+    const file = new File(['timestamp,inflow_cents,outflow_cents\n2026-10-17T08:00:00Z,12345,2345\n2026-10-17T08:15:00Z,20000,5000'], 'cashflows.csv', { type: 'text/csv' });
+    await user.upload(screen.getByLabelText('Cash flow CSV file'), file);
+    await screen.findByText('cashflows.csv');
+    expect(imported).not.toHaveBeenCalled();
+    expect(screen.getByRole('cell', { name: '$123.45' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Start CSV simulation' }));
+    await screen.findByText('CSV replay');
+    expect(imported).toHaveBeenCalledWith(expect.objectContaining({ rows: expect.arrayContaining([expect.objectContaining({ inflow_cents: 12345 })]) }), expect.any(Object));
+    expect(generated).not.toHaveBeenCalled();
+    expect(screen.getByRole('textbox', { name: 'Cash-flow source' })).toHaveValue('Imported CSV · original flows');
+    await user.click(screen.getByRole('button', { name: 'Run strategy comparison' }));
+    await screen.findByRole('heading', { name: 'Imported cash-flow outcomes' });
+    await user.click(screen.getByRole('button', { name: 'Reset simulation' }));
+    await waitFor(() => expect(imported).toHaveBeenCalledTimes(2));
+    await screen.findByRole('button', { name: 'Advance one step' });
+    expect(generated).not.toHaveBeenCalled();
+  });
+  it('rejects invalid CSV values while keeping the current run available', async () => {
+    const { user, api } = renderApp(); await start(user);
+    const imported = vi.spyOn(api, 'createRunFromCashflows');
+    await user.click(screen.getByRole('button', { name: 'Import cash flows' }));
+    await user.upload(screen.getByLabelText('Cash flow CSV file'), new File(['timestamp,inflow_cents,outflow_cents\n2026-10-17T08:00:00Z,1.20,0\n2026-10-17T08:15:00Z,1,0'], 'invalid.csv', { type: 'text/csv' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/Row 2/);
+    expect(screen.getByRole('button', { name: 'Start CSV simulation' })).toBeDisabled();
+    expect(imported).not.toHaveBeenCalled();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Import cash flows' })).toHaveFocus();
+    expect(screen.getAllByTitle('$20,000,000.00').length).toBeGreaterThan(0);
+  });
+  it('keeps CSV execution disabled in live mode without sending a file', async () => {
+    const api = createMockApi({ latency: 0 }); api.mode = 'real';
+    const imported = vi.spyOn(api, 'createRunFromCashflows');
+    const { user } = renderApp(api);
+    await user.click(screen.getByRole('button', { name: 'Import cash flows' }));
+    await user.upload(screen.getByLabelText('Cash flow CSV file'), new File(['timestamp,inflow_cents,outflow_cents\n2026-10-17T08:00:00Z,100,0\n2026-10-17T08:15:00Z,100,0'], 'live.csv', { type: 'text/csv' }));
+    await screen.findByText('live.csv');
+    expect(screen.getByRole('button', { name: 'Start CSV simulation' })).toBeDisabled();
+    expect(imported).not.toHaveBeenCalled();
+  });
   it('lets visitors pause presentation motion and explore capital tiers without creating a run', async () => {
     const { user, api } = renderApp();
     const create = vi.spyOn(api, 'createRun');

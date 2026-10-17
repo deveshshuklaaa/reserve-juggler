@@ -16,10 +16,11 @@ const windows = [
 ];
 
 export default function LandingExperience() {
-  const { createRun, busy } = useSimulation();
+  const { createRun, busy, openImport } = useSimulation();
   const root = useRef(null);
   const [activeWindow, setActiveWindow] = useState('window-hero');
   const [motionPaused, setMotionPaused] = useState(false);
+  const selectedWindow = useRef('window-hero');
 
   useEffect(() => {
     document.documentElement.classList.toggle('treasury-motion-paused', motionPaused);
@@ -43,27 +44,30 @@ export default function LandingExperience() {
       const header = window.innerWidth <= 760 ? 64 : 124;
       let selected = sections[0];
       const available = Math.max(1, height - header);
+      // Read every scene before writing styles so scrolling does not force layout per scene.
+      const measurements = sections.map((section) => ({ rect: section.getBoundingClientRect(), surfaceHeight: section.querySelector('.presentation-surface').offsetHeight }));
       sections.forEach((section, index) => {
-        const rect = section.getBoundingClientRect();
-        const surface = section.querySelector('.presentation-surface');
-        const nextTop = sections[index + 1]?.getBoundingClientRect().top ?? Infinity;
+        const { rect, surfaceHeight } = measurements[index];
+        const nextTop = measurements[index + 1]?.rect.top ?? Infinity;
         const entering = clamp((rect.top - header) / available);
         const leaving = clamp((height - nextTop) / available);
         const still = preference.matches || motionPaused;
-        section.style.setProperty('--scene-height', `${surface.offsetHeight}px`);
+        const sceneHeight = `${surfaceHeight}px`;
+        if (section.style.getPropertyValue('--scene-height') !== sceneHeight) section.style.setProperty('--scene-height', sceneHeight);
         // Tall scenes scroll through their full contents before pinning at the bottom.
-        section.style.setProperty('--scene-pin', `${header - Math.max(0, surface.offsetHeight - available)}px`);
+        section.style.setProperty('--scene-pin', `${header - Math.max(0, surfaceHeight - available)}px`);
         section.style.setProperty('--scene-index', String(index + 1));
         section.style.setProperty('--scene-shift', `${still ? 0 : entering * 48}px`);
         section.style.setProperty('--scene-scale', still ? '1' : String(1 - entering * .045 - leaving * .06));
         section.style.setProperty('--scene-radius', `${still ? 0 : Math.max(entering, leaving) * 32}px`);
-        section.style.setProperty('--scene-blur', `${still ? 0 : entering * 16 + leaving * 12}px`);
+        const blur = window.innerWidth <= 760 ? 6 : 10;
+        section.style.setProperty('--scene-blur', `${still ? 0 : entering * blur + leaving * blur * .8}px`);
         section.style.setProperty('--scene-opacity', String(still ? 1 : 1 - entering * .25 - leaving * .3));
         const visible = rect.top < height * .8 && rect.bottom > header;
         section.classList.toggle('window-in-view', visible);
         if (rect.top <= height * .5) selected = section;
       });
-      setActiveWindow(selected.id);
+      if (selectedWindow.current !== selected.id) { selectedWindow.current = selected.id; setActiveWindow(selected.id); }
       const rect = element.getBoundingClientRect();
       const progress = clamp(-rect.top / Math.max(1, element.offsetHeight - height));
       element.style.setProperty('--presentation-progress', progress.toFixed(4));
@@ -72,11 +76,14 @@ export default function LandingExperience() {
     window.addEventListener('scroll', schedule, { passive: true });
     window.addEventListener('resize', schedule);
     preference.addEventListener('change', schedule);
+    const resize = new ResizeObserver(schedule);
+    sections.forEach((section) => resize.observe(section.querySelector('.presentation-surface')));
     update();
     return () => {
       window.removeEventListener('scroll', schedule);
       window.removeEventListener('resize', schedule);
       preference.removeEventListener('change', schedule);
+      resize.disconnect();
       window.cancelAnimationFrame(frame);
       document.documentElement.classList.remove('treasury-presentation');
     };
@@ -154,6 +161,7 @@ export default function LandingExperience() {
             <Button variant="primary" busy={busy} onClick={() => createRun()} className="apple-hero-btn">
               Open Command Center <ArrowRight size={18} />
             </Button>
+            <Button variant="secondary" onClick={openImport} disabled={busy}>Import cash flows</Button>
             <a href="#landing-story" className="landing-text-link">
               Explore the experience <ArrowDown size={17} />
             </a>
