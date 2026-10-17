@@ -2,9 +2,9 @@
 
 Status: orchestration, persisted receipt/report integration and real PostgreSQL
 probes implemented. **Full historical strategy comparisons remain blocked.**
-Current runtime review: **483936c7e8d6c37c682886deb2e17503bf6d752c**.
-The final follow-up review below supersedes the explicitly historical 082f019
-defect expectations and handoff reproduction commands retained for provenance.
+Current runtime checkpoint: **dee0aae3cbd77ed4ad4e6f0961b9594ad53461d2**.
+The final independent-checkpoint verification below is authoritative; earlier
+082f019/483936c reviews and expectations are retained as historical evidence.
 This is a Python service boundary, not a new API, simulator, strategy algorithm,
 database model, or replacement for Member 1's canonical portfolio contracts.
 
@@ -1140,3 +1140,218 @@ not a replacement specification for RJ-M1-16.
 Current closeout: no new corrected runtime SHA supplied; no H1-H6 owner acceptance
 confirmed; historical strategy comparisons remain BLOCKED. This document is the
 focused Agent 1 handoff until a verified messaging destination is available.
+
+
+## Independent checkpoint verification — dee0aae (2026-10-18)
+
+This section supersedes the older closeouts above. **Historical comparisons
+remain BLOCKED.** A successful diagnostic HTTP request is not financial release
+approval. No Agent 1 acceptance of the remaining defects is recorded.
+
+### Exact local integration and receipts
+
+Verified locally, without fetching an unpublished SHA:
+
+- Runtime checkpoint: dee0aae3cbd77ed4ad4e6f0961b9594ad53461d2.
+- Its parent: 9c1b3b6d345093a2a6ed6345db64f0bc331b2194, our existing handoff commit.
+- Local no-fast-forward integration: 798085c14351345c4941269a65cd17684fe4ad11.
+- Branch/worktree: feat/backtesting-engine in the existing isolated backtesting
+  worktree. The shared develop checkout and main were not switched or edited.
+- Existing 35741cea, 2342501, 19c7326, 8c49078 and 9c1b3b6 remain ancestors.
+- Agent 1's checkpoint included edits to the owned runtime bridge and runtime
+  probe file; these were inspected and inherited, not overwritten.
+- No push or main merge is authorized or performed.
+
+The actual callable is execute_hourly_step(session, run_id,
+expected_step=None, strategy=None), returning a snapshot dict, NOT an accounting
+receipt. StepConflictError remains the shared concurrency exception.
+
+The receipt reader derives evidence from actual persisted SimulationRun,
+OrganizerObservation, CashAccount, LedgerEntry, InvestmentMovement,
+OverdraftMovement, LiquidityBreach, TreasuryDecision, PortfolioValuation and
+PositionValuation. Positions/liabilities are RepoPosition, BondPosition,
+EquityPosition and OverdraftLiability. No replacement simulator was added.
+
+Source timestamp for step k (one-based) is start + (k-1) hours; the closing
+portfolio valuation is at start + k hours. Read/aggregate historical debt from
+dated movements, not the present mutable liability balance. FINANCING_COST
+movements have zero cash delta and an explicit financing_cost_cents amount.
+Repayment kind is REPAYMENT. Borrowing principal and unpaid expense remain
+separate stocks; neither is interest income.
+
+### What the checkpoint actually fixes, and what remains
+
+| Gate | Independently verified progress | Remaining release requirement |
+| --- | --- | --- |
+| H1 | All three dispatches execute; real canonical recommend_four_tier_allocation is called 18 times through 17:00. A returned INVEST_REPO order is linked by order_id to an executed decision and reconciled to real investment movement/cash ledger. Forecast helper excludes current/future cash flows. | REACTIVE without prior history reads the unpublished current withdrawal. Canonical input phase/portfolio freshness needs agreement: portfolio is hydrated before payouts, maturity and repayment, but optimizer is called afterwards. Unsupported non-repo recommendations are not explicitly executed/rejected. |
+| H2 | Complete financed payout legs, BORROW/REPAYMENT cash/principal identities, hourly financing-cost movements and persisted closing NAV deduction pass real shock/receipt tests. | Canonical hydration excludes fully principal-repaid loans even when fees remain unpaid. Paying financing costs later is not implemented: reader has paid_borrowing_costs_cents=0 and runtime posts no expense payment. Verify fee settlement without double expense, multiple loans and optimizer inputs. |
+| H3 | 0.5% fee-field mapping, full early-redemption proceeds including cash beyond immediate shortfall, and actual 17:00/08:00 sweep/maturity receipts pass. | Repo closing accrual is recomputed as ONE hour rather than accumulated earnings. Agree floating-APY accrual/fill policy and verify multi-position, exact/insufficient coverage and no duplicate maturity credits. |
+| H4 | First row 2026-01-01 00:00 is processed, followed exactly once by 01:00; receipt states chain and audit IDs are disjoint. The requested successful route test executes a real 168-hour three-dispatch diagnostic. | Full 336/720-hour and final-window acceptance cases remain pending, not verified financial comparisons. Shared CreateRunRequest requires UTC and the inherited bridge temporarily attaches UTC to unspecified organizer wall time before run service strips it: source-aware creation is still needed; no source timezone is thereby established. |
+| H5 | BOTH funded bond/equity opening fixtures hydrate; two actual hourly marks, signed unrealized P&L, persisted position valuations, NAV and report net benefit reconcile. Bond loss and equity gain remain market P&L, not interest. | No bond/equity buy/sell or emergency liquidation execution is present in this hourly path. PositionValuation.realized_pnl_cents is always written zero; reader rejects non-tier-1 investment movements and cannot claim real liquidation/slippage attribution. Require real fills or explicitly agreed narrower scope. |
+| H6 | Requested POST /api/v1/runs/{id}/backtest and GET /report success probes both pass (not 501). Frozen OpenAPI parity is separately covered by the branch suite. | Public GET response filters out owned accounting/history/model_evaluation/scenario/provenance fields. POST ignores strategy subsets and drops top-level provenance; nested extras happen to serialize with a warning, not a declared authoritative schema. Duration, scenario, transaction and rerun contracts need route-owner completion. |
+
+The public routes remain Agent 1's ownership. No core services, routers,
+v1_contracts, OpenAPI, persistence, migrations, Member 1 code or frontend were
+edited during this independent verification.
+
+### Preserved unmasked failure evidence
+
+The new tests/backtesting/test_checkpoint_verification.py initially ran against
+the unchanged checkpoint core and inherited adapter: **4 passed, 6 failed**
+in 51.41 seconds. The six failures were:
+
+1. REACTIVE first-row reserve changed from 710298085 to 810298085 cents after
+   changing ONLY unpublished current withdrawals in a rolled-back test database.
+2. After full principal repayment, real closing receipts retained 528 cents
+   unpaid financing expense, but canonical hydrated liabilities became ZERO.
+3. Held repo accrual fell from 492724 to 492038 cents between the 18:00/19:00
+   observations: valuation contains one-hour accrual instead of cumulative accrual.
+4. Executed GET /report returned only run_id/scenario/seed/started_at/ended_at/
+   metrics. It lost accounting, history, model_evaluation, scenario_settings_json
+   and execution_provenance.
+5. POST requesting only STATIC_RESERVE returned all three strategies and omitted
+   checkpoint provenance. Its nested history/accounting/model_evaluation were
+   present in this observed response, despite the legacy declared response model;
+   do not claim these particular nested fields were experimentally lost.
+6. The configured backtesting factory silently discarded a supplied step-2
+   LIQUIDITY_SHOCK schedule. This OWNED adapter defect is fixed below.
+
+Five remaining core/route failures are now strict xfail(raises=AssertionError)
+regressions, NOT passes or accepted limitations. An unexpected fix becomes
+XPASS(strict), which fails the suite until reviewed. --runxfail exposes their
+original failing assertions. Unexpected exceptions are not hidden by those marks.
+
+### Owned integration changes
+
+Only app/backtesting/runtime.py, owned tests, and this document change locally:
+
+- Correct inspector/provider RUNTIME_SHA and engine_version to dee0aae. A stored
+  arbitrary run still has execution_provenance=NOT_RECORDED_BY_RUNTIME; the
+  reporter's known code SHA is not invented per-run execution provenance.
+- Preserve scenario schedules by validating and passing each sorted event to
+  the shared apply_simulation_scenario service. No scenario arithmetic is added.
+  Exact duplicate initial settings are one event; conflicting/duplicate steps,
+  missing explicit steps and events outside the run are rejected.
+- Atomically validate each adapter execution receipt in the same PostgreSQL
+  savepoint as the actual shared engine call. On rejection, the hour's ledger,
+  decision and step mutations roll back; outer caller transaction remains owned
+  by its caller.
+- Reject bad source digest/time/token/closed-run executions before posting.
+  Verify actual receipt digest/time within that savepoint.
+- Reject an existing deterministic run ID clearly, without overwriting/reusing a
+  previous strategy ledger or poisoning the SQLAlchemy session. Fresh comparison
+  IDs create isolated runs. Replaying the SAME comparison ID against retained
+  rows remains unsupported: no destructive reset or invented result cache.
+- Validate created run dataset/start/hourly interval against requested conditions.
+  Close factory-owned sessions if initialization fails.
+- Retain explicit blocking_reasons for configured diagnostic providers.
+  Dispatch capabilities describe executable paths, NOT H1-H6 financial approval.
+  Default unconfigured provider remains fail-closed.
+
+Provided sessions retain successful run rows and own commit/rollback.
+Factory-created sessions close without commit (thus roll back uncommitted work).
+The HTTP owner must define durable result versus ephemeral evaluation behavior.
+
+Remaining static route findings to coordinate (not silently fixed):
+
+- POST does not commit and get_db closes without commit; successful new strategy
+  rows are not durably saved under the ordinary request lifecycle. Transaction/
+  idempotency behavior needs explicit route acceptance.
+- Parent duration outside exact 168/336/720 is silently rounded/defaulted to a
+  supported day count; reject unsupported/incomplete windows instead.
+- Parent policy's actual scenarios list is now forwarded by the owned adapter,
+  but route reads constant parameters only from legacy scenario_parameters.
+  Conflicting initial/scheduled settings must be mapped explicitly, not guessed.
+- Requested strategy aliases/subsets/order are accepted publicly but ignored.
+- Shared public/openapi schemas still omit the richer owned response fields.
+- Unsupported configured policy fields (for example reserve_fraction in the
+  original opt-in fixture) are rejected by shared TreasuryPolicy. Agree a real
+  shared policy contract; do not silently substitute defaults.
+
+### Reproduce sequentially on PostgreSQL
+
+Use the repository's existing Python environment. From the isolated worktree,
+set BACKTEST_TEST_DATABASE_URL to the disposable reserve_juggler_m2_test*
+PostgreSQL database URL, PYTHONDONTWRITEBYTECODE=1, PYTHONUNBUFFERED=1. Each harness
+run creates, migrates, seeds and drops only its own uniquely named database.
+Never run these concurrently against shared run state.
+
+Common invocation:
+
+~~~powershell
+$python = 'D:\Hackathon\projects\reserve-juggler\.venv\Scripts\python.exe'
+& $python -u tests/backtesting/run_postgres_suite.py <arguments>
+~~~
+
+Actual argument sets, in execution order:
+
+1. tests/backtesting/test_runtime_persistence.py::test_backtest_and_report_routes_succeed -vv -s -p no:cacheprovider --tb=long
+   First test: **2 passed, 1 warning, 52.71 seconds**; exit 0, no hang.
+2. tests/backtesting tests/integration/test_runs_runtime.py tests/integration/test_four_tier_runtime.py tests/integration/test_strategy_dispatch_and_causality.py tests/backend/test_persistence.py -v -p no:cacheprovider --tb=short
+   Baseline checkpoint regressions: **190 passed, 7 skipped, 1 warning,
+   90.23 seconds**, exit 0.
+3. tests/backtesting/test_checkpoint_verification.py -vv -s -p no:cacheprovider --tb=long
+   Initial unmasked independent gates: **4 passed, 6 failed, 1 warning,
+   51.41 seconds**, exit 1. This predates the owned scenario fix and xfail marks.
+4. tests/backtesting/test_checkpoint_verification.py -k "not public_backtest" -vv -p no:cacheprovider --tb=short -rxX
+   First owned adapter checks: **11 passed, 1 deselected, 4 xfailed,
+   8.19 seconds**, exit 0.
+5. tests -q -p no:cacheprovider --tb=short -rxX
+   Complete integrated PostgreSQL suite: see verification closeout below.
+
+To reproduce unresolved defects without expected-failure masking:
+
+~~~powershell
+& $python -u tests/backtesting/run_postgres_suite.py tests/backtesting/test_checkpoint_verification.py --runxfail -vv -s -p no:cacheprovider --tb=long
+~~~
+
+Full stdout/stderr logs are retained locally in:
+C:\Users\DEVESH SHUKLA\AppData\Local\Temp\reserve-juggler-dee0aae-verification-bb9ff202170d45abb501cecaa51f6d2c
+(files 01-route-success-complete.log through 06-final-owned-adapter-checks.log).
+The source CSV hash remains:
+2e7c1d2e5b678e9975250211e7e0017022049c510e1dd90cd7f29e931837b0c5.
+
+Seven full-comparison cases remain explicit skips until release approval:
+7/14/30 NORMAL and seven-day HIGH_WITHDRAWAL, LOW_DEPOSIT, SETTLEMENT_DELAY,
+LIQUIDITY_SHOCK. They must eventually use a verified real provider and actual
+supported policy, establish deterministic rerun lifecycle and pass ALL original
+receipt identities without xfails. No RJ-M1-16 acceptance is inferred.
+
+Graphify exists at repository level and checkpoint updates were inherited.
+Owned graph regeneration remains deferred because graphify-out and sync scripts
+are outside this workstream's permitted edit paths. No second graph project and
+no unsupported synchronization-success claim. Integration owner must synchronize
+after accepting fixes. This does not delay diagnostic tests or the local commit.
+
+No verified Agent 1 messaging destination is available. This section remains the
+handoff; core fixes are neither claimed accepted nor assigned a new runtime SHA.
+
+### Verification closeout
+
+Complete integrated suite (command 5): **761 passed, 9 skipped, 5 xfailed,
+2 failed, 2 warnings in 161.04 seconds; exit 1**. No hang and no concurrent
+duplicate test runs. PostgreSQL migrations/source seeding/receipt paths were real.
+
+Final owned check (command 6, same arguments as command 4 after adding schedule
+validation/deduplication cases): **15 passed, 1 deselected, 4 xfailed in 8.30
+seconds; exit 0**. The deselected costly POST subset probe was already exercised
+and remained the fifth expected failure in the complete run.
+
+Both ordinary failures are existing parameterizations of
+tests/backend/test_api_versioning.py::test_backtest_routes_return_honest_unimplemented_error:
+they still assert 501 for unknown runs while the checkpoint returns 404.
+Their update belongs to the API/runtime owner, not this workstream.
+Do not describe the complete suite as green.
+
+The five strict expected failures remain release blockers, not verified financial
+paths. Nine skips include all seven full-comparison acceptance cases.
+All 15 non-xfailed new checkpoint/owned adapter checks pass within the complete run;
+the five xfails can be reproduced with --runxfail. Existing Member 1, pipeline,
+runtime/dispatch and PostgreSQL persistence tests otherwise pass. OpenAPI equality
+passes for the OLD declared contract, not the required richer response shape.
+
+Release conclusion: **DO NOT UNBLOCK historical strategy comparisons**. Agent 1
+must address the core/route defects, fee settlement and market trade coverage,
+source-time boundary, repeat-comparison lifecycle and stale API tests.
+Verify a new exact checkpoint, rerun strict gates without xfail masking, then
+obtain Member 1/user approval before historical-comparison or RJ-M1-16 acceptance.

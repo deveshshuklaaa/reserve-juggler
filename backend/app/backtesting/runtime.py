@@ -1,4 +1,4 @@
-"""Integration with the *unmodified* 483936c runtime and its persisted evidence.
+"""Receipt integration with the dee0aae runtime checkpoint.
 
 No prices, yields, cash flows, strategy actions, or posting amounts are calculated
 here. Incomplete receipts are errors, not opportunities to repair the executor.
@@ -20,11 +20,13 @@ from .contracts import EngineState, HourReceipt
 from .protocol import DecisionFrame, EngineCapabilities, ExecutionFrame, HourlyRun, RunSpec
 from .service import EngineContractError, SharedEngineUnavailable, observation_digest
 
-RUNTIME_SHA = "483936c7e8d6c37c682886deb2e17503bf6d752c"
+RUNTIME_SHA = "dee0aae3cbd77ed4ad4e6f0961b9594ad53461d2"
 RUNTIME_BLOCKERS = (
-    "No shared strategy dispatch for STATIC, REACTIVE, RESERVE_JUGGLER.",
-    "get_hourly_forecasts_from_db reads current/future realized source flows.",
-    "The first execution is source_start_timestamp + one hour; the first dataset row cannot be executed.",
+    "Historical-comparison release gates remain unaccepted; configured sessions enable diagnostic execution only.",
+    "REACTIVE no-history fallback reads unpublished current withdrawals.",
+    "Optimizer hydration omits unpaid financing costs once principal is repaid.",
+    "Repo accrued interest is not cumulative; market liquidation/realized-P&L execution is unsupported.",
+    "Public response/scenario/transaction contracts still need integration-owner verification.",
 )
 KNOWN_LEDGER_KINDS = frozenset((
     "CUSTOMER_DEPOSIT_INFLOW", "CUSTOMER_WITHDRAWAL_OUTFLOW", "OVERNIGHT_REPO_SWEEP_DEBIT",
@@ -58,9 +60,23 @@ class PersistedHourlyRun:
         return {"step": frame.step, "timestamp": frame.timestamp}
 
     def execute(self, frame: ExecutionFrame, decision: object) -> HourReceipt:
-        execute_hourly_step(self.session, self.spec.run_id, expected_step=frame.step, strategy=self.spec.strategy)
-        receipt = read_hour_receipt(self.session, self.spec.run_id, frame.step + 1)
-        return receipt
+        if self.closed:
+            raise EngineContractError("Cannot execute a closed strategy run")
+        if type(frame.step) is not int or not 0 <= frame.step < self.spec.steps:
+            raise EngineContractError("Execution step must be an in-window integer")
+        timestamp = self.spec.start + timedelta(hours=frame.step)
+        if (frame.observation.timestamp != timestamp
+                or frame.source_digest != observation_digest(frame.observation)
+                or decision != {"step": frame.step, "timestamp": timestamp}):
+            raise EngineContractError("Execution frame/token does not identify the agreed source hour")
+        # Validation and posting must share one savepoint. Never leave a mutated
+        # ledger behind when the strict receipt reader rejects the execution.
+        with self.session.begin_nested():
+            execute_hourly_step(self.session, self.spec.run_id, expected_step=frame.step, strategy=self.spec.strategy)
+            receipt = read_hour_receipt(self.session, self.spec.run_id, frame.step + 1)
+            if receipt.timestamp != timestamp or receipt.source_digest != frame.source_digest:
+                raise EngineContractError("Persisted execution differs from the supplied source observation")
+            return receipt
 
     def close(self) -> None:
         if not self.closed:
@@ -70,9 +86,14 @@ class PersistedHourlyRun:
 
 
 class SharedRuntimeFactory:
-    """Shared execution provider using verified hourly persistence."""
+    """Configured shared-engine diagnostic provider, NOT comparison release approval.
+
+    Capabilities describe executable dispatch paths, not H1-H6 acceptance.
+    Caller-provided sessions own commit/rollback. Factory-created sessions are
+    closed (and uncommitted work rolled back) at run close.
+    """
     capabilities = EngineCapabilities(
-        engine_version="hourly-runtime-483936c", integration_sha=RUNTIME_SHA,
+        engine_version="hourly-runtime-dee0aae", integration_sha=RUNTIME_SHA,
         execution_kind="SHARED", strategies=(), scenarios=(),
     )
     blocking_reasons = RUNTIME_BLOCKERS
@@ -82,29 +103,38 @@ class SharedRuntimeFactory:
         self.session_factory = session_factory
         if session is not None or session_factory is not None:
             self.capabilities = EngineCapabilities(
-                engine_version="hourly-runtime-483936c", integration_sha=RUNTIME_SHA,
+                engine_version="hourly-runtime-dee0aae", integration_sha=RUNTIME_SHA,
                 execution_kind="SHARED", strategies=("STATIC", "REACTIVE", "RESERVE_JUGGLER"),
                 scenarios=("NORMAL", "HIGH_WITHDRAWAL", "LOW_DEPOSIT", "SETTLEMENT_DELAY", "LIQUIDITY_SHOCK"),
             )
-            self.blocking_reasons = ()
+            self.blocking_reasons = RUNTIME_BLOCKERS
         else:
             self.blocking_reasons = RUNTIME_BLOCKERS
 
     def start(self, spec: RunSpec) -> HourlyRun:
         if self.session is None and self.session_factory is None:
             raise SharedEngineUnavailable("Shared runtime is blocked: runtime unconfigured")
-        owns_session = False
-        if self.session is not None:
-            session = self.session
-        else:
-            session = self.session_factory()
-            owns_session = True
-
         import json
         from app.services.run_service import create_simulation_run, apply_simulation_scenario
         from app.v1_contracts import CreateRunRequest, ScenarioRequest, TreasuryPolicy
 
         policy_dict = json.loads(spec.policy_json)
+        # Reuse the shared scenario scheduler; never implement scenario cash
+        # arithmetic here or silently drop a schedule from comparison conditions.
+        schedule = policy_dict.get("scenarios", [])
+        if not isinstance(schedule, list):
+            raise EngineContractError("Scenario schedule must be a list")
+        scenario_requests = [ScenarioRequest.model_validate(event) for event in schedule]
+        if spec.scenario.name != "NORMAL" or spec.scenario.parameters_json != "{}":
+            initial_scenario = ScenarioRequest(
+                scenario=spec.scenario.name, parameters=json.loads(spec.scenario.parameters_json), effective_step=1)
+            # An exact copy in the persisted schedule is the same event, not a
+            # second shock. Conflicting step-one settings remain an error.
+            if initial_scenario not in scenario_requests:
+                scenario_requests.insert(0, initial_scenario)
+        steps = [event.effective_step for event in scenario_requests]
+        if any(step is None or not 1 <= step <= spec.steps for step in steps) or len(set(steps)) != len(steps):
+            raise EngineContractError("Scenario schedule needs unique in-window explicit effective steps")
         policy_for_model = {k: v for k, v in policy_dict.items() if k not in ("scenarios", "scenario_parameters", "strategy")}
         policy_obj = TreasuryPolicy.model_validate(policy_for_model) if policy_for_model else TreasuryPolicy()
         from datetime import timezone
@@ -117,14 +147,25 @@ class SharedRuntimeFactory:
             start_time=utc_start,
             policy=policy_obj,
         )
-        create_simulation_run(session, create_req, run_id=spec.run_id)
-        if spec.scenario.name != "NORMAL" or spec.scenario.parameters_json != "{}":
-            params = json.loads(spec.scenario.parameters_json)
-            apply_simulation_scenario(session, spec.run_id, ScenarioRequest(
-                scenario=spec.scenario.name, parameters=params, effective_step=1
-            ))
-        session.flush()
-        return PersistedHourlyRun(session, spec, owns_session=owns_session)
+        owns_session = self.session is None
+        session = self.session_factory() if owns_session else self.session
+        try:
+            if session.get(SimulationRun, spec.run_id) is not None:
+                raise EngineContractError("Strategy run ID already exists; use a fresh comparison ID, never reuse a mutated ledger")
+            with session.begin_nested():
+                create_simulation_run(session, create_req, run_id=spec.run_id)
+                created = session.get(SimulationRun, spec.run_id)
+                if (created.dataset_id != spec.dataset_id or created.source_start_timestamp != spec.start
+                        or created.native_interval_seconds != 3600):
+                    raise EngineContractError("Shared run creation did not preserve requested source/time conditions")
+                for event in sorted(scenario_requests, key=lambda item: item.effective_step):
+                    apply_simulation_scenario(session, spec.run_id, event)
+                session.flush()
+            return PersistedHourlyRun(session, spec, owns_session=owns_session)
+        except Exception:
+            if owns_session:
+                session.close()
+            raise
 
 
 def _rows(session, model, run_id, timestamp, *, time_field="occurred_at"):
