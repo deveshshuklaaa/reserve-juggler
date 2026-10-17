@@ -1,5 +1,10 @@
 # Quantitative engine contract v1
 
+**Four-tier migration:** RJ-M1-06 adds the authoritative four-tier boundary below.
+The original models/functions in this document remain supported as legacy interfaces;
+they do not model the full organizer problem. Their UTC, integer-bps, and optional
+15-minute demo assumptions must not be applied to organizer observations.
+
 Package: `treasury_intelligence`. Requires Python 3.10+ and Pydantic 2
 (`treasury_intelligence/requirements.txt`). No database, HTTP, or frontend imports.
 RJ-M1-01 defined validated immutable models and public function declarations.
@@ -303,3 +308,157 @@ Demonstrates five deterministic operational scenarios:
 6. Full JSON serialization and 100% round-trip validation.
 
 Uncertainty is explicitly marked as `provisional_uncalibrated`.
+
+## RJ-M1-06 Additive four-tier contracts
+
+Public module: `treasury_intelligence.four_tier`, also exported from the package.
+Original `types.py` schemas, function signatures, pipeline, demo, and prior fixtures
+are unchanged. `VaultPosition` lacks asset identity, quantities, prices, repo
+maturities, duration/volatility, and debt; `TreasuryContext` cannot represent a
+marked multi-asset balance sheet or timezone-unspecified source history. New models
+use an independent immutable `FourTierContract`, not the legacy UTC base class.
+No lossy automatic conversion to/from legacy bps or UTC contracts is supplied.
+
+### Source fidelity and units
+
+The supplied CSV was inspected read-only: 8,760 contiguous hourly rows, 16 columns,
+2026-01-01 00:00:00 through 2026-12-31 23:00:00. SHA-256:
+`2e7c1d2e5b678e9975250211e7e0017022049c510e1dd90cd7f29e931837b0c5`.
+No CSV file is copied into the repository, edited, or resampled.
+
+`OrganizerHourlyObservation` has exactly these source fields:
+
+| Type | Source fields |
+| --- | --- |
+| Timezone-unspecified timestamp, on the hour | timestamp |
+| Nonnegative Decimal USD | deposits_usd, withdrawals_usd |
+| Signed Decimal USD, independent source value | net_flow_usd |
+| Boolean (also accepts CSV strings True/False) | repo_sweep_window_open, repo_sweep_mature |
+| Signed finite Decimal source rate | tier1_repo_rate_apy, tier2_bond_yield_pct |
+| Positive Decimal index | tier2_bond_price_index, tier3_stock_index_price |
+| Nonnegative Decimal years | tier2_bond_mod_duration |
+| Nonnegative Decimal percentage points | tier3_stock_volatility_pct, emergency_overdraft_penalty_apr_pct |
+| Decimal percentage points in [0,100] | tier1_early_redemption_haircut_pct, tier2_bond_liquidation_haircut_pct, tier3_stock_liquidation_haircut_pct |
+
+Source rates retain their original scale and names. The dataset's repo APY values
+(for example 4.292) are carried unchanged; `MarketRateObservation.repo_apy_pct`
+explicitly uses percentage points, where 4.292 means 4.292%, not fraction 4.292.
+The normalized quote also exposes bond_yield_pct, equity_volatility_pct, and
+overdraft_apr_pct with observed_at provenance. MarketPriceObservation exposes
+bond_price_index, bond_modified_duration_years, and equity_index_price.
+
+Decimal fields accept decimal strings, Decimal, or integers; reject binary floats,
+booleans, NaN, and infinity; and serialize to decimal strings without truncating
+to bps. Source dollar amounts remain Decimal USD. Stored/proposed cash amounts
+are strict integer cents. Exposure bounds are Decimal fractions in [0,1], distinct
+from percentage-point quotes. Do not parse a decimal string through binary float
+before model validation. Source net flow is never recomputed or overwritten.
+
+All new timestamps are naive ISO strings/datetimes with explicit
+`timestamp_basis="timezone_unspecified"` on the portfolio. Aware timestamps and
+epoch numbers are rejected. No conversion, appended Z, or inferred timezone occurs.
+Native history and forecasts are hourly, not fabricated quarter-hour observations.
+The caller must establish when a source row becomes available: its timestamp alone
+does not prove that a whole future hour's flows were known at its start.
+
+### Positions, policy, and provenance
+
+| Model | Fields/semantics |
+| --- | --- |
+| InstrumentId | TIER0_CASH, TIER1_REPO, TIER2_BOND, TIER3_EQUITY, OVERDRAFT; the last is a liability, not an asset tier |
+| Tier0CashPosition | available_cents; fixed zero annual yield |
+| Tier1RepoPosition | position_id, principal_cents, entered_at at 17:00, matures_at next-day 08:00, entry_apy_pct, early_break_allowed, early_break_fee_pct (default 0.5), estimated_interest_cents |
+| Tier2BondPosition | position_id, index_units, cost_basis_cents, observed_price_index, marked_at, market_value_cents, matures_at, tenor_years=2, annual_yield_pct, modified_duration_years, liquidation_haircut_pct (default 2) |
+| Tier3EquityPosition | shared market position fields plus annual_volatility_pct and emergency_sale_slippage_pct (default 15) |
+| OverdraftLiability | principal_cents, accrued_financing_cost_cents, annual_apr_pct, credit_limit_cents; principal cannot exceed credit limit |
+| CostBreakdown | liquidation_fee_cents, repo_break_fee_cents, transaction_cost_cents, funding_cost_cents, market_loss_cents; nonnegative integer cents |
+| FourTierPortfolioState | as_of, timestamp_basis, USD currency, cash, repos, bonds, equities, overdraft, market_rates, market_prices, realized_costs |
+| ExposureConstraint | instrument (asset only), minimum_fraction (default 0), maximum_fraction |
+| FourTierRiskPolicy | minimum_liquid_reserve_cents, operational_buffer_cents, max_estimated_loss_cents, overdraft_allowed, max_overdraft_cents, all four exposure_constraints, bond_risk_method |
+| ForecastRiskMetadata | model_version, generated_at, training_data_through, granularity_hours=1, net_flow_target, uncertainty_status, optional evaluation_reference, notes |
+| HourlyForecastPoint | start_at, predicted_deposits_cents, predicted_withdrawals_cents, signed predicted_net_flow_cents, supplied_uncertainty_buffer_cents |
+
+Market index units mean normalized USD exposure per source index point. Positions
+validate market_value_cents = units * observed index * 100, rounded half up with
+local Decimal precision. This is a schema consistency check, not a valuation engine
+or real exchange-lot convention. Mark timestamps/prices must match the supplied
+price snapshot, which cannot be from the future. Cost basis is not current value.
+Supplied index changes already mark bond value; never subtract duration-implied
+loss again from that same mark. Duration stress is a separate hypothetical risk
+estimate (`observed_index_with_separate_duration_stress`), not another realized loss.
+
+Repo principal remains a separate asset until actual settlement. Crossing maturity
+does not automatically add it to cash, and a source maturity flag is not proof a
+particular position has settled. Entry APY/estimated interest are observations and
+estimates, not guaranteed realized cash. Future interest implementation must use
+actual 15-hour holding time and known rate path, not a fixed 24-hour return.
+Member 2 must remove settled repo positions when crediting cash exactly once.
+Overdraft drawing increases both cash and liability; it is never investment income.
+Realized costs belong to portfolio history; estimated costs belong to recommendations.
+Index losses, liquidation fees/slippage, and financing cost must remain distinguishable
+and must not be charged twice through both mark changes and cost reporting.
+
+All positions have unique IDs. Exposure constraints require exactly one entry per
+asset tier, ordered minimum/maximum bounds, and bounds that permit full allocation.
+Disabled overdraft has a zero policy limit. Training/market/history observations
+cannot be from the future. Request history must be sorted and contiguous hourly;
+missing hours require an explicit upstream policy, not invented data. Metadata can
+identify a source-net-flow target independently of deposits-minus-withdrawals.
+`evaluated` uncertainty requires an actual evaluation reference; no metrics are
+generated or fabricated by this milestone.
+
+### Additive recommendation interface
+
+```python
+recommend_portfolio_allocation(
+    request: FourTierRecommendationRequest,
+) -> PortfolioRecommendation
+```
+
+This interface is available in the package and `api.py`, and raises
+`NotImplementedError` until the optimizer milestone. It does not invoke the legacy
+single-vault optimizer or execute trades. FourTierRecommendationRequest contains
+request_id, portfolio, history, policy, metadata, and supplied hourly forecast.
+
+PortfolioRecommendation contains request_id, as_of, action (HOLD/REBALANCE/
+LIQUIDITY_WARNING), recommendation_only=true, execution_status=NOT_EXECUTED,
+feasible, allocation_budget_cents, four asset targets, target_overdraft_principal_cents,
+required_liquid_reserve_cents, proposed trades, expected_costs,
+estimated_market_risk_loss_cents, instrument_returns, exposure_constraints,
+metadata, and explanations. Target amounts must sum to the asset allocation budget;
+overdraft is separately stated debt, not a fifth asset target. Feasible targets
+must satisfy exposure bounds and target Tier 0 cash must cover required reserve.
+The allocation budget is post-estimated-cost gross assets, not net worth.
+
+TradeRecommendation specifies trade_id, instrument, action, principal_cents,
+index_units for market BUY/SELL, position_id for SELL/REDEEM_REPO,
+earliest_execution_at, expected_settlement_at, expected_maturity_at for ENTER_REPO,
+expected_costs, and reason. All trades are recommendations with NOT_EXECUTED status.
+Actions are instrument-checked: repo ENTER_REPO/REDEEM_REPO, bonds/equities BUY/SELL,
+and overdraft BORROW/REPAY. Cash is the settlement leg rather than an orderable
+security. Repo entries explicitly settle at 17:00 and mature next-day 08:00.
+The tuple preserves proposed order; it does not promise atomicity or permission.
+
+InstrumentReturnEstimate separates expected_income_cents, expected_price_change_cents,
+expected_costs, estimated_stress_loss_cents, horizon_hours, and estimate_basis by
+instrument. `realized=false` is mandatory. Equity expected price change may be signed;
+it is not guaranteed interest. Recommendation-level estimated risk is separate from
+expected transaction/liquidation costs and from already realized portfolio losses.
+
+Schema validation is not trade execution validation. Member 2 must reconcile a
+response with its request, current balances, positions, policy limits, fees, quote
+freshness, repo windows/permissions, settlement timing, and financing before any
+execution. This milestone does not compute target budgets, check the complete
+trade-to-target accounting plan, or implement portfolio risk/optimization.
+
+### Fixtures and integration notes
+
+`tests/treasury_intelligence/fixtures/organizer_hourly_observation.json` preserves
+the first real source row. `four_tier_request.json` includes two real hourly source
+rows with an illustrative portfolio/policy/forecast. `four_tier_response.json` is
+an illustrative recommendation, not a generated optimizer result. The repo return
+example uses a stated constant-rate ACT/365 assumption for 15 hours; forecasts,
+estimates, and stress amounts are explicitly examples, not evaluated metrics.
+
+See [Member 2 integration](MEMBER2_INTEGRATION.md) and
+[Member 3 frontend fields](MEMBER3_FRONTEND_FIELDS.md).

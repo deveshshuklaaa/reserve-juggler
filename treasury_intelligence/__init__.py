@@ -24,6 +24,14 @@ from .forecasting import (
 from .policy import TreasuryDecisionPolicy, VaultTerms
 from .pipeline import TreasuryPipelineResult, run_treasury_pipeline
 from .demo import run_demo
+from .four_tier import (
+    InstrumentId, OrganizerHourlyObservation, MarketRateObservation, MarketPriceObservation,
+    Tier0CashPosition, Tier1RepoPosition, Tier2BondPosition, Tier3EquityPosition,
+    OverdraftLiability, CostBreakdown, FourTierPortfolioState, ExposureConstraint,
+    FourTierRiskPolicy, ForecastRiskMetadata, HourlyForecastPoint,
+    FourTierRecommendationRequest, AllocationTarget, TradeRecommendation,
+    InstrumentReturnEstimate, PortfolioRecommendation, recommend_portfolio_allocation,
+)
 
 __all__ = [
     "CashFlowBucket", "ForecastPoint", "ForecastResult", "TreasuryContext",
@@ -38,4 +46,10 @@ __all__ = [
     "build_feature_matrix", "rolling_mean_forecast", "seasonal_naive_forecast",
     "TreasuryDecisionPolicy", "VaultTerms",
     "TreasuryPipelineResult", "run_treasury_pipeline", "run_demo",
+    "InstrumentId", "OrganizerHourlyObservation", "MarketRateObservation", "MarketPriceObservation",
+    "Tier0CashPosition", "Tier1RepoPosition", "Tier2BondPosition", "Tier3EquityPosition",
+    "OverdraftLiability", "CostBreakdown", "FourTierPortfolioState", "ExposureConstraint",
+    "FourTierRiskPolicy", "ForecastRiskMetadata", "HourlyForecastPoint",
+    "FourTierRecommendationRequest", "AllocationTarget", "TradeRecommendation",
+    "InstrumentReturnEstimate", "PortfolioRecommendation", "recommend_portfolio_allocation",
 ]

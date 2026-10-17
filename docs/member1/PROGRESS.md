@@ -8,6 +8,40 @@
 
 ## Task Log
 
+### [RJ-M1-06] Four-Tier Contract Migration
+- **Status**: COMPLETED
+- **Scope**: Added immutable four-tier contracts for exact organizer observations,
+  instrument identities, Decimal market quotes, operational cash, 15-hour repo
+  positions, index-marked two-year bonds/equities, overdraft debt, realized/estimated
+  costs, portfolio state, exposure/risk policy, hourly forecast provenance, targets,
+  proposed trades, instrument return estimates, and explained recommendations.
+- **Compatibility**: Original model fields, forecast/reserve/decision signatures,
+  tests, demo, and standalone pipeline preserved. New public
+  `recommend_portfolio_allocation(request)` is a contract-only NotImplementedError
+  boundary; no optimizer, trade execution, loader, persistence, or API changes.
+- **Data Fidelity**: Read-only inspection of the supplied Downloads CSV confirmed
+  8,760 contiguous hourly observations and all 16 actual headers. All 8,760 rows
+  validate against the new observation model. Source net flow remains independent.
+  Market/source values retain Decimal precision with decimal-string JSON; new
+  timestamps remain timezone-unspecified, separate from legacy UTC contracts.
+  Original CSV SHA-256 before/after unchanged:
+  `2e7c1d2e5b678e9975250211e7e0017022049c510e1dd90cd7f29e931837b0c5`.
+- **Deliverables**: `treasury_intelligence/four_tier.py`, additive package/API
+  exports, three JSON fixtures, `test_four_tier_contracts.py`, ENGINE_CONTRACT.md,
+  MEMBER2_INTEGRATION.md, MEMBER3_FRONTEND_FIELDS.md, and this log.
+- **Fixtures**: Real source rows plus explicitly illustrative request/response
+  portfolio and estimates; no fabricated evaluation metrics or optimizer claims.
+- **Validation**: Hourly granularity, offset rejection, float/nonfinite rejection,
+  native Decimal scale, 17:00-to-08:00 repo maturity, observed-index mark checks,
+  separate borrowing, exposure/target/reserve invariants, nonexecuted order shapes,
+  causal history/provenance, legacy signatures, and imports without ML/DB/FastAPI.
+- **Tests**: Full suite 237 passed (181 previous tests preserved; 56 new tests).
+  Command: `$env:PYTHONPATH=".;backend"; uv run --with pytest --with fastapi --with pydantic --with httpx --with sqlalchemy --with pydantic-settings pytest tests/ -q`
+- **Commit**: `feat(engine): extend contracts for four-tier treasury`
+  (hash in Git history and completion report).
+- **Push Target**: `origin/feat/treasury-intelligence`; result in completion report.
+- **Next Task**: Await explicit assignment; stop after RJ-M1-06.
+
 ### [RJ-M1-05] Standalone Treasury Decision Pipeline and Demo
 - **Status**: COMPLETED
 - **Scope**: Connected all Member 1 quantitative modules into an end-to-end pure Python
