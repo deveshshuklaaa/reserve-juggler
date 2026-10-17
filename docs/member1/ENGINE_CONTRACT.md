@@ -1367,3 +1367,11 @@ separate metric. No database, trading or frontend behavior is added by this audi
 FINAL_AUDIT.md records release findings, limitations and standalone instructions;
 TESTING_REPORT.md records complete verification, and the two integration handoffs
 supersede conflicting older field examples for canonical consumers.
+
+## RJ-M1-15 Integration handoff verification
+
+FOUR_TIER_HANDOFF.md lists exact imports, inspected public signatures, constructor
+requirements and a runnable canonical JSON consumer. integration_request.json and
+integration_response.json are full validated wire examples. RELEASE_VERIFICATION.md
+records the current branch/test/demo/data-integrity checks. No engine interfaces
+were redesigned; the documented legacy/canonical and metadata boundaries remain.

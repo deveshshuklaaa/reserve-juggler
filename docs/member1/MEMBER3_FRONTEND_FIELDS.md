@@ -1,4 +1,4 @@
-# Member 3 display handoff — RJ-M1-14
+# Member 3 display handoff â€” RJ-M1-14
 
 Use canonical portfolio snapshots and AllocationOptimizerResult JSON. Do not mix
 older four_tier fixture field names with canonical portfolio fields.
@@ -52,3 +52,8 @@ forecast chart series or full MC result. Fetch those result objects separately.
 The four-scenario demo uses illustrative starting balances and synthetic market
 shocks, not measured strategy returns. See RELEASE_RESULTS.json for actual forecast
 error measurements and FINAL_AUDIT.md for limitations. No frontend was modified.
+
+RJ-M1-15: docs/member1/integration_response.json is a complete canonical optimizer
+output for consumer development; its single nominal scenario is illustrative, not
+calibrated risk. See FOUR_TIER_HANDOFF.md and RELEASE_VERIFICATION.md for current
+wire examples, exact imports and outstanding integration boundaries.

@@ -1,4 +1,4 @@
-# Member 2 integration handoff — RJ-M1-14
+# Member 2 integration handoff â€” RJ-M1-14
 
 Use explicit module imports at the canonical boundary:
 
@@ -36,7 +36,8 @@ flows were available at that instant. Only completed/available history belongs i
 forecast inputs. Quotes and model training/calibration cutoffs cannot exceed as_of.
 The demo assumes its supplied decision-time observation is available.
 
-Forecasting still returns the compatibility `four_tier.HourlyForecastResult`.
+Forecasting returns `hourly_forecasting.HourlyForecastResult`, backed by compatibility
+`four_tier` point and metadata models.
 Explicitly copy point fields into canonical `portfolio.HourlyForecastPoint` (including
 time_basis). Preserve metadata separately: forecast net targets deposits minus
 withdrawals, whereas canonical metadata currently permits source_net_flow_usd only.
@@ -70,3 +71,7 @@ cost is conservative; this is not a realized execution/backtesting ledger.
 Integration readiness: contract/demo round trips are tested. No Member 2 API or
 execution adapter has been modified or certified end-to-end. See FINAL_AUDIT.md for
 remaining boundary and data-availability limitations.
+
+RJ-M1-15: see FOUR_TIER_HANDOFF.md for exact inspected signatures, constructor
+requirements, canonical JSON request/response examples, and the verified import
+command. RELEASE_VERIFICATION.md records current tests/demo and readiness blockers.

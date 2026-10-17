@@ -8,6 +8,29 @@
 
 ## Task Log
 
+### [RJ-M1-15] Final Member 1 handoff and release verification
+- **Status**: Verification complete; **release readiness BLOCKED** by documented
+  single-contract/metadata and external integration boundaries. Canonical imports
+  and recommendation JSON consumption work. No engine redesign or production changes.
+- **Git**: Started clean on feat/treasury-intelligence at
+  14a8d72596047a652bd8d98b485da501c2539746, matching origin after fetch; completed
+  Member 1 commit history present. Only Member 1 documentation/examples changed.
+- **Tests**: Complete repository suite including Member 1: **428 passed in 36.94s**.
+  Canonical request/result/risk round trips, dispatcher and stored response comparison
+  pass. Canonical recommendation also works with optional ML/API/ORM imports blocked.
+- **Demo/data**: All four official-data scenarios pass with JSON round trip; 8,760
+  naive hourly rows / 16 fields; original source SHA256 unchanged.
+- **Handoff**: Added FOUR_TIER_HANDOFF.md with inspected signatures, required constructor
+  fields, exact imports and full integration_request.json/integration_response.json.
+  Added RELEASE_VERIFICATION.md; linked existing contract and Member 2/3 notes.
+  Corrected the forecasting result module reference in Member 2's note.
+- **Metrics**: RJ-M1-14 measured reports remain available unchanged; no new metrics
+  fabricated or claimed. The illustrative wire example is not calibrated risk.
+- **Blockers**: Active older four_tier schemas/root exports coexist with canonical
+  portfolio; metadata target mismatch; unspecified source availability; Member 2/3
+  execution/display wiring not certified. Optional ML needs scikit-learn.
+- **Next**: STOP; await an explicitly assigned integration/alignment task.
+
 ### [RJ-M1-14] Final quantitative engine audit
 - **Status**: COMPLETED ? Member 1 release audit; integration limitations remain explicit.
 - **Material fixes**: Monte Carlo asset conservation/endpoint cash, repo claim removal,

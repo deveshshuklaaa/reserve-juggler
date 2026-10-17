@@ -1,0 +1,438 @@
+{
+  "request_id": "rj-m1-15-integration-example",
+  "liquidity": {
+    "portfolio": {
+      "time_basis": "UNSPECIFIED",
+      "run_id": "00000000-0000-0000-0000-000000000001",
+      "source_type": "ORGANIZER_HISTORICAL",
+      "dataset_id": "treasury_4tier_dataset:sha256:2e7c1d2e5b678e9975250211e7e0017022049c510e1dd90cd7f29e931837b0c5",
+      "source_observation_timestamp": "2026-01-02T17:00:00",
+      "as_of": "2026-01-02T17:00:00",
+      "native_interval_seconds": 3600,
+      "currency": "USD",
+      "cash": {
+        "time_basis": "UNSPECIFIED",
+        "run_id": "00000000-0000-0000-0000-000000000001",
+        "source_type": "ORGANIZER_HISTORICAL",
+        "dataset_id": "treasury_4tier_dataset:sha256:2e7c1d2e5b678e9975250211e7e0017022049c510e1dd90cd7f29e931837b0c5",
+        "source_observation_timestamp": "2026-01-02T17:00:00",
+        "id": "43e7d9f8-f562-5823-b1c3-1bd0b1cf54ab",
+        "liquidity": {
+          "classification": "IMMEDIATE",
+          "available_cents": 40000000000,
+          "locked_cents": 0,
+          "liquidatable_value_cents": 40000000000
+        },
+        "tier": 0,
+        "balance_cents": 40000000000,
+        "last_ledger_entry_id": null,
+        "apy_pct": "0"
+      },
+      "repo_positions": [],
+      "bond_positions": [],
+      "equity_positions": [],
+      "overdrafts": [],
+      "valuation": {
+        "time_basis": "UNSPECIFIED",
+        "run_id": "00000000-0000-0000-0000-000000000001",
+        "source_type": "ORGANIZER_HISTORICAL",
+        "dataset_id": "treasury_4tier_dataset:sha256:2e7c1d2e5b678e9975250211e7e0017022049c510e1dd90cd7f29e931837b0c5",
+        "source_observation_timestamp": "2026-01-02T17:00:00",
+        "valued_at": "2026-01-02T17:00:00",
+        "tier0_cash_cents": 40000000000,
+        "tier1_principal_cents": 0,
+        "tier1_value_cents": 0,
+        "tier2_market_value_cents": 0,
+        "tier3_market_value_cents": 0,
+        "total_portfolio_value_cents": 40000000000,
+        "immediately_available_cents": 40000000000,
+        "liquidatable_value_cents": 40000000000,
+        "restricted_value_cents": 0,
+        "liabilities_cents": 0,
+        "net_portfolio_value_cents": 40000000000,
+        "reference_id": "valuation-2026-01-02T17:00:00"
+      },
+      "market_rates": {
+        "time_basis": "UNSPECIFIED",
+        "observed_at": "2026-01-02T17:00:00",
+        "repo_apy_pct": "4.272",
+        "bond_yield_pct": "5.074",
+        "equity_volatility_pct": "18.0",
+        "overdraft_apr_pct": "12.0"
+      },
+      "market_prices": {
+        "time_basis": "UNSPECIFIED",
+        "observed_at": "2026-01-02T17:00:00",
+        "bond_price_index": "99.473",
+        "bond_modified_duration_years": "1.92",
+        "equity_index_price": "4993.83"
+      }
+    },
+    "policy": {
+      "base_buffer_cents": 100000000,
+      "uncertainty_multiplier_bps": 10000,
+      "tolerance_bps": 0,
+      "min_transfer_cents": 100000,
+      "max_allocation_bps": 10000,
+      "repo_sweep_window_open": true,
+      "allow_early_repo_redemption": false,
+      "allow_bond_liquidation": false,
+      "allow_emergency_equity_liquidation": false,
+      "tier_limits": [
+        {
+          "tier": 1,
+          "max_allocation_bps": 10000,
+          "min_allocation_bps": 0
+        },
+        {
+          "tier": 2,
+          "max_allocation_bps": 0,
+          "min_allocation_bps": 0
+        },
+        {
+          "tier": 3,
+          "max_allocation_bps": 0,
+          "min_allocation_bps": 0
+        }
+      ],
+      "minimum_liquid_reserve_cents": 0,
+      "max_estimated_loss_cents": null,
+      "allow_overdraft": false,
+      "max_overdraft_cents": 0,
+      "bond_risk_method": "observed_index_with_separate_duration_stress"
+    },
+    "forecast": [
+      {
+        "time_basis": "UNSPECIFIED",
+        "start_at": "2026-01-02T17:00:00",
+        "predicted_deposits_cents": 1314330697,
+        "predicted_withdrawals_cents": 1465355974,
+        "predicted_net_flow_cents": -151025277,
+        "supplied_uncertainty_buffer_cents": 870404451
+      },
+      {
+        "time_basis": "UNSPECIFIED",
+        "start_at": "2026-01-02T18:00:00",
+        "predicted_deposits_cents": 1281727445,
+        "predicted_withdrawals_cents": 1304423130,
+        "predicted_net_flow_cents": -22695685,
+        "supplied_uncertainty_buffer_cents": 870404451
+      },
+      {
+        "time_basis": "UNSPECIFIED",
+        "start_at": "2026-01-02T19:00:00",
+        "predicted_deposits_cents": 1298700276,
+        "predicted_withdrawals_cents": 1485945262,
+        "predicted_net_flow_cents": -187244986,
+        "supplied_uncertainty_buffer_cents": 870404451
+      },
+      {
+        "time_basis": "UNSPECIFIED",
+        "start_at": "2026-01-02T20:00:00",
+        "predicted_deposits_cents": 963733076,
+        "predicted_withdrawals_cents": 1213484137,
+        "predicted_net_flow_cents": -249751061,
+        "supplied_uncertainty_buffer_cents": 870404451
+      },
+      {
+        "time_basis": "UNSPECIFIED",
+        "start_at": "2026-01-02T21:00:00",
+        "predicted_deposits_cents": 978529384,
+        "predicted_withdrawals_cents": 1001376526,
+        "predicted_net_flow_cents": -22847142,
+        "supplied_uncertainty_buffer_cents": 870404451
+      },
+      {
+        "time_basis": "UNSPECIFIED",
+        "start_at": "2026-01-02T22:00:00",
+        "predicted_deposits_cents": 731263560,
+        "predicted_withdrawals_cents": 896227722,
+        "predicted_net_flow_cents": -164964162,
+        "supplied_uncertainty_buffer_cents": 870404451
+      },
+      {
+        "time_basis": "UNSPECIFIED",
+        "start_at": "2026-01-02T23:00:00",
+        "predicted_deposits_cents": 800283286,
+        "predicted_withdrawals_cents": 608674609,
+        "predicted_net_flow_cents": 191608677,
+        "supplied_uncertainty_buffer_cents": 870404451
+      },
+      {
+        "time_basis": "UNSPECIFIED",
+        "start_at": "2026-01-03T00:00:00",
+        "predicted_deposits_cents": 621500718,
+        "predicted_withdrawals_cents": 816668101,
+        "predicted_net_flow_cents": -195167383,
+        "supplied_uncertainty_buffer_cents": 870404451
+      },
+      {
+        "time_basis": "UNSPECIFIED",
+        "start_at": "2026-01-03T01:00:00",
+        "predicted_deposits_cents": 686221279,
+        "predicted_withdrawals_cents": 678737373,
+        "predicted_net_flow_cents": 7483906,
+        "supplied_uncertainty_buffer_cents": 870404451
+      },
+      {
+        "time_basis": "UNSPECIFIED",
+        "start_at": "2026-01-03T02:00:00",
+        "predicted_deposits_cents": 647356979,
+        "predicted_withdrawals_cents": 591112722,
+        "predicted_net_flow_cents": 56244257,
+        "supplied_uncertainty_buffer_cents": 870404451
+      },
+      {
+        "time_basis": "UNSPECIFIED",
+        "start_at": "2026-01-03T03:00:00",
+        "predicted_deposits_cents": 589177646,
+        "predicted_withdrawals_cents": 601029085,
+        "predicted_net_flow_cents": -11851439,
+        "supplied_uncertainty_buffer_cents": 870404451
+      },
+      {
+        "time_basis": "UNSPECIFIED",
+        "start_at": "2026-01-03T04:00:00",
+        "predicted_deposits_cents": 608533198,
+        "predicted_withdrawals_cents": 627311858,
+        "predicted_net_flow_cents": -18778660,
+        "supplied_uncertainty_buffer_cents": 870404451
+      },
+      {
+        "time_basis": "UNSPECIFIED",
+        "start_at": "2026-01-03T05:00:00",
+        "predicted_deposits_cents": 725652721,
+        "predicted_withdrawals_cents": 630316223,
+        "predicted_net_flow_cents": 95336498,
+        "supplied_uncertainty_buffer_cents": 870404451
+      },
+      {
+        "time_basis": "UNSPECIFIED",
+        "start_at": "2026-01-03T06:00:00",
+        "predicted_deposits_cents": 803487695,
+        "predicted_withdrawals_cents": 766023011,
+        "predicted_net_flow_cents": 37464684,
+        "supplied_uncertainty_buffer_cents": 870404451
+      },
+      {
+        "time_basis": "UNSPECIFIED",
+        "start_at": "2026-01-03T07:00:00",
+        "predicted_deposits_cents": 901630419,
+        "predicted_withdrawals_cents": 934861993,
+        "predicted_net_flow_cents": -33231574,
+        "supplied_uncertainty_buffer_cents": 870404451
+      }
+    ],
+    "planning_horizon_hours": 15,
+    "uncertainty_mode": "scenario_quantile",
+    "calibrated_allowance": null,
+    "confidence": "0.95",
+    "scenarios": [
+      {
+        "scenario_id": "illustrative-nominal-only-not-calibrated",
+        "probability": "1",
+        "forecast": [
+          {
+            "time_basis": "UNSPECIFIED",
+            "start_at": "2026-01-02T17:00:00",
+            "predicted_deposits_cents": 1314330697,
+            "predicted_withdrawals_cents": 1465355974,
+            "predicted_net_flow_cents": -151025277,
+            "supplied_uncertainty_buffer_cents": 870404451
+          },
+          {
+            "time_basis": "UNSPECIFIED",
+            "start_at": "2026-01-02T18:00:00",
+            "predicted_deposits_cents": 1281727445,
+            "predicted_withdrawals_cents": 1304423130,
+            "predicted_net_flow_cents": -22695685,
+            "supplied_uncertainty_buffer_cents": 870404451
+          },
+          {
+            "time_basis": "UNSPECIFIED",
+            "start_at": "2026-01-02T19:00:00",
+            "predicted_deposits_cents": 1298700276,
+            "predicted_withdrawals_cents": 1485945262,
+            "predicted_net_flow_cents": -187244986,
+            "supplied_uncertainty_buffer_cents": 870404451
+          },
+          {
+            "time_basis": "UNSPECIFIED",
+            "start_at": "2026-01-02T20:00:00",
+            "predicted_deposits_cents": 963733076,
+            "predicted_withdrawals_cents": 1213484137,
+            "predicted_net_flow_cents": -249751061,
+            "supplied_uncertainty_buffer_cents": 870404451
+          },
+          {
+            "time_basis": "UNSPECIFIED",
+            "start_at": "2026-01-02T21:00:00",
+            "predicted_deposits_cents": 978529384,
+            "predicted_withdrawals_cents": 1001376526,
+            "predicted_net_flow_cents": -22847142,
+            "supplied_uncertainty_buffer_cents": 870404451
+          },
+          {
+            "time_basis": "UNSPECIFIED",
+            "start_at": "2026-01-02T22:00:00",
+            "predicted_deposits_cents": 731263560,
+            "predicted_withdrawals_cents": 896227722,
+            "predicted_net_flow_cents": -164964162,
+            "supplied_uncertainty_buffer_cents": 870404451
+          },
+          {
+            "time_basis": "UNSPECIFIED",
+            "start_at": "2026-01-02T23:00:00",
+            "predicted_deposits_cents": 800283286,
+            "predicted_withdrawals_cents": 608674609,
+            "predicted_net_flow_cents": 191608677,
+            "supplied_uncertainty_buffer_cents": 870404451
+          },
+          {
+            "time_basis": "UNSPECIFIED",
+            "start_at": "2026-01-03T00:00:00",
+            "predicted_deposits_cents": 621500718,
+            "predicted_withdrawals_cents": 816668101,
+            "predicted_net_flow_cents": -195167383,
+            "supplied_uncertainty_buffer_cents": 870404451
+          },
+          {
+            "time_basis": "UNSPECIFIED",
+            "start_at": "2026-01-03T01:00:00",
+            "predicted_deposits_cents": 686221279,
+            "predicted_withdrawals_cents": 678737373,
+            "predicted_net_flow_cents": 7483906,
+            "supplied_uncertainty_buffer_cents": 870404451
+          },
+          {
+            "time_basis": "UNSPECIFIED",
+            "start_at": "2026-01-03T02:00:00",
+            "predicted_deposits_cents": 647356979,
+            "predicted_withdrawals_cents": 591112722,
+            "predicted_net_flow_cents": 56244257,
+            "supplied_uncertainty_buffer_cents": 870404451
+          },
+          {
+            "time_basis": "UNSPECIFIED",
+            "start_at": "2026-01-03T03:00:00",
+            "predicted_deposits_cents": 589177646,
+            "predicted_withdrawals_cents": 601029085,
+            "predicted_net_flow_cents": -11851439,
+            "supplied_uncertainty_buffer_cents": 870404451
+          },
+          {
+            "time_basis": "UNSPECIFIED",
+            "start_at": "2026-01-03T04:00:00",
+            "predicted_deposits_cents": 608533198,
+            "predicted_withdrawals_cents": 627311858,
+            "predicted_net_flow_cents": -18778660,
+            "supplied_uncertainty_buffer_cents": 870404451
+          },
+          {
+            "time_basis": "UNSPECIFIED",
+            "start_at": "2026-01-03T05:00:00",
+            "predicted_deposits_cents": 725652721,
+            "predicted_withdrawals_cents": 630316223,
+            "predicted_net_flow_cents": 95336498,
+            "supplied_uncertainty_buffer_cents": 870404451
+          },
+          {
+            "time_basis": "UNSPECIFIED",
+            "start_at": "2026-01-03T06:00:00",
+            "predicted_deposits_cents": 803487695,
+            "predicted_withdrawals_cents": 766023011,
+            "predicted_net_flow_cents": 37464684,
+            "supplied_uncertainty_buffer_cents": 870404451
+          },
+          {
+            "time_basis": "UNSPECIFIED",
+            "start_at": "2026-01-03T07:00:00",
+            "predicted_deposits_cents": 901630419,
+            "predicted_withdrawals_cents": 934861993,
+            "predicted_net_flow_cents": -33231574,
+            "supplied_uncertainty_buffer_cents": 870404451
+          }
+        ],
+        "market_stress": {
+          "bond_method": "price_drawdown",
+          "bond_drawdown_pct": "0",
+          "bond_yield_change_pct": "0",
+          "equity_drawdown_pct": "0",
+          "equity_volatility_multiplier": "0"
+        }
+      }
+    ],
+    "repo_settlements": [],
+    "obligations": [],
+    "liquidation_settlements": [],
+    "default_liquidation_delay_hours": 1,
+    "operational_buffer_cents": null,
+    "market_stress": {
+      "bond_method": "price_drawdown",
+      "bond_drawdown_pct": "0",
+      "bond_yield_change_pct": "0",
+      "equity_drawdown_pct": "0",
+      "equity_volatility_multiplier": "0"
+    },
+    "available_overdraft_credit_cents": 0,
+    "modeled_overdraft_apr_pct": null
+  },
+  "rewards": {
+    "time_basis": "UNSPECIFIED",
+    "model_version": "candidate-search-v1",
+    "policy_version": "handoff-example-v1",
+    "assumption_reference": "illustrative-not-calibrated",
+    "assumption_status": "user_supplied",
+    "calibration_reference": null,
+    "assumptions_available_at": "2026-01-02T17:00:00",
+    "holding_hours": 15,
+    "risk_aversion": "1",
+    "equity_volatility_multiplier": "2",
+    "assets": [
+      {
+        "tier": 1,
+        "expected_income_pct": "0",
+        "expected_price_return_pct": "0",
+        "stress_loss_pct": "0",
+        "forced_liquidation_probability": "0",
+        "liquidation_haircut_pct": "0.5",
+        "trade_fee_pct": "0",
+        "fixed_trade_fee_cents": 0,
+        "usd_per_index_point_per_unit": null,
+        "quantity_decimal_places": 8
+      },
+      {
+        "tier": 2,
+        "expected_income_pct": "0",
+        "expected_price_return_pct": "0",
+        "stress_loss_pct": "2",
+        "forced_liquidation_probability": "0",
+        "liquidation_haircut_pct": "2.0",
+        "trade_fee_pct": "0",
+        "fixed_trade_fee_cents": 0,
+        "usd_per_index_point_per_unit": "1",
+        "quantity_decimal_places": 8
+      },
+      {
+        "tier": 3,
+        "expected_income_pct": "0",
+        "expected_price_return_pct": "0",
+        "stress_loss_pct": "18.0",
+        "forced_liquidation_probability": "0",
+        "liquidation_haircut_pct": "15.0",
+        "trade_fee_pct": "0",
+        "fixed_trade_fee_cents": 0,
+        "usd_per_index_point_per_unit": "1",
+        "quantity_decimal_places": 8
+      }
+    ]
+  },
+  "supplied_reserve": null,
+  "allocation_grid_bps": [
+    0,
+    5000,
+    10000
+  ],
+  "max_candidates": 2048,
+  "new_repo_settlement_delay_hours": 0
+}
