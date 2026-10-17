@@ -564,3 +564,217 @@ repo entry/maturity/interest, recorded shock consequences, read-only reporting,
 sampling, isolation, missing-evidence rejection, atomic rollback, and the
 repayment/early-break/future-query diagnoses above. The original seven full
 comparison cases remain pending, not converted into fake passes.
+
+
+## Agent 1 handoff packet — documentation delivery, comparisons blocked
+
+Handoff checkpoint: receipt/report commit
+2342501dd8321d9aaf402929dfd4ed973082aabe on feat/backtesting-engine.
+Inspected runtime: 082f0190a015298d63583d65a0b216a465b93ce1.
+Both are local Git objects. No verified Agent 1 messaging destination is available;
+the user designated this document as the handoff. No message delivery, remote
+publication, route implementation, or completed historical comparison is claimed.
+
+### Exact current response shapes
+
+These are the service models in app.backtesting.reports, verified from their
+Pydantic model_fields. They are NOT yet the response schemas of the 501 routes.
+JSON uses objects and arrays, even though internal collections are tuples.
+The field inventories below are structural descriptions, not fabricated example
+financial results.
+
+BacktestReport object fields:
+
+~~~text
+run_id: UUID string identifying the comparison
+scenario: NORMAL | HIGH_WITHDRAWAL | LOW_DEPOSIT | SETTLEMENT_DELAY | LIQUIDITY_SHOCK
+seed: integer
+started_at: timezone-aware operation timestamp
+ended_at: timezone-aware operation timestamp
+results: array of ReportStrategyResult
+execution_kind: SHARED | TEST_DOUBLE
+engine_integration_sha: full commit SHA string | null
+conditions_sha256: string
+scenario_settings_json: immutable JSON configuration string
+model_evaluation: null
+~~~
+
+ReportStrategyResult object fields:
+
+~~~text
+strategy: STATIC_RESERVE | REACTIVE_RESERVE | RESERVE_JUGGLER
+metrics: FrontendFinancialMetrics object
+history: array of HistoryPoint
+accounting: AccountingTotals object
+model_evaluation: null
+~~~
+
+RunReport object fields:
+
+~~~text
+run_id: UUID string identifying the persisted run
+scenario: one of the five supported scenario names
+seed: integer
+started_at: actual persisted created_at timestamp
+ended_at: actual persisted updated_at timestamp when complete | null
+metrics: FrontendFinancialMetrics object | null
+history: array of HistoryPoint
+accounting: AccountingTotals object | null
+scenario_settings_json: JSON string containing initial_scenario and schedule
+runtime_commit_verified_by_reporter: inspected runtime SHA string
+execution_provenance: NOT_RECORDED_BY_RUNTIME
+model_evaluation: null
+~~~
+
+A ready run with no executed receipts has null metrics/accounting and empty
+history. A partially unsupported or unreconciled run raises an error instead
+of returning a misleading partial financial summary.
+
+FrontendFinancialMetrics contains exactly:
+
+~~~text
+realized_interest_cents, accrued_interest_cents,
+average_checking_cents, average_vault_cents,
+redemption_penalties_cents, emergency_borrowing_cost_cents,
+emergency_events, reserve_breaches, failed_payouts,
+unpaid_cents, net_benefit_cents
+~~~
+
+AccountingTotals contains exactly:
+
+~~~text
+realized_interest_cents, average_checking_cents, average_invested_cents,
+penalties_cents, borrowing_costs_cents, borrowing_outstanding_cents,
+reserve_breaches, emergency_events, failed_payouts, unpaid_payouts_cents,
+sweeps, net_benefit_cents, contractual_penalties_cents,
+liquidation_losses_cents, transaction_costs_cents, realized_market_pnl_cents,
+accrued_interest_cents, unrealized_market_pnl_cents,
+unpaid_borrowing_costs_cents, ending_net_asset_value_cents,
+customer_cash_delta_cents, model_evaluation
+~~~
+
+HistoryPoint contains exactly timestamp (naive organizer source time) and
+checking_cents (integer cents). All monetary JSON values must be JavaScript-safe
+integers; net benefit and market P&L remain signed. The legacy interest/accrual
+projection restriction discussed above is still unresolved, not silently changed.
+
+### Exact reproduction procedure
+
+Run from an isolated checkout containing the handoff commit, not by switching
+the shared develop checkout. Configure the existing project Python environment
+with its backend dependencies and access to Docker PostgreSQL.
+
+Confirm the local object/branch relationship first:
+
+~~~powershell
+git branch --show-current
+git cat-file -e '082f0190a015298d63583d65a0b216a465b93ce1^{commit}'
+git cat-file -e '2342501dd8321d9aaf402929dfd4ed973082aabe^{commit}'
+git merge-base --is-ancestor 082f0190a015298d63583d65a0b216a465b93ce1 HEAD
+git merge-base --is-ancestor 2342501dd8321d9aaf402929dfd4ed973082aabe HEAD
+~~~
+
+The branch is feat/backtesting-engine; both ancestry checks should exit zero.
+A missing local-only commit is a handoff problem, not a SHA to fetch blindly
+from GitHub.
+
+Use a dedicated existing reserve_juggler_m2_test* database with permission to
+create/drop disposable databases. The following URL is ONLY the repository's
+local Compose-default example, not a production credential or requirement:
+
+~~~powershell
+$env:PYTHONDONTWRITEBYTECODE='1'
+$env:BACKTEST_TEST_DATABASE_URL='postgresql+psycopg2://postgres:postgres@127.0.0.1:5432/reserve_juggler_m2_test'
+python tests/backtesting/run_postgres_suite.py tests/backtesting/test_runtime_persistence.py -vv -p no:cacheprovider --tb=short
+~~~
+
+Substitute your configured local test credentials if they differ. The harness
+creates a uniquely named database, applies actual SQL migrations, loads the
+byte-identical CSV and sets the application database before pytest starts.
+The runtime fixture independently creates its own migrated, CSV-loaded test
+database. Both remove only their generated databases afterward. No shared
+application database or organizer source is rewritten.
+
+Individual defect probes (same environment and Python executable):
+
+~~~powershell
+python tests/backtesting/run_postgres_suite.py tests/backtesting/test_runtime_persistence.py::test_runtime_repayment_postgresql_blocker_is_reproducible -vv -p no:cacheprovider --tb=short
+python tests/backtesting/run_postgres_suite.py tests/backtesting/test_runtime_persistence.py::test_runtime_early_repo_break_blocker_is_reproducible -vv -p no:cacheprovider --tb=short
+python tests/backtesting/run_postgres_suite.py tests/backtesting/test_runtime_persistence.py::test_actual_forecast_query_uses_future_observations_so_comparisons_stay_blocked -vv -p no:cacheprovider --tb=short
+python tests/backtesting/run_postgres_suite.py tests/backtesting/test_runtime_persistence.py::test_real_shock_has_shortfall_borrowing_and_financing_records -vv -p no:cacheprovider --tb=short
+python tests/backtesting/run_postgres_suite.py tests/backtesting/test_runtime_persistence.py::test_incomplete_shock_receipt_rolls_back_atomic_execution -vv -p no:cacheprovider --tb=short
+~~~
+
+Expected findings on 082f019:
+
+| Probe | Actual path / observed diagnostic |
+| --- | --- |
+| repayment_postgresql_blocker | Step 1 shock then step 2 NORMAL recovery; PostgreSQL rejects REPAY with SQLSTATE 23514 |
+| early_repo_break_blocker | Real sweep through step 17, shock at step 18; AttributeError for early_break_fee_bps |
+| actual_forecast_query | Database hour 04:00 realized withdrawals appear in the forecast made at 01:00 |
+| real_shock_has_shortfall | Persists the linked breach, loan, BORROW movement and accrued cost; does NOT verify all payout/NAV accounting |
+| incomplete_shock_receipt | Strict receipt adapter rejects missing financing receipts and rolls back that entire step |
+
+These tests PASS when the current defect or guard is reproduced. That is
+diagnostic evidence, not a successful financial-path acceptance result. Do not
+remove the tests to make the next runtime green. Preserve the original evidence
+in Git and replace the relevant defect expectation with positive financial
+assertions once the corrected behavior is independently demonstrated.
+
+### Fix verification matrix and gate for Agent 1's follow-up
+
+| Area | Required positive acceptance evidence |
+| --- | --- |
+| Repayment naming | Shared executor emits the schema's canonical repayment kind; shock/recovery commits successfully in PostgreSQL; principal, paid cash and movement references reconcile without duplicate events |
+| Early repo redemption | Correct Decimal percentage/fee mapping, explicit haircut and net proceeds, linked cash/position movements, no missing attribute, no lost excess proceeds and no double-counted fee |
+| Financed customer payouts | Full settled customer obligation is auditable, including the financed remainder; borrow credit is offset by an explicit funded payout leg; borrowing never becomes income |
+| Financing expense and NAV | Hourly incurred/paid/unpaid cost receipts with unique audit references; NAV deducts principal AND unpaid costs; later payment does not expense the same amount twice; source APR is preserved |
+| First observation | First step executes the requested first row, including the first CSV timestamp; 168/336/720 selected hours are neither skipped nor padded; final boundaries are exact |
+| Market P&L | Persisted per-position marked values, realized/unrealized attribution, liquidation/slippage costs and cost basis reconcile with portfolio values; otherwise precisely declare unsupported cases and continue rejecting them |
+| Strategy dispatch | Explicit STATIC, REACTIVE, RESERVE_JUGGLER paths through the SAME executor; isolated equal all-cash starts, source, interval, seed and scenario settings; no previous strategy state reused |
+| Causal forecasting | Features/training/query access excludes current/future realized flows and future scenario settlements; regression mutating only future rows cannot alter earlier decisions; do not replace lookahead with fabricated zero forecasts |
+| Route wiring | Real database session, explicit parent-run-to-request mapping, correct richer response models/OpenAPI, honest blocked/error handling and /api/v1 paths; no hidden fallback result |
+
+For route integration, Agent 1 owns backend/app/routers/runs.py, the shared
+Pydantic transport contract and contracts/openapi.yaml. This workstream supplies
+BacktestReportService.compare and report_run, not independent route edits.
+The original body only contains public strategy aliases; resolve the duration/
+source window and policy/scenario schedule explicitly with the parent run.
+Do not inherit its current mutated balances as a new strategy's initial state.
+
+Use BacktestReport / RunReport or coordinated equivalent shared response schemas,
+including nested history/accounting/model_evaluation; retain signed net benefit
+and safe integers. Agree request filtering/order semantics rather than silently
+mapping different strategies to identical executions. Do not attach UTC to CSV
+timestamps. Continue reporting unavailable model evaluation as null.
+
+The current SharedRuntimeFactory advertises no validated strategies. Its guard
+must stay until the relevant corrected commit, dispatch and causal tests are
+verified. Full backtest routing cannot claim success merely because a report
+projection or one hourly transaction works.
+
+When the user supplies the corrected full SHA and test evidence:
+
+1. Confirm the object exists locally or on an explicitly published branch; check
+   its ancestry against 082f019, and check this branch still retains 2342501.
+   Inspect divergence rather than assuming a short SHA/base is authoritative.
+2. Inspect the actual runtime/model/result changes and required schema migrations.
+   Integrate only through the agreed isolated-branch workflow, never main.
+3. Reconcile receipt mappings without synthesizing missing financial postings.
+   Run the targeted real PostgreSQL probes as positive acceptance tests.
+4. Run the complete suite with the PostgreSQL harness. The preceding checkpoint
+   reported 733 passed / 9 skipped: seven pending full-comparison cases plus two
+   optional external-dataset tests. This is a checkpoint, not a promise for a
+   different runtime commit.
+5. Only after dispatch, accounting and no-lookahead checks pass, configure the
+   actual shared-provider factory/SHA and run the original seven comparison
+   acceptance cases described above. No deterministic fake in those tests.
+6. Coordinate route response/schema and endpoint tests with Agent 1. A passing
+   service suite does not remove the routes' current 501 status.
+7. Review ownership/diff/status, commit locally, and request permission before
+   any push or main integration. Graphify's repository-level synchronization
+   remains an explicitly deferred integration-owner action under path ownership.
+
+Full historical strategy comparisons remain BLOCKED until these runtime fixes
+are implemented, integrated and verified. The ten runtime probes remain
+diagnostic evidence, not proof that the affected financial paths are correct.
