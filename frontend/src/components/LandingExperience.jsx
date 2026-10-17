@@ -5,6 +5,7 @@ import { Button } from './ui';
 import RJQuantumPrism from './RJQuantumPrism';
 import InteractiveSandbox from './InteractiveSandbox';
 import PresentationScene from './PresentationScene';
+import CapitalFlow from './CapitalFlow';
 import './presentation.css';
 
 const windows = [
@@ -18,6 +19,16 @@ export default function LandingExperience() {
   const { createRun, busy } = useSimulation();
   const root = useRef(null);
   const [activeWindow, setActiveWindow] = useState('window-hero');
+  const [motionPaused, setMotionPaused] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('treasury-motion-paused', motionPaused);
+    window.dispatchEvent(new Event('treasury-motion-change'));
+    return () => {
+      document.documentElement.classList.remove('treasury-motion-paused');
+      window.dispatchEvent(new Event('treasury-motion-change'));
+    };
+  }, [motionPaused]);
 
   useEffect(() => {
     const element = root.current;
@@ -31,13 +42,23 @@ export default function LandingExperience() {
       const height = window.innerHeight;
       const header = window.innerWidth <= 760 ? 64 : 124;
       let selected = sections[0];
-      sections.forEach((section) => {
+      const available = Math.max(1, height - header);
+      sections.forEach((section, index) => {
         const rect = section.getBoundingClientRect();
-        const entering = clamp((rect.top - header) / (height - header));
-        const leaving = clamp((height * .28 - rect.bottom) / (height * .28));
-        section.style.setProperty('--scene-shift', `${preference.matches ? 0 : entering * 70 - leaving * 25}px`);
-        section.style.setProperty('--scene-scale', preference.matches ? '1' : String(1 - entering * .035 - leaving * .018));
-        section.style.setProperty('--scene-radius', `${preference.matches ? 0 : entering * 38}px`);
+        const surface = section.querySelector('.presentation-surface');
+        const nextTop = sections[index + 1]?.getBoundingClientRect().top ?? Infinity;
+        const entering = clamp((rect.top - header) / available);
+        const leaving = clamp((height - nextTop) / available);
+        const still = preference.matches || motionPaused;
+        section.style.setProperty('--scene-height', `${surface.offsetHeight}px`);
+        // Tall scenes scroll through their full contents before pinning at the bottom.
+        section.style.setProperty('--scene-pin', `${header - Math.max(0, surface.offsetHeight - available)}px`);
+        section.style.setProperty('--scene-index', String(index + 1));
+        section.style.setProperty('--scene-shift', `${still ? 0 : entering * 48}px`);
+        section.style.setProperty('--scene-scale', still ? '1' : String(1 - entering * .045 - leaving * .06));
+        section.style.setProperty('--scene-radius', `${still ? 0 : Math.max(entering, leaving) * 32}px`);
+        section.style.setProperty('--scene-blur', `${still ? 0 : entering * 16 + leaving * 12}px`);
+        section.style.setProperty('--scene-opacity', String(still ? 1 : 1 - entering * .25 - leaving * .3));
         const visible = rect.top < height * .8 && rect.bottom > header;
         section.classList.toggle('window-in-view', visible);
         if (rect.top <= height * .5) selected = section;
@@ -59,7 +80,7 @@ export default function LandingExperience() {
       window.cancelAnimationFrame(frame);
       document.documentElement.classList.remove('treasury-presentation');
     };
-  }, []);
+  }, [motionPaused]);
 
   const scrollToWindow = (id) => {
     const target = document.getElementById(id);
@@ -69,8 +90,9 @@ export default function LandingExperience() {
   };
 
   return (
-    <div className="landing-experience" ref={root}>
+    <div className={`landing-experience ${motionPaused ? 'presentation-paused' : ''}`} ref={root}>
       <div className="presentation-progress" aria-hidden="true" />
+      <button type="button" className="presentation-motion-toggle" aria-pressed={motionPaused} onClick={() => setMotionPaused((paused) => !paused)}>{motionPaused ? 'Resume motion' : 'Pause motion'}<span aria-hidden="true">{motionPaused ? '▷' : 'Ⅱ'}</span></button>
       {/* Floating Apple Window Navigator (Desktop) */}
       <nav className="apple-scroll-tracker" aria-label="Page section navigation">
         <div className="tracker-rail">
@@ -265,6 +287,7 @@ export default function LandingExperience() {
           <p>
             Start with $20M in simulated cash. Explore the Command Center, Shock Lab, and Strategy Arena.
           </p>
+          <CapitalFlow />
 
           <div className="finale-action-group">
             <Button variant="primary" busy={busy} onClick={() => createRun()} className="apple-hero-btn">

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 
 const chapters = [
   { id: 'position', label: 'Position' },
+  { id: 'four-tier-section', label: 'Portfolio' },
   { id: 'intelligence', label: 'Intelligence' },
   { id: 'activity', label: 'Activity' },
 ];

@@ -6,7 +6,7 @@ export default function RJQuantumPrism() {
   const prismRef = useRef(null);
 
   const handleMouseMove = (e) => {
-    if (!prismRef.current || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!prismRef.current || window.matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.classList.contains('treasury-motion-paused')) return;
     const rect = prismRef.current.getBoundingClientRect();
     const x = (e.clientX - rect.left) / rect.width - 0.5;
     const y = (e.clientY - rect.top) / rect.height - 0.5;

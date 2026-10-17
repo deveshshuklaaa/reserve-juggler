@@ -24,6 +24,19 @@ async function start(user) {
 }
 
 describe('three-screen frontend workflow', () => {
+  it('lets visitors pause presentation motion and explore capital tiers without creating a run', async () => {
+    const { user, api } = renderApp();
+    const create = vi.spyOn(api, 'createRun');
+    await user.click(screen.getByRole('button', { name: 'Pause motion' }));
+    expect(screen.getByRole('button', { name: 'Resume motion' })).toHaveAttribute('aria-pressed', 'true');
+    expect(document.querySelector('.landing-experience')).toHaveClass('presentation-paused');
+    await user.click(screen.getByRole('button', { name: '02 Bonds' }));
+    expect(screen.getByText('Market value, duration, and settlement timing in one view.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '02 Bonds' })).toHaveAttribute('aria-pressed', 'true');
+    expect(create).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Resume motion' }));
+    expect(screen.getByRole('button', { name: 'Pause motion' })).toHaveAttribute('aria-pressed', 'false');
+  });
   it('opens the first-visit story and enters the real dashboard from its main action', async () => {
     const { user } = renderApp();
     expect(screen.getByRole('heading', { name: 'Treasury, in motion.' })).toBeInTheDocument();

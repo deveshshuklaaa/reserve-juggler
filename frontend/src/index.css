@@ -54,7 +54,7 @@ body {
   line-height: 1.5;
   background: #ffffff;
   color: var(--text-primary);
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 button, input, select {

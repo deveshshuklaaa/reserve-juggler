@@ -147,10 +147,11 @@ export default function InteractiveBackgroundCanvas() {
 
     const restart = () => {
       cancelAnimationFrame(animationFrameId);
-      reduceMotion = motionPreference.matches;
+      reduceMotion = motionPreference.matches || document.documentElement.classList.contains('treasury-motion-paused');
       if (!document.hidden) render();
     };
     motionPreference.addEventListener('change', restart);
+    window.addEventListener('treasury-motion-change', restart);
     document.addEventListener('visibilitychange', restart);
     render();
 
@@ -159,6 +160,7 @@ export default function InteractiveBackgroundCanvas() {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('mousemove', handleMouseMove);
       motionPreference.removeEventListener('change', restart);
+      window.removeEventListener('treasury-motion-change', restart);
       document.removeEventListener('visibilitychange', restart);
     };
   }, []);

@@ -1,0 +1,26 @@
+/* Motion supports orientation and interaction; financial values remain exact. */
+.workspace-main .page-content { animation: workspace-arrive .65s cubic-bezier(.2,.7,.2,1) both; }
+.workspace-main .page-content.landing-page { animation: none; }
+.workspace-main .panel { transition: border-color .3s, box-shadow .3s; }
+.workspace-main .panel:hover { border-color: #b6cce1; box-shadow: 0 12px 36px #18365708; }
+.workspace-main .tier-card, .workspace-main .scorecard-card, .workspace-main .stress-tier-card { transition: transform .35s cubic-bezier(.2,.7,.2,1), box-shadow .35s, border-color .35s; }
+.workspace-main .tier-card:hover, .workspace-main .scorecard-card:hover, .workspace-main .stress-tier-card:hover { transform: translateY(-4px); box-shadow: 0 16px 32px #1836570b; }
+.workspace-main .button svg { transition: transform .25s; }
+.workspace-main .button:hover:not(:disabled) svg:last-child { transform: translateX(2px); }
+.workspace-main .button:active:not(:disabled) { transform: scale(.97); }
+.workspace-main input, .workspace-main select { transition: border-color .25s, box-shadow .25s; }
+.workspace-main input:focus-visible, .workspace-main select:focus-visible { outline: 2px solid #0071e3; outline-offset: 3px; box-shadow: 0 0 0 6px #0071e30a; }
+.workspace-main tbody tr { transition: background .2s; }
+.workspace-main tbody tr:hover { background: #0071e305; }
+.workspace-main .segmented button, .workspace-main .tier-filter-segmented button { transition: color .25s, background .25s, box-shadow .25s; }
+.workspace-main .portfolio-allocation-track span { animation: allocation-reveal .9s cubic-bezier(.16,1,.3,1) both; transform-origin: left; }
+.workspace-main .meter-bar-fill { transition: width .65s cubic-bezier(.16,1,.3,1), background .35s; }
+.workspace-main .story-section [data-story-reveal].story-visible { animation: financial-reveal .8s cubic-bezier(.16,1,.3,1) both; }
+@keyframes workspace-arrive { from { opacity: .5; filter: blur(7px); transform: translateY(18px); } to { opacity: 1; filter: blur(0); transform: none; } }
+@keyframes financial-reveal { from { opacity: .55; filter: blur(6px); transform: translateY(24px); } to { opacity: 1; filter: blur(0); transform: none; } }
+@keyframes allocation-reveal { from { transform: scaleX(.1); opacity: .4; } to { transform: scaleX(1); opacity: 1; } }
+@media (hover: none) { .workspace-main .tier-card:hover, .workspace-main .scorecard-card:hover, .workspace-main .stress-tier-card:hover { transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .workspace-main .page-content, .workspace-main .story-section [data-story-reveal].story-visible, .workspace-main .portfolio-allocation-track span { animation: none; filter: none; transform: none; }
+  .workspace-main .tier-card:hover, .workspace-main .scorecard-card:hover, .workspace-main .stress-tier-card:hover, .workspace-main .button:hover:not(:disabled) svg:last-child { transform: none; }
+}

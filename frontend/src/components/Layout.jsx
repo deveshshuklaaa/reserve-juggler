@@ -5,6 +5,7 @@ import { useSimulation } from '../context/SimulationContext';
 import { utc } from '../utils/format';
 import { Alert, Button } from './ui';
 import InteractiveBackgroundCanvas from './InteractiveBackgroundCanvas';
+import './motion.css';
 
 const navigation = [
   { to: '/', label: 'Command Center' },

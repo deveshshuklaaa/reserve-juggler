@@ -33,3 +33,16 @@ and pauses when the page is hidden.
 The strategy introduction makes no return or safety guarantees. The landing sandbox
 is an explicitly labeled frontend illustration with integer-cent arithmetic and no
 executed trades. See MEMBER1_INTEGRATION_STATUS.md for the quantitative data boundary.
+
+## Blur and reveal presentation
+
+Scenes now pin while the next full-width sheet enters, with scroll-linked blur,
+scale, opacity, and corner transitions. Tall scenes remain scrollable. Body overflow
+uses clipping rather than an extra scroll container so sticky scenes work correctly.
+The four-tier capital diagram supports keyboard and pointer selection with live
+descriptions. Dashboard panels, allocation bars, buttons, and form controls have
+restrained entrance and interaction feedback.
+
+A visible pause control stops decorative CSS animations and scene effects.
+System reduced-motion preferences also remove pinning, blur, and snapping. Motion
+never changes simulated financial results or starts a run.

@@ -38,3 +38,49 @@ html.treasury-presentation { scroll-snap-type: y proximity; scroll-padding-top: 
 @media (max-width: 1050px) { .landing-experience .landing-opening .presentation-body { grid-template-columns: 1fr; }.landing-experience .landing-opening-copy { max-width: 760px; margin: auto; text-align: center; }.landing-experience .hero-tagline { margin-inline: auto; }.landing-experience .landing-opening-actions { justify-content: center; }.landing-experience .rj-prism-stage { max-width: 750px; margin: auto; } }
 @media (max-width: 760px) { html.treasury-presentation { scroll-padding-top: 64px; }.landing-experience .presentation-surface { min-height: calc(100svh - 64px); padding: 42px 20px; }.landing-experience .landing-opening h1 { font-size: clamp(62px, 15vw, 94px); }.landing-experience .hero-stat-row { flex-direction: row; flex-wrap: wrap; gap: 16px; }.landing-experience .stat-num { font-size: 25px; }.landing-experience .hero-stat-item { flex: 1 1 110px; }.landing-experience .finale-content-box h2 { font-size: clamp(47px, 11vw, 80px); }.presentation-progress { top: 64px; }.presentation-light { width: 130vw; height: 130vw; }.landing-experience .landing-scroll-cue { margin-top: 24px; } }
 @media (prefers-reduced-motion: reduce) { html.treasury-presentation { scroll-snap-type: none; }.landing-experience .presentation-surface { transform: none; border-radius: 0; }.presentation-light, .presentation-atmosphere path, .landing-experience .window-in-view .simple-card { animation: none; } }
+
+/* Each scene pins as the next sheet crosses it. Blur follows scroll, not a timer. */
+.landing-experience { --scene-runway: 55svh; }
+.landing-experience .apple-fullscreen-window { position: relative; z-index: var(--scene-index, 1); padding-bottom: 0; height: calc(var(--scene-height, 100svh) + var(--scene-runway)); }
+.landing-experience .apple-fullscreen-window + .apple-fullscreen-window { margin-top: calc(-1 * var(--scene-runway)); }
+.landing-experience .apple-fullscreen-window:last-child { height: auto; }
+.landing-experience .presentation-surface { position: sticky; top: var(--scene-pin, 124px); filter: blur(var(--scene-blur, 0px)); opacity: var(--scene-opacity, 1); box-shadow: 0 -18px 65px #1d35580a; }
+.landing-experience .presentation-surface:focus-within { filter: none; opacity: 1; }
+.landing-experience .window-in-view .presentation-light { animation-play-state: running; }
+.landing-experience .apple-fullscreen-window:not(.window-in-view) .presentation-light,
+.landing-experience .apple-fullscreen-window:not(.window-in-view) .presentation-atmosphere path { animation-play-state: paused; }
+.presentation-motion-toggle { position: fixed; bottom: 22px; right: 28px; z-index: 110; display: flex; align-items: center; gap: 12px; border: 1px solid #b9c7d644; background: #ffffffdf; backdrop-filter: blur(18px); color: #465364; padding: 10px 16px; border-radius: 30px; font-size: 11px; box-shadow: 0 4px 22px #20375509; }
+.presentation-motion-toggle:hover { color: #0071e3; border-color: #0071e355; }
+.presentation-paused *, .presentation-paused *::before, .presentation-paused *::after { animation-play-state: paused !important; }
+.capital-flow { max-width: 800px; margin: 30px auto; text-align: left; }
+.capital-flow-visual { position: relative; height: 100px; overflow: hidden; }
+.capital-flow-visual svg { width: 100%; height: 100%; overflow: visible; }
+.flow-track { fill: none; stroke: #b9cee2; stroke-width: 1; }
+.flow-current { fill: none; stroke: var(--flow-color); stroke-width: 2; stroke-dasharray: 24 150; animation: capital-stream 5s linear infinite; transition: stroke .5s; }
+.flow-node circle:first-child { fill: #ffffffc9; stroke: #cddbea; stroke-width: 1; transition: r .6s, stroke .6s; }
+.flow-node circle:last-child { fill: #a7b9cc; transition: fill .5s; }
+.flow-node.selected circle:first-child { r: 34; stroke: var(--flow-color); }
+.flow-node.selected circle:last-child { fill: var(--flow-color); }
+.capital-flow-controls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.capital-flow-controls button { display: flex; align-items: center; justify-content: center; gap: 13px; padding: 17px 12px; border: 1px solid #d7e2ed; border-radius: 16px; background: #ffffff85; color: #687888; transition: background .3s, transform .3s, border-color .3s; }
+.capital-flow-controls button:hover { transform: translateY(-4px); background: #fff; }
+.capital-flow-controls button.selected { border-color: var(--flow-color); background: #fff; color: var(--flow-color); box-shadow: 0 8px 24px #20375509; }
+.capital-flow-controls button span { display: grid; gap: 3px; text-align: left; font-weight: 600; font-size: 14px; }
+.capital-flow-controls small { font-size: 10px; font-weight: 500; opacity: .65; }
+.landing-experience .capital-flow-description { margin: 16px auto 0; min-height: 44px; max-width: 650px; text-align: center; font-size: 14px; line-height: 1.6; color: #617287; }
+.capital-flow-scan { position: absolute; left: -15%; top: 10%; width: 12%; height: 80%; background: linear-gradient(90deg, transparent, #ffffffad, transparent); transform: skew(-20deg); animation: capital-scan 8s ease-in-out infinite; pointer-events: none; }
+@keyframes capital-stream { to { stroke-dashoffset: -696; } }
+@keyframes capital-scan { 0%, 20% { left: -15%; } 80%, 100% { left: 110%; } }
+@media (max-width: 760px) {
+  .landing-experience { --scene-runway: 34svh; }
+  .presentation-motion-toggle { bottom: 14px; right: 16px; font-size: 10px; padding: 8px 12px; }
+  .capital-flow-controls { gap: 6px; }
+  .capital-flow-controls button { flex-direction: column; gap: 8px; padding: 14px 6px; }
+  .capital-flow-controls button span { text-align: center; font-size: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-experience { --scene-runway: 0px; }
+  .landing-experience .presentation-surface { position: relative; top: auto; filter: none; opacity: 1; transform: none; }
+  .presentation-motion-toggle { display: none; }
+  .capital-flow *, .capital-flow *::before { animation: none; transition: none; }
+}
