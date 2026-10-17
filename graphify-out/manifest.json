@@ -204,14 +204,14 @@
     "semantic_hash": "9a972191f71d003c968cafd70cd2493e"
   },
   "backend/app/services/treasury_adapter.py": {
-    "mtime": 1792268175.4709804,
-    "seen": 1792268721.030382,
-    "ast_hash": "1b33f86f27204e61bbb82e9cd8a82c87",
-    "semantic_hash": "1b33f86f27204e61bbb82e9cd8a82c87"
+    "mtime": 1792270185.5265143,
+    "seen": 1792270545.876066,
+    "ast_hash": "d954b4dc98ff72c39a7bdfdc12ef39ca",
+    "semantic_hash": "d954b4dc98ff72c39a7bdfdc12ef39ca"
   },
   "backend/app/v1_contracts.py": {
-    "mtime": 1792266878.8950589,
-    "seen": 1792268721.030382,
+    "mtime": 1792270404.3133419,
+    "seen": 1792270545.876066,
     "ast_hash": "a5d5a895d59bf291cbe031537f05525f",
     "semantic_hash": "a5d5a895d59bf291cbe031537f05525f"
   },
@@ -384,10 +384,10 @@
     "semantic_hash": "3edb478be026171bfdddd0533c1ef919"
   },
   "backend/app/services/hourly_engine.py": {
-    "mtime": 1792268542.8682253,
-    "seen": 1792268721.030382,
-    "ast_hash": "c30d3bd58246cd23704b08582835e1ec",
-    "semantic_hash": "c30d3bd58246cd23704b08582835e1ec"
+    "mtime": 1792270293.1995494,
+    "seen": 1792270545.876066,
+    "ast_hash": "5b02291acde24f2a00180d28b39c4142",
+    "semantic_hash": "5b02291acde24f2a00180d28b39c4142"
   },
   "backend/app/services/run_service.py": {
     "mtime": 1792268607.354879,
@@ -396,10 +396,10 @@
     "semantic_hash": "575063f0a84a6026289528cf05347d74"
   },
   "backend/app/treasury/four_tier_adapter.py": {
-    "mtime": 1792264613.8959277,
-    "seen": 1792268721.030382,
-    "ast_hash": "e92a999769fcaa2f004c34b6c66a749e",
-    "semantic_hash": "e92a999769fcaa2f004c34b6c66a749e"
+    "mtime": 1792270195.3206255,
+    "seen": 1792270545.876066,
+    "ast_hash": "77a3f4ebf683d7373c582625ca7229fa",
+    "semantic_hash": "77a3f4ebf683d7373c582625ca7229fa"
   },
   "tests/integration/test_four_tier_runtime.py": {
     "mtime": 1792264622.8195002,
@@ -628,5 +628,11 @@
     "seen": 1792268721.0404,
     "ast_hash": "25f059d6087042b2b056870c3c068002",
     "semantic_hash": "25f059d6087042b2b056870c3c068002"
+  },
+  "tests/integration/test_strategy_dispatch_and_causality.py": {
+    "mtime": 1792270311.4548893,
+    "seen": 1792270545.8925803,
+    "ast_hash": "99d3cc80e70b118393a6b0bf38c06c52",
+    "semantic_hash": "99d3cc80e70b118393a6b0bf38c06c52"
   }
 }
