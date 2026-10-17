@@ -8,6 +8,50 @@
 
 ## Task Log
 
+### [RJ-M1-10] Four-Tier Liquidity Reserve and Risk
+- **Status**: COMPLETED
+- **Scope**: Pure canonical hourly pathwise peak funding requirement, explicit
+  contractual repo settlements, committed obligations, required Tier 0 reserve,
+  calibrated-allowance OR weighted scenario-quantile uncertainty, operational/minimum
+  buffers, available/restricted liquidity, permitted stress liquidation, scenario
+  funding/expected-shortfall metrics, policy checks, and borrowing consequences.
+- **Canonical Boundary**: Selectively copied only reviewed `portfolio.py` from
+  `1fcff80f05136a1d90faf8b88adacc8d313dc072`; identical blob
+  `ed86bc45fae6421aa518c0cc10df3aa0e7dd142f`. No review branch merge or replacement
+  of RJ-M1-07/08/09 functionality. New risk inputs use canonical PortfolioState,
+  FourTierTreasuryPolicy and HourlyForecastPoint; reserve is FourTierReserveResult.
+  Prior legacy/root schema migration remains explicitly unresolved, not aliased.
+- **Timing/No Double Counting**: Outflows at bucket start, deposits at bucket end,
+  actual attested maturity/settlement arrival times, forecast-included obligation
+  flags, booked-repo exclusion, and removal of maturity receipts after modeled
+  early break. Full first-hour forecast coverage is required. Source net-flow
+  forecasts stay independent; this path uses separate inflow/outflow timing.
+- **Risk/Economics**: Source-supplied current marks and haircuts; separate hypothetical
+  bond price OR duration stress; equity drawdown/volatility sensitivities; explicit
+  liquidation policy/position permission and delay; min cash/exposure/loss limits.
+  New credit is costly borrowing, never existing cash or a reserve reduction.
+- **Honest Metrics**: Calibration reference is caller supplied; scenario probabilities
+  are supplied model weights. Expected funding deficit, tail ES, reserve breach,
+  projected funding failure, and actual payout failure are separate. The last is
+  always null; probability/ES fields are null without supplied scenarios.
+  No ML/calibration fabrication, Monte Carlo, optimizer, trades or ledger changes.
+- **Precision**: Strict cents and finite Decimal percentages/probabilities;
+  conservative downward stressed marks/upward costs and shortfall rounding.
+- **Tests**: Full suite 361 passed (all prior 328 preserved; 33 new risk tests),
+  including $8M timing, 08:00 maturity/delay, locked cash, 2%/15% haircuts, 0.5%
+  break, no duplicate maturity, monotonic outflows, drawdown, liabilities, zero/tiny
+  balances, weighted quantile/tail mass, calibrated allowance, explicit UTC and
+  unspecified clocks, canonical validation, JSON, and immutability.
+- **Command**: `$env:PYTHONPATH=".;backend"; uv run --with pytest --with fastapi --with pydantic --with httpx --with sqlalchemy --with pydantic-settings --with scikit-learn pytest tests/ -q`
+- **Dataset**: Original organizer CSV unchanged; SHA-256 remains
+  `2e7c1d2e5b678e9975250211e7e0017022049c510e1dd90cd7f29e931837b0c5`.
+- **Files**: `portfolio.py`, new `liquidity_risk.py`, additive exports, new risk
+  tests/canonical fixture, Member 1 contract/integration/progress documentation.
+- **Commit**: `feat(risk): calculate four-tier liquidity requirements`
+  (exact tested hash and push confirmation in completion report).
+- **Push Target**: `origin/feat/treasury-intelligence`.
+- **Next Task**: Await explicit assignment; stop after RJ-M1-10.
+
 ### [Pre-RJ-M1-10] Canonical Contract Compatibility Check
 - **Status**: Check complete; canonical integration NOT aligned and unresolved.
 - **Verified Branches**: Local and remote feature baseline `c3cebcd2ac2f4502e0916405c203240e15dc89ed`;

@@ -29,3 +29,13 @@ from observed bond price movement. Every new recommendation/trade is NOT_EXECUTE
 execution status must come from Member 2's receipts, not an inferred UI state.
 Fixtures are examples with not_evaluated metadata; do not present their estimates
 as historical performance metrics.
+
+RJ-M1-10's canonical liquidity-risk response adds reserve (with explicit time_basis),
+available_cash_cents versus restricted_liquidity_cents, pre/post-liquidation funding
+shortages, stress liquidation quotes, policy_violations, and full timed cash paths.
+Keep reserve_breach distinct from projected_funding_failure_* and from
+actual_payout_failure (always null here). Scenario failure probabilities and tail
+expected shortfall are supplied-model estimates, not realized payout statistics;
+without scenarios those fields are null. Modeled overdraft draw/cost is new
+financing, not an existing asset. Render uncertainty_mode and explanations so
+scenario quantiles are not displayed as a second added uncertainty buffer.

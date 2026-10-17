@@ -5,6 +5,7 @@ from datetime import datetime
 from .reserve import calculate_required_reserve
 from .policy import recommend_treasury_action
 from .four_tier import recommend_portfolio_allocation
+from .liquidity_risk import calculate_four_tier_liquidity_risk
 
 from .types import (
     CashFlowBucket, ForecastResult, TreasuryContext, TreasuryPolicy,

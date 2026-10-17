@@ -1,5 +1,11 @@
 # Pre-RJ-M1-10 canonical contract check
 
+**RJ-M1-10 follow-up:** `portfolio.py` has now been copied unchanged from the
+reviewed branch for the new canonical liquidity-risk interface. The later
+forecasting/economics/root-schema migration described below remains unresolved;
+those completed interfaces are preserved, not implicitly adapted. The findings
+below record the pre-task state, not a claim that portfolio.py is still absent.
+
 Checked 2026-10-18 on `feat/treasury-intelligence`. **Not aligned; RJ-M1-10
 must not assume canonical portfolio inputs work with the current algorithms.**
 This is a compatibility finding, not a new optimizer or completed migration.

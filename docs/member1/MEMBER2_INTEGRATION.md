@@ -42,3 +42,16 @@ not accounting receipts. Repo defaults to forfeiting positive interest on early 
 unless the product explicitly permits payment. ACT/365 fixed uses actual duration;
 income rounds half up, fees/funding round upward. Read the RJ-M1-08 contract section
 for repayment timing, cost-basis allocation, and no-double-counting conventions.
+
+RJ-M1-10 adds a separate canonical boundary: import PortfolioState,
+FourTierTreasuryPolicy, and HourlyForecastPoint from `treasury_intelligence.portfolio`,
+and FourTierLiquidityRiskRequest/calculate_four_tier_liquidity_risk from
+`treasury_intelligence.liquidity_risk`. Do not pass the older root four_tier models.
+The input path must cover the first hour at portfolio.as_of. Explicitly attest
+repo settlement timing, obligations already included in forecasts, calibrated
+allowance provenance or complete weighted scenarios, liquidation delays, and
+available new credit. Do not include the same repo receipt in forecast deposits
+and repo_settlements. Result.reserve is canonical FourTierReserveResult; projected
+shortages and hypothetical liquidation are not executions. actual_payout_failure
+is null. Read the RJ-M1-10 contract section for the two uncertainty modes, expected
+shortfall definitions, buffer floors, and funding-cost assumptions.

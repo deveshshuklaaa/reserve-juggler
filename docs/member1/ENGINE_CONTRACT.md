@@ -1,10 +1,11 @@
 # Quantitative engine contract v1
 
-**Pre-RJ-M1-10 alignment status (2026-10-18): NOT ALIGNED.** The reviewed canonical
-family is `treasury_intelligence.portfolio` on review commit `1fcff80`, but it is
-not integrated into the feature branch. The four_tier interfaces documented below
-describe current RJ-M1-07/08/09 implementation, not canonical interoperability.
-See [verified compatibility findings](CANONICAL_ALIGNMENT_CHECK.md) before integration.
+**RJ-M1-10 boundary (2026-10-18):** The reviewed `portfolio.py` from `1fcff80` is
+now present unchanged and is the input family for the new liquidity-risk API.
+Prior RJ-M1-07/08/09 implementations and root four_tier schema exports remain
+legacy-compatible; they have not been silently converted. Import canonical inputs
+explicitly from `treasury_intelligence.portfolio`. See the RJ-M1-10 section and
+[historical compatibility findings](CANONICAL_ALIGNMENT_CHECK.md).
 
 **Four-tier migration:** RJ-M1-06 adds the authoritative four-tier boundary below.
 The original models/functions in this document remain supported as legacy interfaces;
@@ -704,6 +705,208 @@ The summary does not accrue overdraft again; pass current liability observations
 Recorded realized costs and market losses are already reflected in the snapshot
 and are not subtracted again. Member 2 must remove a repo from holdings when its
 proceeds are booked to cash, and must preserve exclusive cash/position accounting.
+
+## RJ-M1-10 Four-tier liquidity reserve and risk
+
+### Canonical boundary and integration
+
+`treasury_intelligence/portfolio.py` was copied selectively from reviewed commit
+`1fcff80f05136a1d90faf8b88adacc8d313dc072`, without merging its branch or replacing
+completed forecasting/economics. Git blob is unchanged:
+`ed86bc45fae6421aa518c0cc10df3aa0e7dd142f`.
+It supplies PortfolioState, FourTierTreasuryPolicy, HourlyForecastPoint, and
+FourTierReserveResult. Their UUID/source/run/time-basis, valuation and liability
+checks apply. New contracts/calculation live in `treasury_intelligence.liquidity_risk`:
+
+```python
+from treasury_intelligence.portfolio import (
+    PortfolioState, FourTierTreasuryPolicy, HourlyForecastPoint,
+)
+from treasury_intelligence.liquidity_risk import (
+    FourTierLiquidityRiskRequest, calculate_four_tier_liquidity_risk,
+)
+
+request = FourTierLiquidityRiskRequest.model_validate(payload)
+result = calculate_four_tier_liquidity_risk(request)
+assert result.reserve.time_basis == request.portfolio.time_basis
+wire_json = result.model_dump_json()
+```
+
+The request/result/calculation are also package-root exports; the calculation is
+available in `api.py`. Use module-qualified canonical input imports because old
+root names such as HourlyForecastPoint and OverdraftLiability still belong to the
+preserved old family. No model aliases, heuristic unit conversions, ML loading,
+database changes, allocation optimizer, or payout execution is introduced.
+Risk inputs include supplied separate deposit/withdrawal forecasts; generating
+those forecasts remains the forecasting layer's responsibility.
+
+### Request and timing
+
+FourTierLiquidityRiskRequest contains canonical portfolio/policy/forecast,
+planning_horizon_hours, uncertainty_mode, optional calibrated_allowance,
+confidence (Decimal fraction), scenarios, repo_settlements, obligations,
+liquidation_settlements, default_liquidation_delay_hours (default 1), optional
+operational_buffer_cents, market_stress, available_overdraft_credit_cents, and
+optional modeled_overdraft_apr_pct.
+
+The path must cover the first hour beginning at portfolio.as_of, with contiguous
+native hourly points. A longer path is truncated to the requested horizon;
+insufficient coverage is rejected. No interpolation or assumed zero missing hour.
+Legacy forecasters that start after the snapshot do not automatically satisfy this
+coverage requirement; provide an explicit forecast covering the missing hour.
+Clocks must match the portfolio: UNSPECIFIED naive historical or explicit UTC
+synthetic. There is no timezone inference or future historical quote lookup.
+
+Forecast withdrawals debit at each point's start; forecast deposits credit at the
+hour's end. This conservative ordering resolves unspecified intrahour timing.
+Payments and settlements at an exact shared timestamp net available credits before
+debits. Cash is carried through the entire event path, so a late deposit/maturity/
+sale cannot erase an earlier funding shortage. The independent
+predicted_net_flow_cents/source-net field is retained and not overwritten; this
+reserve's timing calculation explicitly uses separate deposits and withdrawals.
+No claim is made that the legacy source-net forecast/evaluation mismatch is fixed.
+
+RepoCashSettlement supplies time_basis, position_id, actual available_at,
+amount_cents, and already_in_cash=false. Only explicitly attested contractual
+settlements count; maturity alone does not credit cash. An unbooked settlement
+must reference a current repo, arrive no earlier than its scheduled maturity or
+snapshot time, and not exceed known principal plus already accrued interest.
+Unknown future floating interest is excluded. Extra settlement delay is honored.
+Only one settlement per repo is allowed. A booked settlement is excluded and must
+be in the past/current time with that position removed from current holdings;
+keeping both the cash and repo is rejected. Known settlements after the horizon
+do not fund it.
+
+CommittedObligation supplies time_basis, obligation_id, due_at, amount_cents, and
+already_in_forecast=false. Add only explicit obligations; no fabricated schedules.
+Duplicates and past-due input are rejected. Already-in-forecast obligations are
+not added twice; matching forecast inclusion is a caller attestation because
+forecast buckets carry no obligation/source IDs. Beyond-horizon obligations are
+excluded. The same source-exclusivity rule applies to separately supplied repo
+settlements versus forecast deposits: callers must not forecast the same cash
+credit in both representations.
+
+### Required cash reserve and uncertainty
+
+Nominal peak = max(0, max over event times of cumulative withdrawals + explicit
+obligations - deposits - contractually available repo settlements). Opening cash
+is deliberately excluded from this required initial funding calculation. Compare
+it with checking separately; risky assets and credit capacity do not lower it.
+
+- `calibrated_allowance`: require a CalibratedForecastAllowance with explicit
+  amount_cents, calibration_reference, calibrated_through <= as_of, confidence,
+  and matching time_basis. Required reserve = nominal peak + supplied allowance +
+  operational buffer. Calibration is a caller-supplied attestation, not measured
+  or invented here. Request and allowance confidence must agree.
+- `scenario_quantile`: require supplied weighted LiquidityScenarios and **forbid**
+  a calibrated_allowance. Required reserve = inverse-CDF weighted quantile of
+  scenario peaks + operational buffer. Scenario probabilities must sum exactly to
+  one; no automatic renormalization. No Monte Carlo generator is implemented.
+- Per-point provisional supplied_uncertainty_buffer_cents and legacy policy
+  uncertainty multipliers are not added again in either mode. The explicit
+  allowance/peak distribution is the complete uncertainty treatment for this API.
+- Operational buffer defaults to policy.base_buffer_cents, with explicit override
+  supported. Policy.minimum_liquid_reserve_cents is a floor. Floor top-up is
+  reported separately and included in canonical reserve.base_buffer_cents so the
+  canonical component-sum identity remains exact. In quantile mode the canonical
+  reserve.net_drain_cents is the selected scenario peak; nominal peak is separate.
+
+All cash arithmetic uses integer cents. Decimal fees/costs round upward; stressed
+asset marks round downward before source haircuts, and scenario expected monetary
+shortfalls round upward. No binary floating calculations or reserve rounding down.
+
+### Stress liquidation and policy
+
+MarketStress supports bond_method (price_drawdown OR yield_shock),
+bond_drawdown_pct, bond_yield_change_pct (percentage points), equity_drawdown_pct,
+and equity_volatility_multiplier. Bond risk starts from the supplied current
+market value, never inferred quantity-times-index units. Price drawdown and
+duration stress cannot be combined for the same bond. Yield stress is the
+separate hypothetical loss fraction max(0, Dmod * yield_change_pct / 100), not a
+second adjustment to actual historical mark-to-market. Loss stress is capped at
+100%; favorable yield moves are not credited as guaranteed liquidity.
+
+Equity loss fraction = explicit drawdown / 100 + multiplier * annual source
+volatility / 100 * sqrt(horizon_hours / 8760), capped at 100%. This is a supplied
+scenario/sensitivity convention, not a calibrated Gaussian probability model.
+No expected equity return is added. After stress, the **source position's** bond
+haircut or equity fire-sale slippage applies once to the stressed gross mark.
+Existing liquidatable-value fields are not haircut again; they are not the mark.
+
+StressLiquidationResult reports position/tier, arrival time, observed/stressed
+value, modeled market loss, liquidation fee, net proceeds, permission, and reason.
+Bond/equity liquidation requires explicit policy permission and LIQUIDATABLE
+classification. Early repo break requires policy permission and position permission
+explicitly true; unknown permission fails closed. It returns principal less known
+negative accrual and the full source early-break haircut, excluding uncertain
+positive interest. A fee exceeding available proceeds disqualifies a self-funded
+break rather than silently reducing the fee. Once broken, that repo's future
+maturity credit is removed from the after-liquidation path.
+
+LiquidationSettlement provides an optional position-specific actual arrival
+time; otherwise modeled arrival is as_of + default_liquidation_delay_hours.
+Default 1 hour is a risk assumption, not a guaranteed settlement speed. Early
+break candidates must arrive before repo maturity; normal maturity receipts use
+the contractual settlement schedule exclusively. The engine models hypothetical
+full permitted sales, not optimal amounts or executable recommended orders.
+Such an assumed early-break plan can forfeit interest/pay fees; it is not promised
+to dominate waiting for maturity. Potential proceeds are never added to current
+cash or asset totals and are only credited to the projected path at arrival.
+
+Current tier min/max allocation limits, existing overdraft policy limits, and
+max_estimated_loss_cents are reported as violations. Market loss checks cover
+nominal and worst supplied scenario stress. Permissions remain enforced even
+when a shortage exists; a positive mark is not a risk-free cash balance.
+The exposure checks describe current holdings. Hypothetical full-sale projections
+are not a claim that every resulting allocation meets post-trade exposure bounds;
+the allocation optimizer/executor must perform that plan-level feasibility check.
+
+### Risk response, borrowing, and interpretation
+
+FourTierLiquidityRiskResult contains the canonical reserve, as_of/end clock,
+uncertainty mode/reference/confidence, nominal peak, configured buffer/floor top-up,
+available cash, source-reported immediate and restricted liquidity, existing
+liabilities, hypothetical liquidation quotes/proceeds/losses, pre/post-liquidation
+funding shortages, scenario summaries/probabilities, borrowing consequences,
+policy violations, full event paths, and calculation explanations.
+
+Only portfolio.cash.balance_cents is initial checking. Source-reported restricted
+and liquidatable categories can overlap; they are not partitions or extra assets.
+Existing per-loan liabilities equal outstanding principal plus **unpaid** financing
+cost; already paid costs are not deducted again. Outstanding overdraft is never
+cash capacity or an asset. Optional newly available credit is constrained by the
+explicit borrowing policy/remaining principal limit. It covers only the residual
+modeled post-liquidation shortage and never reduces required reserve. Financing
+cost uses ACT/365 fixed, ceiling cents, with supplied APR or the current quote
+held constant over the full horizon as a conservative illustration. It is not
+actual realized cost or an assertion future APR is known. Missing APR with a
+positive modeled draw yields null cost, not a fabricated zero. Actual draw/
+repayment timing, credit approval, and executions remain Member 2 responsibilities.
+
+Definitions are intentionally distinct:
+
+- funding_shortfall_before/after_liquidation_cents: maximum projected cash deficit
+  at any event; they preserve interim timing even if ending cash becomes positive.
+- reserve_breach: checking is below the reserve including buffers/floor. This
+  can be true with no projected payout funding shortage at all.
+- expected_unfunded_cash_cents: scenario-weighted mean of positive pre-liquidation
+  peak funding deficits; not tail expected shortfall.
+- tail_expected_shortfall_cents: mean deficit in the worst 1-confidence scenario
+  mass, including fractional quantile-boundary mass; at confidence=1, worst loss.
+- scenario_reserve_breach_probability: model weight of scenarios whose peak plus
+  buffer/floor exceeds cash; do not add another calibration allowance to scenarios.
+- scenario_funding_failure_probability_before/after: model weights of positive
+  pre/post-liquidation deficits. Weights are supplied scenario-model probabilities,
+  not empirically validated payout failure frequencies.
+- Without supplied scenarios, probability/expected-shortfall fields are null and
+  scenario_metrics_basis is not_estimated. Deterministic path shortages remain.
+- actual_payout_failure is always null: this pure calculation observes/executes
+  no payout. Projected funding-failure flags are not realized payout outcomes.
+
+Every response is recommendation_only=true and NOT_EXECUTED. Forecasts, quotes,
+calibrations, scenarios, portfolios, source CSV, databases and ledgers are not mutated.
+No risky-asset expected return, paid fee, floating repo estimate, or matured cash
+credit is counted as a second asset or realized income.
 
 ## RJ-M1-09 Hourly ML forecasting and chronological evaluation
 
