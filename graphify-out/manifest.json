@@ -6,22 +6,22 @@
     "semantic_hash": "447648a1d1b154f6bb94740cd1b182f4"
   },
   "backend/app/config.py": {
-    "mtime": 1792251393.9833167,
-    "seen": 1792251772.9775722,
-    "ast_hash": "3b5515186fbf11ad27fbdb2ff4094954",
-    "semantic_hash": ""
+    "mtime": 1792263782.8452368,
+    "seen": 1792268721.030382,
+    "ast_hash": "3f3e66a1ea41dfcae29801f6b1815406",
+    "semantic_hash": "3f3e66a1ea41dfcae29801f6b1815406"
   },
   "backend/app/database.py": {
-    "mtime": 1792246924.3623893,
-    "seen": 1792249178.3151393,
-    "ast_hash": "e905db657fa6dc5bbce18fe1cf0d1e1c",
-    "semantic_hash": "e905db657fa6dc5bbce18fe1cf0d1e1c"
+    "mtime": 1792267146.4711008,
+    "seen": 1792268721.030382,
+    "ast_hash": "53390a0a169b3d5e76e1cb325c440afa",
+    "semantic_hash": "53390a0a169b3d5e76e1cb325c440afa"
   },
   "backend/app/main.py": {
-    "mtime": 1792249817.2347376,
-    "seen": 1792249861.3373444,
-    "ast_hash": "fd6326da4b23e322689c2565c46d2bbe",
-    "semantic_hash": ""
+    "mtime": 1792264660.0670228,
+    "seen": 1792268721.030382,
+    "ast_hash": "666819e7e1ec2caa57da5bd28b556072",
+    "semantic_hash": "666819e7e1ec2caa57da5bd28b556072"
   },
   "backend/app/models.py": {
     "mtime": 1792246625.68385,
@@ -192,34 +192,34 @@
     "semantic_hash": "55ed67e53d401c1d2e3a93cc3b57d7fc"
   },
   "backend/app/routers/runs.py": {
-    "mtime": 1792249549.3610175,
-    "seen": 1792249861.3383448,
-    "ast_hash": "e31a2718e8b752403f0a54faa0990232",
-    "semantic_hash": ""
+    "mtime": 1792267316.8439996,
+    "seen": 1792268721.030382,
+    "ast_hash": "a3cc2ba2f82695762e075da4e1f0b149",
+    "semantic_hash": "a3cc2ba2f82695762e075da4e1f0b149"
   },
   "backend/app/services/__init__.py": {
-    "mtime": 1792249726.7522528,
-    "seen": 1792249861.339345,
-    "ast_hash": "b27687efc6feb73d82e93f49a833a6b7",
-    "semantic_hash": ""
+    "mtime": 1792263782.8452368,
+    "seen": 1792268721.030382,
+    "ast_hash": "9a972191f71d003c968cafd70cd2493e",
+    "semantic_hash": "9a972191f71d003c968cafd70cd2493e"
   },
   "backend/app/services/treasury_adapter.py": {
-    "mtime": 1792249727.282628,
-    "seen": 1792249861.339345,
-    "ast_hash": "e57e26ec7195cbdca4455205281cf059",
-    "semantic_hash": ""
+    "mtime": 1792268175.4709804,
+    "seen": 1792268721.030382,
+    "ast_hash": "1b33f86f27204e61bbb82e9cd8a82c87",
+    "semantic_hash": "1b33f86f27204e61bbb82e9cd8a82c87"
   },
   "backend/app/v1_contracts.py": {
-    "mtime": 1792249817.7982001,
-    "seen": 1792249861.3403447,
-    "ast_hash": "33be7e4edf84953c7f4b462863cd41f4",
-    "semantic_hash": ""
+    "mtime": 1792266878.8950589,
+    "seen": 1792268721.030382,
+    "ast_hash": "a5d5a895d59bf291cbe031537f05525f",
+    "semantic_hash": "a5d5a895d59bf291cbe031537f05525f"
   },
   "tests/backend/test_api_versioning.py": {
-    "mtime": 1792249818.3479662,
-    "seen": 1792249861.3475654,
-    "ast_hash": "980a85794d435280947fba7449c63c11",
-    "semantic_hash": ""
+    "mtime": 1792267324.8108573,
+    "seen": 1792268721.0404,
+    "ast_hash": "6226f0f936a220ccb7af35a7b393c99d",
+    "semantic_hash": "6226f0f936a220ccb7af35a7b393c99d"
   },
   ".agents/rules/git-milestone.md": {
     "mtime": 1792248860.068357,
@@ -306,22 +306,22 @@
     "semantic_hash": ""
   },
   "backend/app/data/__init__.py": {
-    "mtime": 1792251396.0078976,
-    "seen": 1792251772.9775722,
-    "ast_hash": "6be064f413a14f31ccb9d71cf43d1438",
-    "semantic_hash": ""
+    "mtime": 1792263782.8452368,
+    "seen": 1792268721.030382,
+    "ast_hash": "ace74d7e9a09cd51f4a9a12a67df1598",
+    "semantic_hash": "ace74d7e9a09cd51f4a9a12a67df1598"
   },
   "backend/app/data/organizer.py": {
-    "mtime": 1792251396.5228157,
-    "seen": 1792251772.9775722,
-    "ast_hash": "dae0b5be852bf9c4eb0c39057c68c93c",
-    "semantic_hash": ""
+    "mtime": 1792263782.8452368,
+    "seen": 1792268721.030382,
+    "ast_hash": "5b3cd8a2565e850cf91363cd2f70a8e6",
+    "semantic_hash": "5b3cd8a2565e850cf91363cd2f70a8e6"
   },
   "tests/backend/test_organizer_data.py": {
-    "mtime": 1792251684.0164409,
-    "seen": 1792251772.9905717,
-    "ast_hash": "c2b801bdaacf3999a98f6a1ad8ff4628",
-    "semantic_hash": ""
+    "mtime": 1792263782.8574412,
+    "seen": 1792268721.0404,
+    "ast_hash": "4d6be954fa74b0b904afab985b960054",
+    "semantic_hash": "4d6be954fa74b0b904afab985b960054"
   },
   "docs/organizer-data.md": {
     "mtime": 1792251886.747223,
@@ -336,34 +336,34 @@
     "semantic_hash": ""
   },
   "backend/app/persistence/__init__.py": {
-    "mtime": 1792255343.579868,
-    "seen": 1792256657.8842583,
-    "ast_hash": "66103106307b805508b516cf5bc59b82",
-    "semantic_hash": ""
+    "mtime": 1792263782.8452368,
+    "seen": 1792268721.030382,
+    "ast_hash": "dd82b640cb67fa81d7b754ef75948c1f",
+    "semantic_hash": "dd82b640cb67fa81d7b754ef75948c1f"
   },
   "backend/app/persistence/migrations.py": {
-    "mtime": 1792256405.0459652,
-    "seen": 1792256657.8842583,
-    "ast_hash": "33753044796ce9f5dcc097cdb80d3f0f",
-    "semantic_hash": ""
+    "mtime": 1792263782.8452368,
+    "seen": 1792268721.030382,
+    "ast_hash": "3e10af6e79fb2f298317db3f6ebed5d6",
+    "semantic_hash": "3e10af6e79fb2f298317db3f6ebed5d6"
   },
   "backend/app/persistence/models.py": {
-    "mtime": 1792256480.359743,
-    "seen": 1792256657.8842583,
-    "ast_hash": "ff31da25ca932da8400b216ad19c0019",
-    "semantic_hash": ""
+    "mtime": 1792263782.8452368,
+    "seen": 1792268721.030382,
+    "ast_hash": "65f31ea2ec09b733217b3c903bf8fc74",
+    "semantic_hash": "65f31ea2ec09b733217b3c903bf8fc74"
   },
   "backend/app/persistence/repositories.py": {
-    "mtime": 1792256575.6845202,
-    "seen": 1792256657.8842583,
-    "ast_hash": "bc7400fb3682526e53f0f88ccaae8894",
-    "semantic_hash": ""
+    "mtime": 1792263782.8452368,
+    "seen": 1792268721.030382,
+    "ast_hash": "30079718ca13e8e36a618fe4c67b081c",
+    "semantic_hash": "30079718ca13e8e36a618fe4c67b081c"
   },
   "tests/backend/test_persistence.py": {
-    "mtime": 1792256576.2152205,
-    "seen": 1792256657.8935018,
-    "ast_hash": "f94eecabad535955a2859c42a90463ca",
-    "semantic_hash": ""
+    "mtime": 1792263782.8574412,
+    "seen": 1792268721.0404,
+    "ast_hash": "55e1a9475e44183e37115a6410ac0ebc",
+    "semantic_hash": "55e1a9475e44183e37115a6410ac0ebc"
   },
   "docs/four-tier-persistence.md": {
     "mtime": 1792256769.2115889,
@@ -372,9 +372,261 @@
     "semantic_hash": ""
   },
   "scripts/sync-persistence-graph.py": {
-    "mtime": 1792256769.7448368,
-    "seen": 1792256795.7451935,
-    "ast_hash": "2b7c80c8e7d6fe0056f4a7eb52ea95fb",
-    "semantic_hash": ""
+    "mtime": 1792263782.8574412,
+    "seen": 1792268721.0404,
+    "ast_hash": "efa784b576641c52f043fca6ce946b3f",
+    "semantic_hash": "efa784b576641c52f043fca6ce946b3f"
+  },
+  "backend/app/routers/simulation_v1.py": {
+    "mtime": 1792264364.4880087,
+    "seen": 1792268721.030382,
+    "ast_hash": "3edb478be026171bfdddd0533c1ef919",
+    "semantic_hash": "3edb478be026171bfdddd0533c1ef919"
+  },
+  "backend/app/services/hourly_engine.py": {
+    "mtime": 1792268542.8682253,
+    "seen": 1792268721.030382,
+    "ast_hash": "c30d3bd58246cd23704b08582835e1ec",
+    "semantic_hash": "c30d3bd58246cd23704b08582835e1ec"
+  },
+  "backend/app/services/run_service.py": {
+    "mtime": 1792268607.354879,
+    "seen": 1792268721.030382,
+    "ast_hash": "575063f0a84a6026289528cf05347d74",
+    "semantic_hash": "575063f0a84a6026289528cf05347d74"
+  },
+  "backend/app/treasury/four_tier_adapter.py": {
+    "mtime": 1792264613.8959277,
+    "seen": 1792268721.030382,
+    "ast_hash": "e92a999769fcaa2f004c34b6c66a749e",
+    "semantic_hash": "e92a999769fcaa2f004c34b6c66a749e"
+  },
+  "tests/integration/test_four_tier_runtime.py": {
+    "mtime": 1792264622.8195002,
+    "seen": 1792268721.0404,
+    "ast_hash": "1e43f00993b7c26507bfbfcc7f422ad9",
+    "semantic_hash": "1e43f00993b7c26507bfbfcc7f422ad9"
+  },
+  "tests/integration/test_runs_runtime.py": {
+    "mtime": 1792267396.6644692,
+    "seen": 1792268721.0404,
+    "ast_hash": "9cf3d62242b3f0936e98f2dcbf0d80c5",
+    "semantic_hash": "9cf3d62242b3f0936e98f2dcbf0d80c5"
+  },
+  "tests/treasury_intelligence/fixtures/canonical_liquidity_portfolio.json": {
+    "mtime": 1792263787.2992144,
+    "seen": 1792268721.0404,
+    "ast_hash": "10dca853cd9426597e792e6d9c9b6431",
+    "semantic_hash": "10dca853cd9426597e792e6d9c9b6431"
+  },
+  "tests/treasury_intelligence/fixtures/contracts.json": {
+    "mtime": 1792263787.2992144,
+    "seen": 1792268721.0404,
+    "ast_hash": "5d7f841d8659c8e20979f69d971f60bb",
+    "semantic_hash": "5d7f841d8659c8e20979f69d971f60bb"
+  },
+  "tests/treasury_intelligence/fixtures/four_tier_request.json": {
+    "mtime": 1792263787.2997408,
+    "seen": 1792268721.0404,
+    "ast_hash": "059dc5f92d2b45d355e1a0609c0b519e",
+    "semantic_hash": "059dc5f92d2b45d355e1a0609c0b519e"
+  },
+  "tests/treasury_intelligence/fixtures/four_tier_response.json": {
+    "mtime": 1792263787.300263,
+    "seen": 1792268721.0404,
+    "ast_hash": "2802f5f82a71cdd967370c2ef463b935",
+    "semantic_hash": "2802f5f82a71cdd967370c2ef463b935"
+  },
+  "tests/treasury_intelligence/fixtures/organizer_hourly_observation.json": {
+    "mtime": 1792263787.3007834,
+    "seen": 1792268721.0404,
+    "ast_hash": "6307b704b98d81c8061f880a478a9d1e",
+    "semantic_hash": "6307b704b98d81c8061f880a478a9d1e"
+  },
+  "tests/treasury_intelligence/fixtures/organizer_hourly_series.json": {
+    "mtime": 1792263787.301826,
+    "seen": 1792268721.0404,
+    "ast_hash": "ded0fae5befdba1eceb41292aaa5c3ac",
+    "semantic_hash": "ded0fae5befdba1eceb41292aaa5c3ac"
+  },
+  "tests/treasury_intelligence/test_contracts.py": {
+    "mtime": 1792263787.302469,
+    "seen": 1792268721.0404,
+    "ast_hash": "1a75f6ea4d9c948500f5e2c129eaabad",
+    "semantic_hash": "1a75f6ea4d9c948500f5e2c129eaabad"
+  },
+  "tests/treasury_intelligence/test_decisions.py": {
+    "mtime": 1792263787.3029306,
+    "seen": 1792268721.0404,
+    "ast_hash": "05a7bcb97e9c9b4fba49066afdba6192",
+    "semantic_hash": "05a7bcb97e9c9b4fba49066afdba6192"
+  },
+  "tests/treasury_intelligence/test_demo_pipeline.py": {
+    "mtime": 1792263787.3034184,
+    "seen": 1792268721.0404,
+    "ast_hash": "f34def05799f3ede9243dcfdc9abfcbf",
+    "semantic_hash": "f34def05799f3ede9243dcfdc9abfcbf"
+  },
+  "tests/treasury_intelligence/test_financial_math.py": {
+    "mtime": 1792263787.303954,
+    "seen": 1792268721.0404,
+    "ast_hash": "4670dccdf5d4c4048523299e87f13eef",
+    "semantic_hash": "4670dccdf5d4c4048523299e87f13eef"
+  },
+  "tests/treasury_intelligence/test_forecasting.py": {
+    "mtime": 1792263787.304506,
+    "seen": 1792268721.0404,
+    "ast_hash": "9792cef052d2ccac48250b9562e3f084",
+    "semantic_hash": "9792cef052d2ccac48250b9562e3f084"
+  },
+  "tests/treasury_intelligence/test_four_tier_contracts.py": {
+    "mtime": 1792263787.3050423,
+    "seen": 1792268721.0404,
+    "ast_hash": "d1b9b6a0e64d4de8d6677346c71c7eb4",
+    "semantic_hash": "d1b9b6a0e64d4de8d6677346c71c7eb4"
+  },
+  "tests/treasury_intelligence/test_hourly_forecasting.py": {
+    "mtime": 1792263787.3050423,
+    "seen": 1792268721.0404,
+    "ast_hash": "570214db2a00e9889a8ad552e1db142f",
+    "semantic_hash": "570214db2a00e9889a8ad552e1db142f"
+  },
+  "tests/treasury_intelligence/test_instrument_economics.py": {
+    "mtime": 1792263787.3050423,
+    "seen": 1792268721.0404,
+    "ast_hash": "7848584fa5861eecbed0bc852b028de5",
+    "semantic_hash": "7848584fa5861eecbed0bc852b028de5"
+  },
+  "tests/treasury_intelligence/test_liquidity_risk.py": {
+    "mtime": 1792263787.3050423,
+    "seen": 1792268721.0404,
+    "ast_hash": "ba866f5a726f398618eefa1597138d33",
+    "semantic_hash": "ba866f5a726f398618eefa1597138d33"
+  },
+  "tests/treasury_intelligence/test_ml_forecasting.py": {
+    "mtime": 1792263787.3050423,
+    "seen": 1792268721.0404,
+    "ast_hash": "d2d6be19e1b741458a2083e4748e7961",
+    "semantic_hash": "d2d6be19e1b741458a2083e4748e7961"
+  },
+  "tests/treasury_intelligence/test_monte_carlo_risk.py": {
+    "mtime": 1792266453.2538507,
+    "seen": 1792268721.0404,
+    "ast_hash": "baf1b183a1e6a568b736be275a541667",
+    "semantic_hash": "baf1b183a1e6a568b736be275a541667"
+  },
+  "tests/treasury_intelligence/test_optimizer.py": {
+    "mtime": 1792266453.2538507,
+    "seen": 1792268721.0404,
+    "ast_hash": "978632f5034dbbfe0a0b7613973392bb",
+    "semantic_hash": "978632f5034dbbfe0a0b7613973392bb"
+  },
+  "treasury_intelligence/__init__.py": {
+    "mtime": 1792266453.2549741,
+    "seen": 1792268721.0404,
+    "ast_hash": "27ce388fb6e0ad6daca9bd4bf8a854e6",
+    "semantic_hash": "27ce388fb6e0ad6daca9bd4bf8a854e6"
+  },
+  "treasury_intelligence/api.py": {
+    "mtime": 1792266453.2549741,
+    "seen": 1792268721.0404,
+    "ast_hash": "ad23b652f2758877953407a550a0aaf2",
+    "semantic_hash": "ad23b652f2758877953407a550a0aaf2"
+  },
+  "treasury_intelligence/demo.py": {
+    "mtime": 1792263787.3050423,
+    "seen": 1792268721.0404,
+    "ast_hash": "1c2839d2143471a4ffebb77664665d56",
+    "semantic_hash": "1c2839d2143471a4ffebb77664665d56"
+  },
+  "treasury_intelligence/economics.py": {
+    "mtime": 1792263787.3050423,
+    "seen": 1792268721.0404,
+    "ast_hash": "29477acf29fe66c30c55d5a030979a85",
+    "semantic_hash": "29477acf29fe66c30c55d5a030979a85"
+  },
+  "treasury_intelligence/features.py": {
+    "mtime": 1792263787.3050423,
+    "seen": 1792268721.0404,
+    "ast_hash": "8d2f3960b622420527a4efb36eadf0b7",
+    "semantic_hash": "8d2f3960b622420527a4efb36eadf0b7"
+  },
+  "treasury_intelligence/forecasting.py": {
+    "mtime": 1792263787.3050423,
+    "seen": 1792268721.0404,
+    "ast_hash": "53c728c75354a3070ee7dfd45cdf10b6",
+    "semantic_hash": "53c728c75354a3070ee7dfd45cdf10b6"
+  },
+  "treasury_intelligence/four_tier.py": {
+    "mtime": 1792263787.3050423,
+    "seen": 1792268721.0404,
+    "ast_hash": "2d8c5726c23da8be2588dd8b8e5f39bc",
+    "semantic_hash": "2d8c5726c23da8be2588dd8b8e5f39bc"
+  },
+  "treasury_intelligence/hourly_forecasting.py": {
+    "mtime": 1792263787.3050423,
+    "seen": 1792268721.0404,
+    "ast_hash": "b455f15dc459394074496a69b94b82b8",
+    "semantic_hash": "b455f15dc459394074496a69b94b82b8"
+  },
+  "treasury_intelligence/instrument_economics.py": {
+    "mtime": 1792263787.3050423,
+    "seen": 1792268721.0404,
+    "ast_hash": "419a1ab6d5475d23f09288cd704c0a15",
+    "semantic_hash": "419a1ab6d5475d23f09288cd704c0a15"
+  },
+  "treasury_intelligence/liquidity_risk.py": {
+    "mtime": 1792266453.2559817,
+    "seen": 1792268721.0404,
+    "ast_hash": "318653f5bf866a00b65fd929e51e919f",
+    "semantic_hash": "318653f5bf866a00b65fd929e51e919f"
+  },
+  "treasury_intelligence/ml_forecasting.py": {
+    "mtime": 1792263787.3050423,
+    "seen": 1792268721.0404,
+    "ast_hash": "466d8b65832e69e8a999aadd85f99036",
+    "semantic_hash": "466d8b65832e69e8a999aadd85f99036"
+  },
+  "treasury_intelligence/monte_carlo_risk.py": {
+    "mtime": 1792266453.2559817,
+    "seen": 1792268721.0404,
+    "ast_hash": "d7f9a02826a736c38399c004224d101a",
+    "semantic_hash": "d7f9a02826a736c38399c004224d101a"
+  },
+  "treasury_intelligence/optimizer.py": {
+    "mtime": 1792266453.2569804,
+    "seen": 1792268721.0404,
+    "ast_hash": "33c1af19532e862bfcd84ed01e55e8bd",
+    "semantic_hash": "33c1af19532e862bfcd84ed01e55e8bd"
+  },
+  "treasury_intelligence/pipeline.py": {
+    "mtime": 1792263787.3050423,
+    "seen": 1792268721.0404,
+    "ast_hash": "7c186c738ac53bd89b6f7f592198ff0a",
+    "semantic_hash": "7c186c738ac53bd89b6f7f592198ff0a"
+  },
+  "treasury_intelligence/policy.py": {
+    "mtime": 1792263787.3050423,
+    "seen": 1792268721.0404,
+    "ast_hash": "338d242ea0c2beb19f9c1fe2eb234714",
+    "semantic_hash": "338d242ea0c2beb19f9c1fe2eb234714"
+  },
+  "treasury_intelligence/portfolio.py": {
+    "mtime": 1792266453.25798,
+    "seen": 1792268721.0404,
+    "ast_hash": "4172c72ba4202fce6a9c3a7e9c9785da",
+    "semantic_hash": "4172c72ba4202fce6a9c3a7e9c9785da"
+  },
+  "treasury_intelligence/reserve.py": {
+    "mtime": 1792263787.3050423,
+    "seen": 1792268721.0404,
+    "ast_hash": "551dc80fab8c05ac7f28be44508816ae",
+    "semantic_hash": "551dc80fab8c05ac7f28be44508816ae"
+  },
+  "treasury_intelligence/types.py": {
+    "mtime": 1792263787.3050423,
+    "seen": 1792268721.0404,
+    "ast_hash": "25f059d6087042b2b056870c3c068002",
+    "semantic_hash": "25f059d6087042b2b056870c3c068002"
   }
 }

@@ -1,4 +1,4 @@
-"""Member 2 public data contracts. No forecasting or accounting implementation."""
+"""Member 2 public data contracts with additive four-tier portfolio extensions."""
 
 from datetime import datetime, timezone
 from enum import Enum
@@ -45,6 +45,26 @@ class TreasuryPolicy(ContractModel):
     early_redemption_allowed: bool = True
     early_redemption_penalty_bps: BasisPoints = 200
 
+    @model_validator(mode="before")
+    @classmethod
+    def map_frontend_policy_fields(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        d = dict(data)
+        if "min_sweep_cents" in d and "minimum_sweep_cents" not in d:
+            d["minimum_sweep_cents"] = d.pop("min_sweep_cents")
+        if "vault_rate_bps" in d and "vault_yield_bps" not in d:
+            d["vault_yield_bps"] = d.pop("vault_rate_bps")
+        if "lock_steps" in d and "vault_lock_steps" not in d:
+            d["vault_lock_steps"] = d.pop("lock_steps")
+        if "allow_early_redemption" in d and "early_redemption_allowed" not in d:
+            d["early_redemption_allowed"] = d.pop("allow_early_redemption")
+        if "risk_percentile" in d and isinstance(d["risk_percentile"], (int, float)):
+            # Frontend passes 90, 95, 99 as integer percentages
+            if d["risk_percentile"] in (90, 95, 99):
+                d["risk_percentile"] = d["risk_percentile"] / 100.0
+        return d
+
 
 class CreateRunRequest(ContractModel):
     initial_cash_cents: Cents = 2000000000
@@ -53,6 +73,16 @@ class CreateRunRequest(ContractModel):
     scenario: Scenario = Scenario.NORMAL
     start_time: datetime | None = None
     policy: TreasuryPolicy = Field(default_factory=TreasuryPolicy)
+
+    @model_validator(mode="before")
+    @classmethod
+    def map_frontend_create_fields(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        d = dict(data)
+        if "initial_checking_cents" in d and "initial_cash_cents" not in d:
+            d["initial_cash_cents"] = d.pop("initial_checking_cents")
+        return d
 
 
 class RunCreated(ContractModel):
@@ -70,8 +100,8 @@ class AdvanceRequest(ContractModel):
 
 class ScenarioRequest(ContractModel):
     scenario: Scenario
-    # Scenario-specific parameter validation is deferred until those contracts freeze.
     parameters: dict[str, Any] = Field(default_factory=dict)
+    effective_step: Step | None = None
 
 
 class ScenarioApplied(ContractModel):
@@ -82,7 +112,6 @@ class ScenarioApplied(ContractModel):
 
 
 class PolicyPatch(ContractModel):
-    # Omission or null means unchanged; the future service applies non-null fields.
     risk_percentile: float | None = Field(default=None, gt=0, lt=1, allow_inf_nan=False)
     operational_buffer_cents: Cents | None = None
     minimum_sweep_cents: Cents | None = None
@@ -90,6 +119,26 @@ class PolicyPatch(ContractModel):
     vault_lock_steps: PositiveSteps | None = None
     early_redemption_allowed: bool | None = None
     early_redemption_penalty_bps: BasisPoints | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def map_frontend_patch_fields(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        d = dict(data)
+        if "min_sweep_cents" in d and "minimum_sweep_cents" not in d:
+            d["minimum_sweep_cents"] = d.pop("min_sweep_cents")
+        if "vault_rate_bps" in d and "vault_yield_bps" not in d:
+            d["vault_yield_bps"] = d.pop("vault_rate_bps")
+        if "lock_steps" in d and "vault_lock_steps" not in d:
+            d["vault_lock_steps"] = d.pop("lock_steps")
+        if "allow_early_redemption" in d and "early_redemption_allowed" not in d:
+            d["early_redemption_allowed"] = d.pop("allow_early_redemption")
+        if "risk_percentile" in d and isinstance(d["risk_percentile"], (int, float)):
+            if d["risk_percentile"] in (90, 95, 99):
+                d["risk_percentile"] = d["risk_percentile"] / 100.0
+        return d
+
 
 class CashFlowBucket(ContractModel):
     step: Step
@@ -164,6 +213,113 @@ class DecisionRecord(ContractModel):
     explanation: list[str]
 
 
+# ---------------------------------------------------------
+# Four-Tier Additive Models (Matching Frontend Contracts)
+# ---------------------------------------------------------
+
+class Tier0Snapshot(ContractModel):
+    tier: int = 0
+    name: str = "Operating Cash Buffer"
+    checking_cents: Cents
+    required_reserve_cents: Cents
+    operational_buffer_cents: Cents
+    deployable_surplus_cents: Cents
+    reserve_deficit_cents: Cents
+    immediate_liquidity_cents: Cents
+    status: Literal["BALANCED", "SURPLUS", "DEFICIT"]
+
+
+class Tier1Snapshot(ContractModel):
+    tier: int = 1
+    id: str = "REPO-1"
+    name: str = "Overnight Repo"
+    principal_cents: Cents
+    repo_apy_bps: BasisPoints
+    repo_apy_decimal: str
+    accrued_interest_cents: Cents
+    realized_interest_cents: Cents
+    status: Literal["LOCKED", "MATURED", "REDEEMED"]
+    entry_window_open: bool
+    early_redemption_allowed: bool
+    early_break_fee_bps: BasisPoints
+    break_fee_cents: Cents
+    net_redeemable_cents: Cents
+    immediate_liquidity_cents: Cents
+    entry_time: str = "17:00"
+    maturity_time: str = "08:00"
+    maturity_timestamp: str | None = None
+
+
+class Tier2Snapshot(ContractModel):
+    tier: int = 2
+    id: str = "BOND-SOV-1"
+    name: str = "Sovereign Bonds"
+    notional_cents: Cents
+    quantity: float
+    acquisition_price: str
+    current_price: str
+    market_value_cents: Cents
+    ytm_bps: BasisPoints
+    ytm_decimal: str
+    modified_duration: float
+    liquidation_haircut_bps: BasisPoints
+    haircut_cents: Cents
+    realized_pnl_cents: int = Field(strict=True)
+    unrealized_pnl_cents: int = Field(strict=True)
+    available_liquidity_cents: Cents
+    liquidity_status: str = "2-DAY_SETTLEMENT_OR_HAIRCUT"
+
+
+class Tier3Snapshot(ContractModel):
+    tier: int = 3
+    id: str = "EQ-IDX-1"
+    name: str = "Growth Equities"
+    quantity: float
+    acquisition_price: str
+    current_price: str
+    market_value_cents: Cents
+    cost_basis_cents: Cents
+    volatility_bps: BasisPoints
+    volatility_decimal: str
+    emergency_slippage_bps: BasisPoints
+    slippage_cents: Cents
+    realized_pnl_cents: int = Field(strict=True)
+    unrealized_pnl_cents: int = Field(strict=True)
+    available_liquidity_cents: Cents
+    liquidity_status: str = "MARKET_VOLATILITY_AND_SLIPPAGE"
+
+
+class OverdraftSnapshot(ContractModel):
+    borrowing_outstanding_cents: Cents
+    financing_rate_bps: BasisPoints
+    financing_cost_cents: Cents
+    liability_status: Literal["ACTIVE", "CLEARED"]
+    is_active: bool
+
+
+class AggregatesSnapshot(ContractModel):
+    gross_assets_cents: Cents
+    total_liabilities_cents: Cents
+    net_portfolio_value_cents: int = Field(strict=True)
+    total_immediate_liquidity_cents: Cents
+    total_realized_returns_cents: int = Field(strict=True)
+    total_unrealized_returns_cents: int = Field(strict=True)
+    net_financial_benefit_cents: int = Field(strict=True)
+    checking_cents: Cents
+    required_reserve_cents: Cents
+    deployable_surplus_cents: Cents
+
+
+class FourTierPortfolioSnapshot(ContractModel):
+    timestamp: str | None = None
+    tier0: Tier0Snapshot
+    tier1: Tier1Snapshot
+    tier2: Tier2Snapshot
+    tier3: Tier3Snapshot
+    overdraft: OverdraftSnapshot
+    aggregates: AggregatesSnapshot
+
+
 class SimulationSnapshot(ContractModel):
     run_id: UUID
     step: Step
@@ -174,6 +330,43 @@ class SimulationSnapshot(ContractModel):
     required_reserve_cents: Cents | None
     forecast: ForecastSummary | None
     decision: DecisionRecord | None
+    status: str = "READY"
+    policy: TreasuryPolicy | None = None
+    deployable_surplus_cents: Cents = 0
+    four_tier: FourTierPortfolioSnapshot | None = None
+
+
+# ---------------------------------------------------------
+# Collections & Enveloped Responses
+# ---------------------------------------------------------
+
+class HistoryResponse(ContractModel):
+    items: list[SimulationSnapshot]
+
+
+class DecisionsResponse(ContractModel):
+    items: list[DecisionRecord]
+
+
+class TransactionsResponse(ContractModel):
+    items: list[TransactionRecord]
+
+
+class ForecastPoint(ContractModel):
+    timestamp: datetime
+    predicted_inflow_cents: Cents
+    predicted_outflow_cents: Cents
+    predicted_net_cents: int = Field(strict=True)
+    lower_cents: int = Field(strict=True)
+    upper_cents: int = Field(strict=True)
+
+
+class ForecastResponse(ContractModel):
+    as_of: datetime
+    horizon_minutes: PositiveSteps
+    model_version: str
+    points: list[ForecastPoint]
+    summary: ForecastSummary | None = None
 
 
 class FinancialMetrics(ContractModel):
