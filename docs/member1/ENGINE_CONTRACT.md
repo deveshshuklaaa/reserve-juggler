@@ -4,7 +4,8 @@ Package: `treasury_intelligence`. Requires Python 3.10+ and Pydantic 2
 (`treasury_intelligence/requirements.txt`). No database, HTTP, or frontend imports.
 RJ-M1-01 defined validated immutable models and public function declarations.
 RJ-M1-02 implements `calculate_required_reserve` and the pure helpers below.
-The other five original functions still raise `NotImplementedError`.
+RJ-M1-03 implements forecasting and RJ-M1-04 implements treasury recommendations.
+Model evaluation, risk scenarios, and allocation evaluation remain declarations.
 Existing forecasting and backend classes are unchanged; no execution path is implemented.
 
 The referenced Member 1 prompt signatures, MEMBER1_SCOPE.md, and AGENT_RULES.md
@@ -197,3 +198,69 @@ seasonal_naive_forecast(history: Sequence[CashFlowBucket], *, as_of: datetime,
 - **Automatic Fallback**: If history is shorter than the seasonal cycle (e.g. < 96 intervals for 15-min daily cycle), seasonal-naive automatically falls back to rolling-mean. If history is empty, falls back to zero-flow baseline.
 - **Horizons**: Validated for arbitrary horizons exactly divisible by bucket_minutes, including 1, 2, 4, and 96 future 15-minute intervals.
 - **JSON Serialization**: Strict Pydantic 2 schema compatibility with integer cents and UTC timestamps.
+
+## RJ-M1-04 Treasury decisions
+
+`recommend_treasury_action(context, forecast, policy) -> DecisionResult` retains
+its frozen signature. Additive immutable types `TreasuryDecisionPolicy(TreasuryPolicy)`
+and `VaultTerms` provide the previously absent controls. Both support the same
+Pydantic validation and JSON serialization as the original contracts. Consumers
+must deserialize extended policies as TreasuryDecisionPolicy to retain controls.
+
+TreasuryDecisionPolicy adds `sweep_window_open: bool = false`, optional nonnegative
+`sweep_cap_cents = None`, positive `holding_minutes = 1440`, and `vault_terms`
+(a tuple, default empty). The caller evaluates the sweep window at context.as_of;
+the engine does not infer a bank calendar. Vault terms must have unique IDs present
+in the context. Missing terms disqualify that vault for both sweeps and withdrawals.
+A plain TreasuryPolicy therefore permits HOLD or LIQUIDITY_WARNING only.
+
+VaultTerms contains `vault_id`, optional UTC `maturity_at = None` (explicitly no
+time lock), `early_redemption_allowed = false`, `early_redemption_penalty_bps = 0`,
+`early_redemption_fixed_fee_cents = 0`, `sweep_eligible = false`,
+`transaction_cost_cents = 0`, and `opportunity_cost_cents = 0`. Boolean fields are
+strict, cents are nonnegative integers, and penalty bps range from 0 to 10,000.
+Terms describe this position/product, including the proposed placement's lock;
+callers must supply current product terms rather than assume an old maturity
+applies to a new investment. Transaction cost is the total cost supplied for the
+modeled action, charged from checking for sweeps or deducted from withdrawal
+proceeds. Opportunity cost affects investment economics, not cash settlement.
+
+Decision precedence and calculations:
+
+1. Calculate pathwise reserve with the existing frozen reserve function and require
+   context.as_of == forecast.generated_at. If checking is below reserve, address
+   the entire deficit immediately before considering sweep windows, minimums,
+   tolerance, or yield. Only vaults with zero withdrawal delay and explicit terms
+   qualify. Before maturity, early redemption permission is mandatory. Redemption
+   never exceeds withdrawable_cents, even after maturity. A maturity date alone
+   neither books checking cash nor increases the withdrawable balance.
+2. For each permitted position, compute net available principal after the existing
+   ceiling-rounded penalty and transaction cost. Choose a single vault able to
+   cover the deficit, minimizing total cost (vault ID breaks ties). Binary search
+   finds the smallest gross redemption whose net proceeds cover it. WITHDRAW's
+   amount_cents is **gross principal**, while its reason records penalty, fee,
+   net proceeds, and resulting checking. Immediate liquidity takes precedence
+   over the economic return of an existing investment.
+3. If no single position covers the deficit, return LIQUIDITY_WARNING with zero
+   transfer amount, deficit, aggregate accessible net cash, and remaining funding
+   gap. Even if several positions together suffice, the frozen one-vault result
+   cannot express that plan; return a warning requiring separate coordination.
+   Delayed funds are conservatively excluded even for a later forecast shortfall.
+4. Otherwise HOLD within the reserve tolerance corridor, below the minimum sweep,
+   or when the sweep window is closed/unspecified. No eligibility is inferred.
+5. Sweep cap is min(optional absolute cap, floor(checking * max_allocation_bps /
+   10,000)). For each sweep-eligible position, candidate principal is min(cap,
+   max(0, checking - reserve - transaction_cost)). This bounds the **new transfer**,
+   not total existing portfolio exposure. Apply the minimum again after cap/costs.
+   The modeled holding period must allow the supplied withdrawal delay; an exit
+   before maturity requires early redemption permission.
+6. Compute simple expected interest for holding_minutes, applicable early-exit
+   penalty, transaction and opportunity costs using the existing economics helpers.
+   Reject zero or negative net benefit. Among valid candidates choose greatest
+   expected net benefit (vault ID breaks ties). SWEEP's amount_cents is invested
+   principal. Checking after principal and upfront fee is always at least reserve.
+
+Every result sets recommendation_only=true and includes calculation values in
+integer cents in its reason. No execution, ledger mutation, future-maturity cash
+credit, database access, or random simulation occurs. Expected yield is never
+reported as realized earnings. Balances and forecasts remain immutable snapshots.

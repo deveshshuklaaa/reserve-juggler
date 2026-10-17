@@ -21,6 +21,7 @@ from .features import (
 from .forecasting import (
     rolling_mean_forecast, seasonal_naive_forecast,
 )
+from .policy import TreasuryDecisionPolicy, VaultTerms
 
 __all__ = [
     "CashFlowBucket", "ForecastPoint", "ForecastResult", "TreasuryContext",
@@ -33,4 +34,5 @@ __all__ = [
     "early_redemption_penalty", "expected_net_economic_benefit",
     "extract_calendar_features", "compute_lag_features", "compute_rolling_features",
     "build_feature_matrix", "rolling_mean_forecast", "seasonal_naive_forecast",
+    "TreasuryDecisionPolicy", "VaultTerms",
 ]

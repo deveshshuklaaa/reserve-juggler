@@ -8,6 +8,36 @@
 
 ## Task Log
 
+### [RJ-M1-04] Treasury Decisions and Explanations
+- **Status**: COMPLETED
+- **Scope**: Implemented pure HOLD, SWEEP, WITHDRAW, and LIQUIDITY_WARNING
+  recommendations using existing reserve and economics helpers. Added explicit
+  TreasuryDecisionPolicy and VaultTerms controls without changing frozen fields
+  or the public function signature.
+- **Liquidity**: Deficits take precedence; only permitted zero-delay withdrawals
+  qualify, capped at withdrawable principal. Penalties and fees are deducted when
+  grossing up redemptions. Locked nonredeemable funds never support a withdrawal.
+  A deficit needing multiple vaults returns a warning because the result contract
+  permits a single vault only; this limit is documented in ENGINE_CONTRACT.md.
+- **Sweeps**: Require explicit open window and eligibility, reserve coverage after
+  upfront fees, minimum threshold after caps, allocation/absolute caps, permissible
+  modeled exit timing, and positive expected benefit after costs. Missing terms
+  block investment and redemption. Stable vault-ID tie breaks.
+- **Explanations**: Integer-cent reserve components, candidate/cap amounts, expected
+  interest, penalties, fees, net benefit/proceeds, and resulting checking balances.
+  Recommendation only; no ledger/database execution or realized-return claims.
+- **Tests**: Full suite 173 passed. Added 37 decision tests; replaced only the
+  former recommendation-stub assertion with implemented-behavior coverage.
+  Existing forecasting, financial mathematics, and backend tests pass.
+- **Command**: `$env:PYTHONPATH=".;backend"; uv run --with pytest --with fastapi --with pydantic --with httpx --with sqlalchemy --with pydantic-settings pytest tests/ -q`
+- **Diff Check**: `git diff --check` passed.
+- **Files**: `treasury_intelligence/policy.py`, package exports/API, Member 1 tests,
+  ENGINE_CONTRACT.md, and this progress log only.
+- **Commit**: `feat(engine): implement treasury decisions and explanations`
+  (hash in Git history and completion report).
+- **Push Target**: `origin/feat/treasury-intelligence`; result in completion report.
+- **Next Task**: Await explicit assignment; stop after RJ-M1-04.
+
 ### [RJ-M1-03] Feature Engineering and Baseline Forecasts
 - **Status**: COMPLETED
 - **Scope**: Implemented causal feature engineering (calendar time-of-day/day-of-week,

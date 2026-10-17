@@ -1,12 +1,13 @@
-"""Public engine API; reserve mathematics implemented, other algorithms deferred."""
+"""Public engine API; forecasting, reserves, and recommendations are implemented."""
 from collections.abc import Sequence
 from datetime import datetime
 
 from .reserve import calculate_required_reserve
+from .policy import recommend_treasury_action
 
 from .types import (
     CashFlowBucket, ForecastResult, TreasuryContext, TreasuryPolicy,
-    DecisionResult, EvaluationResult, RiskScenarioResult,
+    EvaluationResult, RiskScenarioResult,
     OptimizationResult,
 )
 
@@ -27,11 +28,6 @@ def forecast_cashflows(history: Sequence[CashFlowBucket], *, as_of: datetime,
             bucket_minutes=bucket_minutes, model_version=model_version
         )
     raise ValueError(f"unsupported model_version: {model_version}")
-
-
-def recommend_treasury_action(context: TreasuryContext, forecast: ForecastResult,
-                              policy: TreasuryPolicy) -> DecisionResult:
-    raise NotImplementedError("RJ-M1-01 defines contracts only")
 
 
 def evaluate_forecasting_models(history: Sequence[CashFlowBucket], *,
