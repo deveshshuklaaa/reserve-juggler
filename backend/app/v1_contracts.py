@@ -46,6 +46,14 @@ class TreasuryPolicy(ContractModel):
     early_redemption_penalty_bps: BasisPoints = 200
     allow_bond_liquidation: bool = Field(default=False, strict=True)
     allow_emergency_equity_liquidation: bool = Field(default=False, strict=True)
+    allow_overdraft: bool = Field(default=True, strict=True)
+    max_overdraft_cents: int = Field(default=5000000000, strict=True, ge=0, le=9007199254740991)
+
+    @model_validator(mode="after")
+    def overdraft_policy(self):
+        if not self.allow_overdraft and self.max_overdraft_cents:
+            raise ValueError("disabled overdraft requires a zero principal cap")
+        return self
 
     @model_validator(mode="before")
     @classmethod
@@ -53,6 +61,8 @@ class TreasuryPolicy(ContractModel):
         if not isinstance(data, dict):
             return data
         d = dict(data)
+        if d.get("allow_overdraft") is False and "max_overdraft_cents" not in d:
+            d["max_overdraft_cents"] = 0
         if "min_sweep_cents" in d and "minimum_sweep_cents" not in d:
             d["minimum_sweep_cents"] = d.pop("min_sweep_cents")
         if "vault_rate_bps" in d and "vault_yield_bps" not in d:
@@ -123,6 +133,8 @@ class PolicyPatch(ContractModel):
     early_redemption_penalty_bps: BasisPoints | None = None
     allow_bond_liquidation: bool | None = Field(default=None, strict=True)
     allow_emergency_equity_liquidation: bool | None = Field(default=None, strict=True)
+    allow_overdraft: bool | None = Field(default=None, strict=True)
+    max_overdraft_cents: int | None = Field(default=None, strict=True, ge=0, le=9007199254740991)
 
     @model_validator(mode="before")
     @classmethod

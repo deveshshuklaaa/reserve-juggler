@@ -180,7 +180,8 @@ def execute_market_order(session, run, cash, instruction, observation, step, min
         session.add(movement)
         session.flush()
         record_market_valuation(session, run, position, observation, realized)
-        return dict(run_id=str(run.id), step=step, order_id=str(o.id), action=o.action,
+        return dict(receipt_version="runtime-execution-v1",
+            run_id=str(run.id), step=step, order_id=str(o.id), recommendation_reference=str(o.id), action=o.action,
             position_id=position.id, requested_amount_cents=o.amount_cents,
             executed_amount_cents=principal if buy else gross, status="EXECUTED", reason="Validated full fill",
             quantity=str(quantity), price_index=str(price), principal_cents=principal, gross_cents=gross,

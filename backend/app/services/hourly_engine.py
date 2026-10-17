@@ -115,7 +115,8 @@ def execute_hourly_step(
     
     Shared by live simulation advance and backtesting engines.
     """
-    run = session.scalar(select(DbSimulationRun).where(DbSimulationRun.id == run_id))
+    # Serialize each run's cap, cash, position and idempotency lifecycle.
+    run = session.scalar(select(DbSimulationRun).where(DbSimulationRun.id == run_id).with_for_update())
     if run is None:
         raise KeyError(f"Simulation run {run_id} not found")
 
@@ -270,7 +271,9 @@ def execute_hourly_step(
 
     # Customer Outflow
     pre_out = cash_acc.balance_cents
-    if cash_acc.balance_cents >= outflow_cents:
+    if outflow_cents == 0:
+        pass
+    elif cash_acc.balance_cents >= outflow_cents:
         cash_acc.balance_cents -= outflow_cents
         session.add(
             DbLedgerEntry(
@@ -428,94 +431,99 @@ def execute_hourly_step(
                 source_observation_timestamp=observation.timestamp,
                 occurred_at=observation.timestamp,
                 shortfall_cents=cash_shortfall,
-                description=f"Negative cash drain of {cash_shortfall} cents; triggered overdraft.",
+                description=f"Unfunded payout shortfall {cash_shortfall} cents before capped emergency funding.",
                 reference_id=breach_ref,
             )
             session.add(breach)
             session.flush()
 
-            od_ref = f"overdraft-{run.id}-{target_step}"
-            od_liability = DbOverdraftLiability(
-                id=uuid4(),
-                run_id=run.id,
-                source_type=run.source_type,
-                dataset_id=run.dataset_id,
-                source_observation_timestamp=observation.timestamp,
-                borrowed_at=observation.timestamp,
-                borrowed_cents=cash_shortfall,
-                outstanding_principal_cents=cash_shortfall,
-                repaid_principal_cents=0,
-                apr_pct=observation.emergency_overdraft_penalty_apr_pct if observation else Decimal("10.0"),
-                financing_cost_cents=0,
-                breach_id=breach.id,
-                reference_id=od_ref,
-            )
-            session.add(od_liability)
-            session.flush()
-
-            cash_before_borrow = cash_acc.balance_cents
-            cash_acc.balance_cents += cash_shortfall
-
-            od_ledger = DbLedgerEntry(
-                id=uuid4(),
-                run_id=run.id,
-                step=target_step,
-                timestamp=None,
-                entry_type="OVERDRAFT_DRAW_BORROW",
-                amount_cents=cash_shortfall,
-                balance_before_cents=cash_before_borrow,
-                balance_after_cents=cash_acc.balance_cents,
-                reference_id=f"OD-DRAW-{target_step}",
-                source_type=run.source_type,
-                dataset_id=run.dataset_id,
-                source_observation_timestamp=observation.timestamp,
-                event_at=observation.timestamp,
-            )
-            session.add(od_ledger)
-            session.flush()
-
-            session.add(
-                DbOverdraftMovement(
+            outstanding = sum(session.scalars(select(DbOverdraftLiability.outstanding_principal_cents).where(
+                DbOverdraftLiability.run_id == run.id)))
+            capacity = max(0, policy_obj.max_overdraft_cents - outstanding) if policy_obj.allow_overdraft else 0
+            cash_shortfall = min(cash_shortfall, capacity)
+            if cash_shortfall > 0:
+                od_ref = f"overdraft-{run.id}-{target_step}"
+                od_liability = DbOverdraftLiability(
                     id=uuid4(),
                     run_id=run.id,
-                    liability_id=od_liability.id,
-                    occurred_at=observation.timestamp,
-                    kind="BORROW",
-                    principal_cents=cash_shortfall,
-                    financing_cost_cents=0,
-                    cash_delta_cents=cash_shortfall,
-                    ledger_entry_id=od_ledger.id,
-                    reference_id=f"od-mov-{target_step}",
                     source_type=run.source_type,
                     dataset_id=run.dataset_id,
                     source_observation_timestamp=observation.timestamp,
+                    borrowed_at=observation.timestamp,
+                    borrowed_cents=cash_shortfall,
+                    outstanding_principal_cents=cash_shortfall,
+                    repaid_principal_cents=0,
+                    apr_pct=observation.emergency_overdraft_penalty_apr_pct if observation else Decimal("10.0"),
+                    financing_cost_cents=0,
+                    breach_id=breach.id,
+                    reference_id=od_ref,
                 )
-            )
+                session.add(od_liability)
+                session.flush()
 
-            cash_before_financed = cash_acc.balance_cents
-            cash_acc.balance_cents -= cash_shortfall
-            session.add(
-                DbLedgerEntry(
+                cash_before_borrow = cash_acc.balance_cents
+                cash_acc.balance_cents += cash_shortfall
+
+                od_ledger = DbLedgerEntry(
                     id=uuid4(),
                     run_id=run.id,
                     step=target_step,
                     timestamp=None,
-                    entry_type="CUSTOMER_WITHDRAWAL_OUTFLOW",
+                    entry_type="OVERDRAFT_DRAW_BORROW",
                     amount_cents=cash_shortfall,
-                    balance_before_cents=cash_before_financed,
+                    balance_before_cents=cash_before_borrow,
                     balance_after_cents=cash_acc.balance_cents,
-                    reference_id=f"FLOW-OUT-FINANCED-{target_step}",
+                    reference_id=f"OD-DRAW-{target_step}",
                     source_type=run.source_type,
                     dataset_id=run.dataset_id,
                     source_observation_timestamp=observation.timestamp,
                     event_at=observation.timestamp,
                 )
-            )
+                session.add(od_ledger)
+                session.flush()
 
-            action_decision = "LIQUIDITY_WARNING"
-            decision_explanations.append(
-                f"Cash deficit of {cash_shortfall} cents covered via emergency overdraft."
-            )
+                session.add(
+                    DbOverdraftMovement(
+                        id=uuid4(),
+                        run_id=run.id,
+                        liability_id=od_liability.id,
+                        occurred_at=observation.timestamp,
+                        kind="BORROW",
+                        principal_cents=cash_shortfall,
+                        financing_cost_cents=0,
+                        cash_delta_cents=cash_shortfall,
+                        ledger_entry_id=od_ledger.id,
+                        reference_id=f"od-mov-{target_step}",
+                        source_type=run.source_type,
+                        dataset_id=run.dataset_id,
+                        source_observation_timestamp=observation.timestamp,
+                    )
+                )
+
+                cash_before_financed = cash_acc.balance_cents
+                cash_acc.balance_cents -= cash_shortfall
+                session.add(
+                    DbLedgerEntry(
+                        id=uuid4(),
+                        run_id=run.id,
+                        step=target_step,
+                        timestamp=None,
+                        entry_type="CUSTOMER_WITHDRAWAL_OUTFLOW",
+                        amount_cents=cash_shortfall,
+                        balance_before_cents=cash_before_financed,
+                        balance_after_cents=cash_acc.balance_cents,
+                        reference_id=f"FLOW-OUT-FINANCED-{target_step}",
+                        source_type=run.source_type,
+                        dataset_id=run.dataset_id,
+                        source_observation_timestamp=observation.timestamp,
+                        event_at=observation.timestamp,
+                    )
+                )
+
+                action_decision = "LIQUIDITY_WARNING"
+                decision_explanations.append(
+                    f"Cash deficit of {cash_shortfall} cents covered via emergency overdraft."
+                )
 
     # 4. Overdraft repayment & hourly interest accrual
     active_ods = list(
@@ -622,6 +630,17 @@ def execute_hourly_step(
     # Keep canonical planning inputs at the opening decision boundary. Current
     # customer flows are execution outcomes, not available forecast features.
 
+    paid_outflow_cents = sum(session.scalars(select(DbLedgerEntry.amount_cents).where(
+        DbLedgerEntry.run_id == run.id, DbLedgerEntry.step == target_step,
+        DbLedgerEntry.entry_type == "CUSTOMER_WITHDRAWAL_OUTFLOW")))
+    unpaid_outflow_cents = outflow_cents - paid_outflow_cents
+    if unpaid_outflow_cents:
+        executed_decision = False
+        action_decision = "LIQUIDITY_WARNING"
+        decision_explanations.append(
+            f"{unpaid_outflow_cents} cents remain unpaid; overdraft disabled or principal cap exhausted. "
+            "No unfunded payout leg was executed; unpaid requests are not automatically retried.")
+
     # 5. Required Reserve & Sweep Decision by Strategy
     active_strategy = normalize_strategy_id(strategy or policy_dict.get("strategy"))
     cutoff = get_information_cutoff(observation.timestamp)
@@ -671,6 +690,11 @@ def execute_hourly_step(
             f"Summary action: {opt_result.summary_action}."
         )
         for order in opt_result.decision.orders:
+            if unpaid_outflow_cents:
+                orders_rejected.append({"order_id": str(order.id), "action": order.action,
+                    "requested_amount_cents": order.amount_cents, "executed_amount_cents": 0,
+                    "status": "REJECTED", "reason": "Unpaid customer payout requires resolution before reallocation"})
+                continue
             if order.action in {"BUY_BONDS", "SELL_BONDS", "BUY_EQUITIES", "SELL_EQUITIES"}:
                 try:
                     fill = execute_market_order(session, run, cash_acc, order, observation,
@@ -954,6 +978,7 @@ def execute_hourly_step(
         ]
 
     details = {
+        "receipt_version": "runtime-execution-v1",
         "strategy": active_strategy,
         "pre_checking_cents": pre_out,
         "post_checking_cents": cash_acc.balance_cents,
@@ -961,6 +986,43 @@ def execute_hourly_step(
         "orders_executed": orders_executed,
         "orders_rejected": orders_rejected,
     }
+    payout_ledgers = list(session.scalars(select(DbLedgerEntry).where(
+        DbLedgerEntry.run_id == run.id, DbLedgerEntry.step == target_step,
+        DbLedgerEntry.entry_type == "CUSTOMER_WITHDRAWAL_OUTFLOW")))
+    draw_ledgers = list(session.scalars(select(DbLedgerEntry).where(
+        DbLedgerEntry.run_id == run.id, DbLedgerEntry.step == target_step,
+        DbLedgerEntry.entry_type == "OVERDRAFT_DRAW_BORROW")))
+    details["payout"] = {
+        "receipt_version": "runtime-execution-v1", "run_id": str(run.id), "step": target_step,
+        "recommendation_reference": None, "source_observation_timestamp": observation.timestamp.isoformat(),
+        "requested_amount_cents": outflow_cents, "executed_amount_cents": paid_outflow_cents,
+        "unpaid_amount_cents": unpaid_outflow_cents,
+        "status": "EXECUTED" if not unpaid_outflow_cents else ("PARTIALLY_EXECUTED" if paid_outflow_cents else "FAILED"),
+        "settlement_status": "PAID" if not unpaid_outflow_cents else ("PARTIALLY_PAID" if paid_outflow_cents else "UNPAID"),
+        "reason": "All requested funds settled" if not unpaid_outflow_cents else "Overdraft disabled or principal cap exhausted",
+        "cash_delta_cents": -paid_outflow_cents, "fees_cents": 0, "realized_pnl_cents": 0,
+        "overdraft_draw_cents": sum(e.amount_cents for e in draw_ledgers),
+        "borrowing_outstanding_cents": od_borrowing, "unpaid_financing_cost_cents": od_fees,
+        "remaining_financial_liability_cents": total_liabilities,
+        "ledger_entry_ids": [str(e.id) for e in payout_ledgers],
+        "overdraft_ledger_entry_ids": [str(e.id) for e in draw_ledgers],
+        "automatic_retry": False,
+    }
+    # Freeze per-hour financing receipts so later repayment cannot rewrite history.
+    loan_states = {loan.id: loan for loan in all_ods}
+    details["financing"] = [{
+        "receipt_version": "runtime-execution-v1", "run_id": str(run.id), "step": target_step,
+        "recommendation_reference": None, "movement_id": str(m.id), "liability_id": str(m.liability_id),
+        "kind": m.kind, "status": "ACCRUED" if m.kind == "FINANCING_COST" else "EXECUTED",
+        "reason": "Hourly financing expense" if m.kind == "FINANCING_COST" else "Actual financing cash leg",
+        "principal_cents": m.principal_cents, "financing_cost_cents": m.financing_cost_cents,
+        "cash_delta_cents": m.cash_delta_cents,
+        "ledger_entry_id": str(m.ledger_entry_id) if m.ledger_entry_id else None,
+        "outstanding_principal_cents": loan_states[m.liability_id].outstanding_principal_cents,
+        "unpaid_financing_cost_cents": (loan_states[m.liability_id].financing_cost_cents or 0) - paid_costs.get(m.liability_id, 0),
+    } for m in session.scalars(select(DbOverdraftMovement).where(
+        DbOverdraftMovement.run_id == run.id, DbOverdraftMovement.occurred_at == observation.timestamp
+    ).order_by(DbOverdraftMovement.reference_id))]
     db_decision = DbTreasuryDecision(
         id=uuid4(),
         run_id=run.id,
@@ -968,7 +1030,8 @@ def execute_hourly_step(
         timestamp=None if run.source_type == "ORGANIZER_HISTORICAL" else observation.timestamp,
         action=action_decision,
         amount_cents=decision_amount,
-        execution_status="EXECUTED" if executed_decision else "RECOMMENDED",
+        execution_status=(details["payout"]["status"] if unpaid_outflow_cents
+                          else ("EXECUTED" if executed_decision else "RECOMMENDED")),
         explanation_json=decision_explanations,
         decision_details_json=details,
         source_type=run.source_type,

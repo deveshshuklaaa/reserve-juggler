@@ -98,7 +98,8 @@ def build_four_tier_policy(
         allow_overdraft=policy_dict.get("allow_overdraft", True),
         allow_bond_liquidation=policy_dict.get("allow_bond_liquidation", False),
         allow_emergency_equity_liquidation=policy_dict.get("allow_emergency_equity_liquidation", False),
-        max_overdraft_cents=policy_dict.get("max_overdraft_cents", 5000000000),
+        max_overdraft_cents=policy_dict.get("max_overdraft_cents",
+            5000000000 if policy_dict.get("allow_overdraft", True) else 0),
     )
 
 

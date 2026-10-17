@@ -1434,6 +1434,18 @@ components:
           - type: boolean
           - type: 'null'
           title: Allow Emergency Equity Liquidation
+        allow_overdraft:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Allow Overdraft
+        max_overdraft_cents:
+          anyOf:
+          - type: integer
+            maximum: 9007199254740991.0
+            minimum: 0.0
+          - type: 'null'
+          title: Max Overdraft Cents
       additionalProperties: false
       type: object
       title: PolicyPatch
@@ -2130,6 +2142,16 @@ components:
           type: boolean
           title: Allow Emergency Equity Liquidation
           default: false
+        allow_overdraft:
+          type: boolean
+          title: Allow Overdraft
+          default: true
+        max_overdraft_cents:
+          type: integer
+          maximum: 9007199254740991.0
+          minimum: 0.0
+          title: Max Overdraft Cents
+          default: 5000000000
       additionalProperties: false
       type: object
       title: TreasuryPolicy

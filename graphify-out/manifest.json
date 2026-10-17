@@ -204,15 +204,15 @@
     "semantic_hash": "9a972191f71d003c968cafd70cd2493e"
   },
   "backend/app/services/treasury_adapter.py": {
-    "mtime": 1792280441.401026,
-    "seen": 1792280534.4192812,
-    "ast_hash": "264320e65345cc15156b7b43132af651",
+    "mtime": 1792280825.217446,
+    "seen": 1792281045.3267646,
+    "ast_hash": "dffcb0126a79910df5761f7d0dcc5079",
     "semantic_hash": ""
   },
   "backend/app/v1_contracts.py": {
-    "mtime": 1792279039.0819247,
-    "seen": 1792279130.7036886,
-    "ast_hash": "6f43d70bfcfc1e6506ad83c61c7d9f28",
+    "mtime": 1792280889.8102894,
+    "seen": 1792281045.327999,
+    "ast_hash": "c682f025ee5eaae81aa0a8c294b7a650",
     "semantic_hash": ""
   },
   "tests/backend/test_api_versioning.py": {
@@ -276,9 +276,9 @@
     "semantic_hash": ""
   },
   "contracts/openapi.yaml": {
-    "mtime": 1792279445.490968,
-    "seen": 1792279453.972916,
-    "ast_hash": "dea6060375f6ab48adb2795b75bbcdf9",
+    "mtime": 1792280892.027674,
+    "seen": 1792281045.3576107,
+    "ast_hash": "e69019017c060694a4c532568ba8aa09",
     "semantic_hash": ""
   },
   "docker-compose.yml": {
@@ -378,15 +378,15 @@
     "semantic_hash": ""
   },
   "backend/app/services/hourly_engine.py": {
-    "mtime": 1792280468.7927873,
-    "seen": 1792280534.4185214,
-    "ast_hash": "7634411471dabd481484424b59bb746f",
+    "mtime": 1792280980.5688176,
+    "seen": 1792281045.3267646,
+    "ast_hash": "db0587f22cd5f91acc6411172a25b8b4",
     "semantic_hash": ""
   },
   "backend/app/services/run_service.py": {
-    "mtime": 1792279114.193073,
-    "seen": 1792279130.7036886,
-    "ast_hash": "89b8e0da3a0852f5486165487d7a93ce",
+    "mtime": 1792280889.8102894,
+    "seen": 1792281045.3267646,
+    "ast_hash": "7711f7640a04e0e8d15fb9ab1f8f0c00",
     "semantic_hash": ""
   },
   "backend/app/treasury/four_tier_adapter.py": {
@@ -726,9 +726,9 @@
     "semantic_hash": ""
   },
   "backend/app/services/market_execution.py": {
-    "mtime": 1792280670.0448618,
-    "seen": 1792280688.5619268,
-    "ast_hash": "10b393c44a75cbb50be7d182c17c885f",
+    "mtime": 1792280980.5688176,
+    "seen": 1792281045.3267646,
+    "ast_hash": "0178f87dbf7c3227184c35c20462b780",
     "semantic_hash": ""
   },
   "scripts/export-openapi.py": {
@@ -804,9 +804,15 @@
     "semantic_hash": ""
   },
   "docs/RUNTIME_RELEASE_CHECKPOINT.md": {
-    "mtime": 1792280573.4069314,
-    "seen": 1792280688.5939343,
-    "ast_hash": "9cdfc34d8f388068c5f564f1a72df4ea",
+    "mtime": 1792281004.976342,
+    "seen": 1792281045.3593245,
+    "ast_hash": "a723e79e39e56ac1289f6932ee2566e4",
+    "semantic_hash": ""
+  },
+  "tests/integration/test_payout_execution.py": {
+    "mtime": 1792280980.573027,
+    "seen": 1792281045.3390028,
+    "ast_hash": "bdb48b6916bcbc000395ae0018b8e9cb",
     "semantic_hash": ""
   }
 }

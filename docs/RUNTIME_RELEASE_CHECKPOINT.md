@@ -94,3 +94,80 @@ publication/calibration confirmation, deferred settlement, unsupported repo/
 borrowing recommendation actions, seven gated historical acceptance cases and
 RJ-M1-16 owner acceptance still require verification. Passing unit tests or
 unlimited-borrowing runs are not release approval.
+
+## Capped financing and payout receipt v1
+
+Emergency principal drawn never exceeds
+`max(0, max_overdraft_cents - existing outstanding principal)`.
+Disabled borrowing has zero capacity. Unpaid interest is a separate liability,
+not silently capitalized principal or income. Run-level row locking serializes
+execution, capacity checks and step idempotency. Existing above-cap debt is
+preserved but cannot draw additional funds.
+
+Backend TreasuryPolicy / PolicyPatch expose allow_overdraft and
+max_overdraft_cents using existing Member 1 names. Defaults remain enabled /
+5,000,000,000 cents. Disabling without an explicit limit sets zero; a positive
+explicit limit with disabled borrowing is invalid. OpenAPI is regenerated;
+frontend and Member 1 source remain unchanged.
+
+`TreasuryDecision.decision_details_json.payout` is frozen per completed hour:
+receipt_version=runtime-execution-v1, run_id, step, recommendation_reference
+(null for customer instructions), source_observation_timestamp,
+requested_amount_cents, executed_amount_cents, unpaid_amount_cents, status,
+settlement_status, reason, cash_delta_cents, fees_cents, realized_pnl_cents,
+overdraft_draw_cents, borrowing_outstanding_cents, unpaid_financing_cost_cents,
+remaining_financial_liability_cents, ledger_entry_ids,
+overdraft_ledger_entry_ids, automatic_retry=false.
+
+| Actual funding | status | settlement_status |
+| --- | --- | --- |
+| All requested cents paid | EXECUTED | PAID |
+| Some, not all, paid | PARTIALLY_EXECUTED | PARTIALLY_PAID |
+| None paid | FAILED | UNPAID |
+
+An unpaid request has no cash leg, no invented overdraft liability and no
+financing charge on its unpaid portion. It remains an unresolved customer
+payment instruction in its persisted receipt, not a funded payment.
+There is no automatic resubmission or claim of successful fulfillment.
+Consumers must surface unpaid requests; retained cash or smaller paid outflows
+are not strategy profit. NAV remains the existing financial-asset/borrowing
+balance sheet, not a newly invented customer-deposit accounting model.
+Payment-obligation settlement/retry and its balance sheet treatment need an
+explicit integration contract before release.
+
+Decision execution_status is FAILED or PARTIALLY_EXECUTED when unpaid, never
+EXECUTED. Actual payout ledger legs sum to executed_amount_cents. A residual
+shortfall produces LiquidityBreach even when borrowing is disabled. Only
+actual draws produce OverdraftLiability/BORROW rows; cash stays nonnegative.
+Reallocation orders are rejected while the current payout is unpaid.
+
+`decision_details_json.financing[]` links each actual OverdraftMovement by
+movement_id, liability_id, run_id, step, kind, status (ACCRUED for expenses,
+EXECUTED for cash legs), reason, principal_cents, financing_cost_cents,
+cash_delta_cents, ledger_entry_id, outstanding_principal_cents and
+unpaid_financing_cost_cents; recommendation_reference is null for automatic
+emergency funding/settlement. BORROW, REPAYMENT and FINANCING_COST rows remain
+authoritative. Principal repayment does not erase unpaid expense; fee payment
+is a separate cash debit/REPAYMENT financing-cost field, not another expense.
+Closing NAV deducts principal plus unpaid expense.
+
+Fail-first evidence: five payout regressions failed against the market
+checkpoint (over-cap/disabled borrowing, absent receipts and disabled-policy
+default). Public policy configuration separately failed on forbidden fields
+before the additive backend policy fields.
+
+Compatibility evidence: unchanged Agent 2 endpoint regressions
+`test_public_backtest_retains_fields_and_honors_requested_subset` and
+`test_backtest_repeat_is_ephemeral_and_preserves_parent` now fail with 422:
+Requested customer flow lacks complete settled-payout ledger legs.
+Their windows exhaust the real principal cap. This is the older receipt
+reader rejecting actual unpaid payouts, not grounds to bypass the cap or
+fabricate successful payments. Agent 2 must extend its receipt/accounting
+contract and endpoint acceptance to expose unpaid requests explicitly.
+Its implementation and tests remain untouched. Historical comparisons stay blocked.
+
+Checkpoint verification: new market/payout cases and preserved diagnostic/
+accounting probes: 47 passed, 2 explicitly deselected in 20.99 seconds.
+The two deselections are exactly the endpoint incompatibilities above; the
+unfiltered run recorded 47 passed / 2 failed, not a green integration result.
+Graphify refreshed successfully (2098 nodes / 6093 relationships). No push.

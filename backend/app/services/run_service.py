@@ -483,6 +483,8 @@ def update_simulation_policy(
     policy_json = dict(run.policy_json or {})
     patch_dict = patch.model_dump(exclude_unset=True, exclude_none=True)
     policy_json.update(patch_dict)
+    if patch_dict.get("allow_overdraft") is False and "max_overdraft_cents" not in patch_dict:
+        policy_json["max_overdraft_cents"] = 0
     run.policy_json = policy_json
     clean_policy = {k: v for k, v in policy_json.items() if k != "scenarios"}
     return TreasuryPolicy(**clean_policy)
