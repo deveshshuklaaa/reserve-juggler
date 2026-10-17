@@ -2,6 +2,9 @@
 
 Status: orchestration, persisted receipt/report integration and real PostgreSQL
 probes implemented. **Full historical strategy comparisons remain blocked.**
+Current runtime review: **483936c7e8d6c37c682886deb2e17503bf6d752c**.
+The final follow-up review below supersedes the explicitly historical 082f019
+defect expectations and handoff reproduction commands retained for provenance.
 This is a Python service boundary, not a new API, simulator, strategy algorithm,
 database model, or replacement for Member 1's canonical portfolio contracts.
 
@@ -11,9 +14,11 @@ Original base: feat/simulation-backend,
 52e58bcfcad766a1444b37a175b48158fd645409; initial backtesting implementation:
 35741cea1993fb6ee665a10a572c75b3b44a0abd.
 
-Verified local runtime: 082f0190a015298d63583d65a0b216a465b93ce1, based on 4a85674.
-Both commits were confirmed in the same Git object database before merging the
-runtime into the isolated feat/backtesting-engine branch. No GitHub fetch of a
+Initial runtime: 082f0190a015298d63583d65a0b216a465b93ce1, based on 4a85674.
+Verified follow-up: 483936c7e8d6c37c682886deb2e17503bf6d752c, a descendant of
+082f019, merged locally as 94272ddae0738a63811556a96400ce95527996ec. This merge
+retains the receipt/report commit 2342501 and handoff commit 19c7326 unchanged.
+The exact commits were confirmed in the same Git object database. No GitHub fetch of a
 local-only SHA, no develop/main checkout changes, and no push. Runtime code and
 shared contracts arrive unchanged through the dependency merge, not owned edits.
 
@@ -101,7 +106,7 @@ The conditions hash covers source, window, capital, seed, policy, scenario and
 engine/protocol provenance, and is common to all three strategies. Each run has
 its own run_id. Results cannot contain partial/missing strategies.
 
-## Strategy-provider protocol (proposed, not supplied by runtime 082f019)
+## Strategy-provider protocol (proposed; complete provider still blocked on 483936c)
 
 HourlyEngineFactory has:
 
@@ -387,7 +392,7 @@ Concrete database/runtime/report relationships above now exist; strategy economi
 and causal forecasting still belong to Agent 1, with no substitute implemented here.
 
 
-## Verified persisted-runtime adapter and report handoff (082f019)
+## Historical baseline runtime audit (082f019; superseded by follow-up review below)
 
 The inspected callable is:
 
@@ -444,7 +449,7 @@ paid and unpaid cost flows. The adapter rejects it, rather than treating it as
 free cash, assigning it to income, inventing a financing event ID, or revaluing
 the portfolio itself. Audit IDs reference actual model primary keys.
 
-### Additional confirmed runtime blockers for Agent 1
+### Historical baseline defects for Agent 1 (not all remain on 483936c)
 
 These are diagnoses of unchanged code, not fixes in this workstream:
 
@@ -566,7 +571,7 @@ repayment/early-break/future-query diagnoses above. The original seven full
 comparison cases remain pending, not converted into fake passes.
 
 
-## Agent 1 handoff packet — documentation delivery, comparisons blocked
+## Historical 082f019 handoff packet — preserved diagnostic evidence
 
 Handoff checkpoint: receipt/report commit
 2342501dd8321d9aaf402929dfd4ed973082aabe on feat/backtesting-engine.
@@ -778,3 +783,146 @@ When the user supplies the corrected full SHA and test evidence:
 Full historical strategy comparisons remain BLOCKED until these runtime fixes
 are implemented, integrated and verified. The ten runtime probes remain
 diagnostic evidence, not proof that the affected financial paths are correct.
+
+
+## Current follow-up verification — 483936c (authoritative current assessment)
+
+Verified exact local Git object: 483936c7e8d6c37c682886deb2e17503bf6d752c.
+Integration merge: 94272ddae0738a63811556a96400ce95527996ec on feat/backtesting-engine.
+The follow-up descends from 082f019. Receipt/report and documentation commits
+2342501 and 19c7326 remain ancestors of this branch. No main/develop checkout
+changes, remote fetch, force-push or push were made.
+
+The changed shared callable is now:
+
+~~~python
+execute_hourly_step(session, run_id, expected_step=None, strategy=None) -> dict[str, Any]
+~~~
+
+It accepts canonical strategy names and legacy STATIC_RESERVE/REACTIVE_RESERVE
+aliases, or reads policy_json.strategy. The display snapshot return type and
+persisted receipt model family have not been replaced. The backtesting guard
+advertises no fully validated comparison strategies despite actual dispatch
+branches now existing. This is intentional: dispatch alone is not full financial
+or allocator integration.
+
+### What verification actually established
+
+| Concern | Result on 483936c |
+| --- | --- |
+| Strategy dispatch | Present: STATIC uses a fixed reserve, REACTIVE uses prior observed withdrawals, RESERVE_JUGGLER invokes forecasting and the risk helper. Real runs with equal cash, seed, policy and separate ledger IDs were exercised. |
+| Forecast query cutoff | Fixed for tested cash-flow forecasts: history is restricted to timestamps <= decision time minus one hour. Mutating the current and next six observations in a rollback-isolated test DB leaves the earlier forecast unchanged. |
+| Future calibration | Agent 1's real regression rejects calibration after the cutoff. This is not proof of every possible end-to-end causal path or fitted-model provenance. |
+| Repayment enum | Fixed: PostgreSQL accepts REPAYMENT; linked repayment cash and outstanding/repaid principal reconcile in the tested recovery hour. |
+| Repo fee field | Fixed narrowly: early redemption executes without AttributeError and records the fee from early_redemption_haircut_pct. Complete redemption cash behavior is NOT correct yet. |
+| Repo surplus proceeds | Still broken: a shock requiring only one quarter of the actual repo principal redeems the whole repo; proceeds exceeding the customer shortfall are not credited to checking. |
+| Financed payouts | Still incomplete: the recorded customer withdrawal is smaller than the decision's actual requested amount by exactly the borrowed amount. |
+| Financing expense / NAV | Still incomplete: positive cost accumulates on the liability, no hourly FINANCING_COST movement is recorded, and valuation liabilities/NAV omit that cost. |
+| First CSV row | Still skipped: initial step 0 executes source_start_timestamp + one hour. The existing observation FK prevents simply inserting an artificial earlier start marker. |
+| Bond/equity path | Unsupported earlier than P&L attribution: real open-position fixtures fail Member 1 PortfolioState validation with “current position marks must match the supplied market price observation”; no next-hour/position valuation is produced. |
+| Market-P&L attribution | Not fixed: no new per-position P&L posting path or liquidation accounting was introduced. The adapter still refuses unsupported market amounts/positions. |
+| Versioned routes | POST /api/v1/runs/{id}/backtest and GET /api/v1/runs/{id}/report still return HTTP 501 / NOT_IMPLEMENTED, verified by actual TestClient requests. |
+| Canonical optimizer | NOT invoked by the real RESERVE_JUGGLER path, including its 17:00 sweep; see call trace below. |
+
+The market-position hydration adapter supplies current price/value but omits
+market_observation_timestamp in the canonical position construction. That violates
+the canonical price-observation identity at treasury_intelligence/portfolio.py.
+It also copies the position's stored yield/volatility rather than consistently
+mapping current risk observations. No Member 1 validation was bypassed or relaxed;
+the runtime remains responsible for supplying compatible canonical inputs.
+Tests establish the actual validation failure, not a successful bond/equity run.
+
+The forecast adapter defaults to hourly-seasonal-naive-v1, while the runtime
+snapshot still labels the RESERVE_JUGGLER forecast evaluated-gb-v1. Do not treat
+that display label as evidence of an evaluated ML forecast or fabricate an
+evaluation score; model_evaluation remains null.
+
+### Canonical optimizer verification
+
+Static inspection finds no invocation/import of recommend_four_tier_allocation
+in the shared hourly engine. The services treasury adapter mentions it in its
+module documentation but does not call it.
+
+test_reserve_juggler_still_omits_canonical_allocation_optimizer profiles actual
+Python calls by exact function code identity, without patching the executor,
+forecasting, risk helper or optimizer. Across 17 actual persisted hourly steps
+through the 17:00 sweep:
+
+- calculate_four_tier_liquidity_risk: 17 calls.
+- recommend_four_tier_allocation: 0 calls.
+
+RESERVE_JUGGLER therefore currently performs a risk-derived reserve/repo sweep,
+not Member 1's canonical multi-tier allocation recommendation. Agent 1 must wire
+the actual optimizer request/result contract and audit executed orders; the
+backtester will not substitute another optimizer or relabel risk-only execution
+as the complete strategy.
+
+### Preserved evidence and updated regression expectations
+
+The first post-merge run used the previous tests unchanged against real
+PostgreSQL: 3 failed, 166 passed, 7 pending/skipped across the selected backtesting,
+runtime, strategy/causality and API suites. The three failures were obsolete
+assertions that the old enum/attribute/leak defects still occurred. They were
+recorded before any test expectations changed.
+
+Original 082f019 failing-path probes remain recoverable from commit 2342501.
+Their resolved expectations were replaced with positive checks only after the
+real corrected paths were exercised. Remaining broken paths are still explicit
+diagnostic tests, not xfailed, deleted, or asserted as financially correct.
+
+Final integrated PostgreSQL-backed suite: 748 passed, 9 skipped. The skips are
+the original seven pending full-comparison cases and two unavailable external
+Downloads datasets. The owned real-runtime probe module has 18 passing cases;
+diagnostic passes still signify reproduced defects, not financial correctness.
+
+Current reproduction commands (use these instead of historical node IDs above):
+
+~~~powershell
+$env:PYTHONDONTWRITEBYTECODE='1'
+# Set BACKTEST_TEST_DATABASE_URL to the dedicated local test database URL.
+python tests/backtesting/run_postgres_suite.py tests/backtesting/test_runtime_persistence.py -vv -p no:cacheprovider --tb=short
+python tests/backtesting/run_postgres_suite.py tests/backtesting tests/integration/test_runs_runtime.py tests/integration/test_strategy_dispatch_and_causality.py tests/backend/test_api_versioning.py -q -p no:cacheprovider --tb=line -rs
+python tests/backtesting/run_postgres_suite.py -q -p no:cacheprovider --tb=line -rs
+~~~
+
+To reproduce the optimizer integration gap alone:
+
+~~~powershell
+python tests/backtesting/run_postgres_suite.py tests/backtesting/test_runtime_persistence.py::test_reserve_juggler_still_omits_canonical_allocation_optimizer -vv -p no:cacheprovider --tb=short
+~~~
+
+Other current exact node IDs in tests/backtesting/test_runtime_persistence.py:
+
+- test_runtime_repayment_uses_schema_kind_and_preserves_principal_identity
+- test_runtime_repo_fee_field_mapping_no_longer_raises_attribute_error
+- test_forecast_cutoff_is_invariant_to_current_and_future_source_flows
+- test_repo_redemption_still_loses_proceeds_beyond_customer_shortfall
+- test_shock_still_has_incomplete_payout_and_financing_nav_receipts
+- test_open_market_positions_still_fail_canonical_hydration (BOND/EQUITY cases)
+- test_backtest_and_report_routes_still_return_501 (POST/GET cases)
+
+The selected fixture shock is derived only to hit the partial-redemption branch;
+the test does not implement its own execution/valuation model. Future-row
+mutations and seeded market positions exist only inside isolated disposable
+PostgreSQL transactions. The original CSV remains byte-identical.
+
+### Current readiness gate and ownership
+
+**NOT READY for historical strategy comparisons.** The seven full-comparison
+acceptance cases remain pending. Strategy/cash-flow forecast improvements do not
+waive the outstanding requirements for financed payouts, financing-cost receipts
+and NAV, complete repo proceeds, first-row alignment, market compatibility/P&L,
+actual canonical optimizer use, and route/response integration.
+
+The prior response field inventories and safe-cent/report mappings remain
+unchanged. The owned adapter's inspected runtime SHA is updated to 483936c; it
+does not claim arbitrary persisted runs record their own executor commit.
+BacktestReportService still fails closed for full comparisons. The service does
+not inject a replacement engine, forecast, optimizer or balancing ledger entry.
+
+Only backend/app/backtesting/, tests/backtesting/ and this document are edited by
+this workstream. Agent 1's shared engine, adapters, models/migrations, router,
+public contracts/OpenAPI and frontend are inherited unchanged from the verified
+follow-up. Graphify updates in that commit are inherited; owned graph regeneration
+is still deferred under the existing path restriction. No push or main integration
+is authorized by this verification.

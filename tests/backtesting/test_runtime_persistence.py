@@ -178,43 +178,215 @@ def test_run_state_is_isolated_and_receipt_reader_rejects_missing_evidence(runti
         read_hour_receipt(session, left.id, 1)
 
 
-def test_runtime_repayment_postgresql_blocker_is_reproducible(runtime_session):
-    """Diagnosis, not a claim that repayment works: executor emits invalid kind REPAY."""
-    from sqlalchemy.exc import IntegrityError
+# Original 082f019 failing-path evidence is preserved in commit 2342501.
+# These three expectations changed only after exercising 483936c unchanged.
+def test_runtime_repayment_uses_schema_kind_and_preserves_principal_identity(runtime_session):
+    """Repayment naming is fixed; this does NOT certify missing expense/NAV receipts."""
     session = runtime_session
     run = create_run(session, initial=1_000_000)
     apply_simulation_scenario(session, run.id, ScenarioRequest(
         scenario="LIQUIDITY_SHOCK", parameters={"amount_cents":5_000_000_000}, effective_step=1))
     execute_hourly_step(session, run.id, 0)
+    debt = session.scalar(select(OverdraftLiability).where(OverdraftLiability.run_id == run.id))
+    prior_principal = debt.outstanding_principal_cents
     apply_simulation_scenario(session, run.id, ScenarioRequest(scenario="NORMAL", effective_step=2))
-    with pytest.raises(IntegrityError) as failure:
-        with session.begin_nested():
-            execute_hourly_step(session, run.id, 1)
-    assert failure.value.orig.diag.sqlstate == "23514"
-    assert "overdraft_movements" in str(failure.value.orig)
+    execute_hourly_step(session, run.id, 1)
+    repayment = session.scalar(select(OverdraftMovement).where(
+        OverdraftMovement.run_id == run.id, OverdraftMovement.kind == "REPAYMENT"))
+    assert repayment is not None and repayment.principal_cents > 0
+    ledger = session.get(LedgerEntry, repayment.ledger_entry_id)
+    assert ledger.balance_before_cents-ledger.balance_after_cents == repayment.principal_cents
+    assert repayment.cash_delta_cents == -repayment.principal_cents
+    assert debt.outstanding_principal_cents == prior_principal-repayment.principal_cents
+    assert debt.borrowed_cents == debt.outstanding_principal_cents+debt.repaid_principal_cents
 
 
-def test_runtime_early_repo_break_blocker_is_reproducible(runtime_session):
-    """Diagnosis: ORM has haircut_pct; executor accesses nonexistent early_break_fee_bps."""
+def test_runtime_repo_fee_field_mapping_no_longer_raises_attribute_error(runtime_session):
+    """Fee mapping is fixed; complete liquidation cash reconciliation is tested separately."""
     session = runtime_session
     run = create_run(session, initial=100_000_000_000, buffer=5_000_000_000)
     for step in range(17):
         execute_hourly_step(session, run.id, step)
     apply_simulation_scenario(session, run.id, ScenarioRequest(
         scenario="LIQUIDITY_SHOCK", parameters={"amount_cents":100_000_000_000}, effective_step=18))
-    with pytest.raises(AttributeError, match="early_break_fee_bps"):
-        with session.begin_nested():
-            execute_hourly_step(session, run.id, 17)
+    execute_hourly_step(session, run.id, 17)
+    position = session.scalar(select(RepoPosition).where(RepoPosition.run_id == run.id))
+    movement = session.scalar(select(InvestmentMovement).where(
+        InvestmentMovement.run_id == run.id, InvestmentMovement.kind == "REDEMPTION"))
+    assert position.status == "REDEEMED"
+    assert movement.haircut_cost_cents == int(position.principal_cents*position.early_redemption_haircut_pct/100)
+    assert movement.cash_delta_cents == position.principal_cents-movement.haircut_cost_cents
 
 
-def test_actual_forecast_query_uses_future_observations_so_comparisons_stay_blocked(runtime_session):
-    from app.services.treasury_adapter import get_hourly_forecasts_from_db
+def test_forecast_cutoff_is_invariant_to_current_and_future_source_flows(runtime_session):
+    from datetime import timedelta
+    from decimal import Decimal
+    from app.services.treasury_adapter import get_hourly_forecasts_from_db, get_information_cutoff
     from app.persistence.models import OrganizerObservation
-    from app.backtesting.runtime import SharedRuntimeFactory
     session = runtime_session
     run = create_run(session)
-    points = get_hourly_forecasts_from_db(session, run.dataset_id, datetime(2026,1,1,1))
-    future = session.scalar(select(OrganizerObservation).where(
-        OrganizerObservation.dataset_id == run.dataset_id, OrganizerObservation.timestamp == datetime(2026,1,1,4)))
-    assert points[-1].predicted_withdrawals_cents == int(future.withdrawals_usd * 100)
-    assert SharedRuntimeFactory.capabilities.strategies == ()
+    as_of = datetime(2026,1,3,2)
+    assert get_information_cutoff(as_of) == as_of-timedelta(hours=1)
+    baseline = get_hourly_forecasts_from_db(session, run.dataset_id, as_of)
+    future_rows = list(session.scalars(select(OrganizerObservation).where(
+        OrganizerObservation.dataset_id == run.dataset_id,
+        OrganizerObservation.timestamp >= as_of,
+        OrganizerObservation.timestamp <= as_of+timedelta(hours=6))))
+    assert len(future_rows) == 7
+    for row in future_rows:
+        row.deposits_usd = Decimal("999999999.99")
+        row.withdrawals_usd = Decimal("888888888.88")
+        row.net_flow_usd = Decimal("111111111.11")
+    session.flush()  # only this rollback-isolated test database, never the CSV
+    assert get_hourly_forecasts_from_db(session, run.dataset_id, as_of) == baseline
+
+
+def test_shock_still_has_incomplete_payout_and_financing_nav_receipts(runtime_session):
+    """Remaining defect evidence, NOT a correct shock accounting acceptance."""
+    from app.persistence.models import TreasuryDecision
+    session = runtime_session
+    run = create_run(session, initial=1_000_000)
+    apply_simulation_scenario(session, run.id, ScenarioRequest(
+        scenario="LIQUIDITY_SHOCK", parameters={"amount_cents":5_000_000_000}, effective_step=1))
+    execute_hourly_step(session, run.id, 0)
+    decision = session.scalar(select(TreasuryDecision).where(TreasuryDecision.run_id == run.id))
+    ledgers = list(session.scalars(select(LedgerEntry).where(LedgerEntry.run_id == run.id, LedgerEntry.step == 1)))
+    debt = session.scalar(select(OverdraftLiability).where(OverdraftLiability.run_id == run.id))
+    value = session.scalar(select(PortfolioValuation).where(
+        PortfolioValuation.run_id == run.id, PortfolioValuation.valued_at == datetime(2026,1,1,1)))
+    paid = sum(row.amount_cents for row in ledgers if row.entry_type == "CUSTOMER_WITHDRAWAL_OUTFLOW")
+    assert decision.expected_outflow_cents-paid == debt.borrowed_cents > 0
+    assert debt.financing_cost_cents > 0
+    assert session.scalar(select(OverdraftMovement.id).where(
+        OverdraftMovement.run_id == run.id, OverdraftMovement.kind == "FINANCING_COST")) is None
+    assert value.liabilities_cents == debt.outstanding_principal_cents
+    assert value.net_portfolio_value_cents == value.total_portfolio_value_cents-debt.outstanding_principal_cents
+    assert value.net_portfolio_value_cents > (
+        value.total_portfolio_value_cents-debt.outstanding_principal_cents-debt.financing_cost_cents)
+
+
+def test_repo_redemption_still_loses_proceeds_beyond_customer_shortfall(runtime_session):
+    """Field access is fixed, but unused net proceeds disappear instead of becoming cash."""
+    from app.persistence.models import OrganizerObservation, TreasuryDecision
+    session = runtime_session
+    run = create_run(session, initial=100_000_000_000, buffer=5_000_000_000)
+    for step in range(17):
+        execute_hourly_step(session, run.id, step)
+    position = session.scalar(select(RepoPosition).where(RepoPosition.run_id == run.id))
+    cash_before = session.scalar(select(CashAccount).where(CashAccount.run_id == run.id)).balance_cents
+    row = session.scalar(select(OrganizerObservation).where(
+        OrganizerObservation.dataset_id == run.dataset_id, OrganizerObservation.timestamp == datetime(2026,1,1,18)))
+    # Choose a fixture shock that needs only a quarter of this actual repo's principal.
+    # This configures the scenario; it does not replace any runtime execution.
+    shock = cash_before+int((row.deposits_usd-row.withdrawals_usd)*100)+position.principal_cents//4
+    apply_simulation_scenario(session, run.id, ScenarioRequest(
+        scenario="LIQUIDITY_SHOCK", parameters={"amount_cents":shock}, effective_step=18))
+    execute_hourly_step(session, run.id, 17)
+    decision = session.scalar(select(TreasuryDecision).where(
+        TreasuryDecision.run_id == run.id, TreasuryDecision.step == 18))
+    paid_from_cash = sum(session.scalars(select(LedgerEntry.amount_cents).where(
+        LedgerEntry.run_id == run.id, LedgerEntry.step == 18,
+        LedgerEntry.entry_type == "CUSTOMER_WITHDRAWAL_OUTFLOW")))
+    redemption = session.scalar(select(InvestmentMovement).where(
+        InvestmentMovement.run_id == run.id, InvestmentMovement.kind == "REDEMPTION"))
+    shortfall = decision.expected_outflow_cents-paid_from_cash
+    assert redemption.cash_delta_cents > shortfall > 0
+    cash = session.scalar(select(CashAccount).where(CashAccount.run_id == run.id))
+    assert cash.balance_cents == 0
+    assert cash.balance_cents != redemption.cash_delta_cents-shortfall
+    assert session.scalar(select(OverdraftLiability.id).where(OverdraftLiability.run_id == run.id)) is None
+
+
+def test_all_dispatches_have_equal_independent_initial_conditions(runtime_session):
+    from app.persistence.models import TreasuryDecision
+    session = runtime_session
+    runs = {strategy:create_run(session) for strategy in ("STATIC","REACTIVE","RESERVE_JUGGLER")}
+    assert len({run.id for run in runs.values()}) == 3
+    assert len({run.seed for run in runs.values()}) == 1
+    assert len({run.initial_cash_cents for run in runs.values()}) == 1
+    policies = [run.policy_json for run in runs.values()]
+    assert policies[0] == policies[1] == policies[2]
+    for strategy, run in runs.items():
+        before = session.scalar(select(CashAccount).where(CashAccount.run_id == run.id)).balance_cents
+        assert before == run.initial_cash_cents and run.current_step == 0
+        result = execute_hourly_step(session, run.id, 0, strategy=strategy)
+        assert result["strategy"] == strategy
+        decision = session.scalar(select(TreasuryDecision).where(TreasuryDecision.run_id == run.id))
+        assert decision.decision_details_json["strategy"] == strategy
+        others = [other for other in runs.values() if other.current_step == 0]
+        for other in others:
+            assert session.scalar(select(CashAccount).where(CashAccount.run_id == other.id)).balance_cents == other.initial_cash_cents
+    reserves = {strategy:session.scalar(select(TreasuryDecision).where(
+        TreasuryDecision.run_id == run.id)).required_reserve_cents for strategy,run in runs.items()}
+    assert reserves["STATIC"] == 50_000_000
+    assert reserves["REACTIVE"] != reserves["STATIC"]
+    ledger_ids = [set(session.scalars(select(LedgerEntry.id).where(LedgerEntry.run_id == run.id))) for run in runs.values()]
+    assert all(a.isdisjoint(b) for i,a in enumerate(ledger_ids) for b in ledger_ids[i+1:])
+
+
+def test_reserve_juggler_still_omits_canonical_allocation_optimizer(runtime_session):
+    """Trace actual Python calls; no monkeypatch, mock, or alternate decision engine."""
+    import sys
+    from treasury_intelligence.optimizer import recommend_four_tier_allocation
+    from treasury_intelligence.liquidity_risk import calculate_four_tier_liquidity_risk
+    session = runtime_session
+    run = create_run(session, initial=100_000_000_000, buffer=5_000_000_000)
+    counts = {"optimizer":0,"risk":0}
+    def trace(frame, event, arg):
+        if event == "call":
+            if frame.f_code is recommend_four_tier_allocation.__code__:
+                counts["optimizer"] += 1
+            if frame.f_code is calculate_four_tier_liquidity_risk.__code__:
+                counts["risk"] += 1
+    previous = sys.getprofile()
+    try:
+        sys.setprofile(trace)
+        for step in range(17):  # covers the actual 17:00 sweep decision
+            execute_hourly_step(session, run.id, step, strategy="RESERVE_JUGGLER")
+    finally:
+        sys.setprofile(previous)
+    assert counts["risk"] == 17
+    assert counts["optimizer"] == 0  # confirmed missing integration, not acceptance of it
+
+
+@pytest.mark.parametrize("method,suffix,body", [("POST","backtest",{}),("GET","report",None)])
+def test_backtest_and_report_routes_still_return_501(runtime_session, method, suffix, body):
+    from fastapi.testclient import TestClient
+    from app.main import app
+    run = create_run(runtime_session)
+    client = TestClient(app)
+    response = client.request(method, f"/api/v1/runs/{run.id}/{suffix}",
+                              **({"json":body} if body is not None else {}))
+    assert response.status_code == 501
+    assert response.json()["error_code"] == "NOT_IMPLEMENTED"
+
+
+@pytest.mark.parametrize("instrument", ["BOND","EQUITY"])
+def test_open_market_positions_still_fail_canonical_hydration(runtime_session, instrument):
+    """Actual position path fails before marking; no fake successful market execution."""
+    from pydantic import ValidationError
+    from decimal import Decimal
+    from app.persistence.models import BondPosition, EquityPosition, PositionValuation
+    session = runtime_session
+    run = create_run(session)
+    values = dict(run_id=run.id, source_type=run.source_type, dataset_id=run.dataset_id,
+                  source_observation_timestamp=run.source_start_timestamp,
+                  quantity=Decimal("1"), acquired_at=run.source_start_timestamp,
+                  status="OPEN")
+    if instrument == "BOND":
+        position = BondPosition(**values, acquisition_price_index=Decimal("100"),
+            current_market_price_index=Decimal("100"), current_market_value_cents=10_000,
+            supplied_yield_pct=Decimal("4.8"), modified_duration=Decimal("1.92"),
+            liquidation_haircut_pct=Decimal("2"))
+    else:
+        position = EquityPosition(**values, acquisition_price_index=Decimal("4988.59"),
+            current_market_price_index=Decimal("4988.59"), current_market_value_cents=498_859,
+            supplied_volatility_pct=Decimal("18"), liquidation_haircut_pct=Decimal("15"))
+    session.add(position)
+    session.flush()
+    with pytest.raises(ValidationError, match="current position marks must match"):
+        execute_hourly_step(session, run.id, 0)
+    assert run.current_step == 0
+    assert session.scalar(select(PortfolioValuation.id).where(
+        PortfolioValuation.run_id == run.id, PortfolioValuation.valued_at == datetime(2026,1,1,1))) is None
+    assert session.scalar(select(PositionValuation.id).where(PositionValuation.run_id == run.id)) is None

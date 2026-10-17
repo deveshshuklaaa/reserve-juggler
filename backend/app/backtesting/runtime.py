@@ -1,4 +1,4 @@
-"""Integration with the *unmodified* 082f019 runtime and its persisted evidence.
+"""Integration with the *unmodified* 483936c runtime and its persisted evidence.
 
 No prices, yields, cash flows, strategy actions, or posting amounts are calculated
 here. Incomplete receipts are errors, not opportunities to repair the executor.
@@ -20,11 +20,13 @@ from .contracts import EngineState, HourReceipt
 from .protocol import EngineCapabilities
 from .service import EngineContractError, SharedEngineUnavailable, observation_digest
 
-RUNTIME_SHA = "082f0190a015298d63583d65a0b216a465b93ce1"
+RUNTIME_SHA = "483936c7e8d6c37c682886deb2e17503bf6d752c"
 RUNTIME_BLOCKERS = (
-    "No shared strategy dispatch for STATIC, REACTIVE, RESERVE_JUGGLER.",
-    "get_hourly_forecasts_from_db reads current/future realized source flows.",
+    "RESERVE_JUGGLER calls the risk helper but not canonical recommend_four_tier_allocation.",
+    "Financed payout legs, financing-cost receipts/NAV and repo redemption proceeds remain incomplete.",
     "The first execution is source_start_timestamp + one hour; the first dataset row cannot be executed.",
+    "Historical market-P&L attribution is not persisted completely.",
+    "Backtest/report API routes still return 501.",
 )
 KNOWN_LEDGER_KINDS = frozenset((
     "CUSTOMER_DEPOSIT_INFLOW", "CUSTOMER_WITHDRAWAL_OUTFLOW", "OVERNIGHT_REPO_SWEEP_DEBIT",
@@ -39,7 +41,7 @@ class RuntimeReceiptUnavailable(EngineContractError):
 class SharedRuntimeFactory:
     """Explicit dependency guard, not three differently named copies of one policy."""
     capabilities = EngineCapabilities(
-        engine_version="hourly-runtime-082f019", integration_sha=RUNTIME_SHA,
+        engine_version="hourly-runtime-483936c", integration_sha=RUNTIME_SHA,
         execution_kind="SHARED", strategies=(),
         scenarios=("NORMAL","HIGH_WITHDRAWAL","LOW_DEPOSIT","SETTLEMENT_DELAY","LIQUIDITY_SHOCK"),
     )
