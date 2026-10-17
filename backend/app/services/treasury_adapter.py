@@ -19,7 +19,7 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from app.services.accounting import paid_financing_costs, repo_interest_cents
+from app.services.accounting import market_cost_basis, paid_financing_costs, repo_interest_cents
 from treasury_intelligence.instrument_economics import usd_to_ledger_cents, percentage_cost_cents
 
 from app.persistence.models import (
@@ -215,13 +215,15 @@ def hydrate_portfolio_state(
     )
     m1_bonds: list[M1BondPosition] = []
     for b in db_bonds:
+        basis = market_cost_basis(session, b)
         cur_price = observation.tier2_bond_price_index
         cur_market_val = usd_to_ledger_cents(b.quantity * cur_price)
         haircut = b.liquidation_haircut_pct
-        liq_val = int(round(cur_market_val * (Decimal(100) - haircut) / Decimal(100)))
+        liq_val = cur_market_val - percentage_cost_cents(cur_market_val, haircut)
         b.market_observation_timestamp = observation.timestamp
         b.current_market_price_index = cur_price
         b.current_market_value_cents = cur_market_val
+        b.unrealized_pnl_cents = cur_market_val - basis
         b.supplied_yield_pct = observation.tier2_bond_yield_pct
         b.modified_duration = observation.tier2_bond_mod_duration
         m1_bonds.append(
@@ -233,6 +235,9 @@ def hydrate_portfolio_state(
                 time_basis=time_basis,
                 source_observation_timestamp=observation.timestamp,
                 quantity=b.quantity,
+                acquisition_cost_cents=basis,
+                realized_pnl_cents=b.realized_pnl_cents or 0,
+                unrealized_pnl_cents=b.unrealized_pnl_cents,
                 acquisition_price_index=b.acquisition_price_index,
                 acquired_at=b.acquired_at,
                 current_market_price_index=cur_price,
@@ -262,13 +267,15 @@ def hydrate_portfolio_state(
     )
     m1_equities: list[M1EquityPosition] = []
     for eq in db_equities:
+        basis = market_cost_basis(session, eq)
         cur_price = observation.tier3_stock_index_price
         cur_market_val = usd_to_ledger_cents(eq.quantity * cur_price)
         haircut = eq.liquidation_haircut_pct
-        liq_val = int(round(cur_market_val * (Decimal(100) - haircut) / Decimal(100)))
+        liq_val = cur_market_val - percentage_cost_cents(cur_market_val, haircut)
         eq.market_observation_timestamp = observation.timestamp
         eq.current_market_price_index = cur_price
         eq.current_market_value_cents = cur_market_val
+        eq.unrealized_pnl_cents = cur_market_val - basis
         eq.supplied_volatility_pct = observation.tier3_stock_volatility_pct
         m1_equities.append(
             M1EquityPosition(
@@ -279,6 +286,9 @@ def hydrate_portfolio_state(
                 time_basis=time_basis,
                 source_observation_timestamp=observation.timestamp,
                 quantity=eq.quantity,
+                acquisition_cost_cents=basis,
+                realized_pnl_cents=eq.realized_pnl_cents or 0,
+                unrealized_pnl_cents=eq.unrealized_pnl_cents,
                 acquisition_price_index=eq.acquisition_price_index,
                 acquired_at=eq.acquired_at,
                 current_market_price_index=cur_price,

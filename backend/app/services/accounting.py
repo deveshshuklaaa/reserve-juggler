@@ -3,7 +3,34 @@ from datetime import timedelta
 from decimal import Decimal, ROUND_HALF_UP, localcontext
 
 from sqlalchemy import select
-from app.persistence.models import OrganizerObservation, OverdraftMovement
+from app.persistence.models import BondPosition, InvestmentMovement, OrganizerObservation, OverdraftMovement
+from treasury_intelligence.instrument_economics import usd_to_ledger_cents
+
+
+def market_cost_basis(session, position):
+    """Remaining actual acquisition cents, not a repricing of the original lot.
+
+    Execution movements release basis on each sale. Legacy opening positions
+    without movements retain their persisted value-minus-unrealized basis.
+    """
+    link = (InvestmentMovement.bond_position_id if isinstance(position, BondPosition)
+            else InvestmentMovement.equity_position_id)
+    rows = list(session.scalars(select(InvestmentMovement).where(
+        InvestmentMovement.run_id == position.run_id, link == position.id,
+        InvestmentMovement.kind.in_(["INVESTMENT", "LIQUIDATION"]))))
+    buys = [m for m in rows if m.kind == "INVESTMENT"]
+    if buys:
+        basis = sum(m.principal_cents or 0 for m in buys) - sum(
+            m.principal_cents or 0 for m in rows if m.kind == "LIQUIDATION")
+    elif position.current_market_value_cents is not None and position.unrealized_pnl_cents is not None:
+        basis = position.current_market_value_cents - position.unrealized_pnl_cents
+    else:
+        with localcontext() as context:
+            context.prec = 80
+            basis = usd_to_ledger_cents(position.quantity * position.acquisition_price_index)
+    if basis < 0:
+        raise ValueError("Market movements release more basis than was acquired")
+    return basis
 
 
 def repo_interest_cents(session, position, as_of):

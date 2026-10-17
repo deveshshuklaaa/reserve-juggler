@@ -204,9 +204,9 @@
     "semantic_hash": "9a972191f71d003c968cafd70cd2493e"
   },
   "backend/app/services/treasury_adapter.py": {
-    "mtime": 1792279114.1910686,
-    "seen": 1792279130.7036886,
-    "ast_hash": "838bb452ad5491c5d04f0112e5bba3aa",
+    "mtime": 1792280441.401026,
+    "seen": 1792280534.4192812,
+    "ast_hash": "264320e65345cc15156b7b43132af651",
     "semantic_hash": ""
   },
   "backend/app/v1_contracts.py": {
@@ -378,9 +378,9 @@
     "semantic_hash": ""
   },
   "backend/app/services/hourly_engine.py": {
-    "mtime": 1792279114.1920571,
-    "seen": 1792279130.7036886,
-    "ast_hash": "0fcd3544cb7d8cfef5ad50723e385eb1",
+    "mtime": 1792280468.7927873,
+    "seen": 1792280534.4185214,
+    "ast_hash": "7634411471dabd481484424b59bb746f",
     "semantic_hash": ""
   },
   "backend/app/services/run_service.py": {
@@ -720,15 +720,15 @@
     "semantic_hash": "34c6deb75ec3bce999b8f50540c9db84"
   },
   "backend/app/services/accounting.py": {
-    "mtime": 1792278456.098164,
-    "seen": 1792279130.7036886,
-    "ast_hash": "b9c466f3f06061fe2ec0ed8178cd8ccf",
+    "mtime": 1792280407.169784,
+    "seen": 1792280534.4185214,
+    "ast_hash": "7b73f52aa5f50e78141818d5ec797170",
     "semantic_hash": ""
   },
   "backend/app/services/market_execution.py": {
-    "mtime": 1792278819.850433,
-    "seen": 1792279130.7036886,
-    "ast_hash": "07788ed1167ad171615c6e5f8b7de06e",
+    "mtime": 1792280670.0448618,
+    "seen": 1792280688.5619268,
+    "ast_hash": "10b393c44a75cbb50be7d182c17c885f",
     "semantic_hash": ""
   },
   "scripts/export-openapi.py": {
@@ -750,9 +750,9 @@
     "semantic_hash": ""
   },
   "docs/BACKTEST_SERVICE_CONTRACT.md": {
-    "mtime": 1792279390.9548109,
-    "seen": 1792279453.9739158,
-    "ast_hash": "ae8f670efc58adcc67326f9b3172dace",
+    "mtime": 1792279737.401697,
+    "seen": 1792280534.448588,
+    "ast_hash": "0250892fde0a8940834267cdce2dbea7",
     "semantic_hash": ""
   },
   "docs/member1/CANONICAL_ALIGNMENT_CHECK.md": {
@@ -795,6 +795,18 @@
     "mtime": 1792278400.808273,
     "seen": 1792279130.7036886,
     "ast_hash": "90b67a1da4a15245158f6b53a0bf42c9",
+    "semantic_hash": ""
+  },
+  "tests/integration/test_market_order_execution.py": {
+    "mtime": 1792280640.507942,
+    "seen": 1792280688.589368,
+    "ast_hash": "5b82190d9e53a666a7d115e9baf76bf6",
+    "semantic_hash": ""
+  },
+  "docs/RUNTIME_RELEASE_CHECKPOINT.md": {
+    "mtime": 1792280573.4069314,
+    "seen": 1792280688.5939343,
+    "ast_hash": "9cdfc34d8f388068c5f564f1a72df4ea",
     "semantic_hash": ""
   }
 }

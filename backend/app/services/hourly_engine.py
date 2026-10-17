@@ -18,8 +18,8 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from app.services.accounting import paid_financing_costs, repo_interest_cents
-from app.services.market_execution import emergency_liquidate
+from app.services.accounting import market_cost_basis, paid_financing_costs, repo_interest_cents
+from app.services.market_execution import emergency_liquidate, execute_market_order, record_market_valuation, TradeRejected
 from treasury_intelligence.instrument_economics import usd_to_ledger_cents, percentage_cost_cents
 
 from app.persistence.models import (
@@ -671,6 +671,22 @@ def execute_hourly_step(
             f"Summary action: {opt_result.summary_action}."
         )
         for order in opt_result.decision.orders:
+            if order.action in {"BUY_BONDS", "SELL_BONDS", "BUY_EQUITIES", "SELL_EQUITIES"}:
+                try:
+                    fill = execute_market_order(session, run, cash_acc, order, observation,
+                        target_step, minimum_cash_cents=req_reserve)
+                    fill["position_id"] = str(fill["position_id"])
+                    orders_executed.append(fill)
+                    # Preserve the public legacy summary enum; exact instrument
+                    # actions and independent fills live in persisted receipts.
+                    action_decision = "SWEEP" if order.action.startswith("BUY_") else "WITHDRAW"
+                    decision_amount += fill["executed_amount_cents"]
+                except TradeRejected as error:
+                    orders_rejected.append({"order_id": str(order.id), "action": order.action,
+                        "requested_amount_cents": order.amount_cents, "executed_amount_cents": 0,
+                        "status": "REJECTED", "reason": str(error)})
+                    executed_decision = False
+                continue
             if order.action != "INVEST_REPO":
                 orders_rejected.append({"order_id": str(order.id), "action": order.action,
                     "reason": "Canonical recommendation execution for this action is not supported yet"})
@@ -823,13 +839,16 @@ def execute_hourly_step(
             })
 
     # 6. Mark to Market & Valuations
+    # Re-query after fills: opening hydration must not hide newly acquired lots.
+    db_bonds = list(session.scalars(select(DbBondPosition).where(DbBondPosition.run_id == run.id)))
+    db_equities = list(session.scalars(select(DbEquityPosition).where(DbEquityPosition.run_id == run.id)))
     tier2_mkt_val = 0
     tier2_notional = 0
     tier2_unrealized = 0
-    tier2_realized = 0
+    tier2_realized = sum(b.realized_pnl_cents or 0 for b in db_bonds)
     for b in (position for position in db_bonds if position.status == "OPEN"):
         cur_p = observation.tier2_bond_price_index if observation else Decimal("100.0")
-        cost_b = usd_to_ledger_cents(b.quantity * b.acquisition_price_index)
+        cost_b = market_cost_basis(session, b)
         tier2_notional += cost_b
         mkt_val = usd_to_ledger_cents(b.quantity * cur_p)
         b.current_market_price_index = cur_p
@@ -838,33 +857,15 @@ def execute_hourly_step(
         b.market_observation_timestamp = observation.timestamp
         tier2_mkt_val += mkt_val
         tier2_unrealized += (mkt_val - cost_b)
-        session.add(
-            DbPositionValuation(
-                id=uuid4(),
-                run_id=run.id,
-                tier=2,
-                bond_position_id=b.id,
-                repo_position_id=None,
-                equity_position_id=None,
-                valued_at=target_timestamp,
-                market_price_index=cur_p,
-                market_value_cents=mkt_val,
-                realized_pnl_cents=0,
-                unrealized_pnl_cents=mkt_val - cost_b,
-                reference_id=f"pos-val-b-{b.id}-{target_step}",
-                source_type=run.source_type,
-                dataset_id=run.dataset_id,
-                source_observation_timestamp=observation.timestamp,
-            )
-        )
+        record_market_valuation(session, run, b, observation)
 
     tier3_mkt_val = 0
     tier3_cost_basis = 0
     tier3_unrealized = 0
-    tier3_realized = 0
+    tier3_realized = sum(eq.realized_pnl_cents or 0 for eq in db_equities)
     for eq in (position for position in db_equities if position.status == "OPEN"):
         cur_p = observation.tier3_stock_index_price if observation else Decimal("450.0")
-        cost_b = usd_to_ledger_cents(eq.quantity * eq.acquisition_price_index)
+        cost_b = market_cost_basis(session, eq)
         tier3_cost_basis += cost_b
         mkt_val = usd_to_ledger_cents(eq.quantity * cur_p)
         eq.current_market_price_index = cur_p
@@ -873,25 +874,7 @@ def execute_hourly_step(
         eq.market_observation_timestamp = observation.timestamp
         tier3_mkt_val += mkt_val
         tier3_unrealized += (mkt_val - cost_b)
-        session.add(
-            DbPositionValuation(
-                id=uuid4(),
-                run_id=run.id,
-                tier=3,
-                bond_position_id=None,
-                repo_position_id=None,
-                equity_position_id=eq.id,
-                valued_at=target_timestamp,
-                market_price_index=cur_p,
-                market_value_cents=mkt_val,
-                realized_pnl_cents=0,
-                unrealized_pnl_cents=mkt_val - cost_b,
-                reference_id=f"pos-val-eq-{eq.id}-{target_step}",
-                source_type=run.source_type,
-                dataset_id=run.dataset_id,
-                source_observation_timestamp=observation.timestamp,
-            )
-        )
+        record_market_valuation(session, run, eq, observation)
 
     active_repos_after = list(
         session.scalars(
