@@ -1,0 +1,121 @@
+{
+  "CashFlowBucket": {
+    "start_at": "2026-10-17T12:00:00Z",
+    "end_at": "2026-10-17T13:00:00Z",
+    "inflow_cents": 22000000,
+    "outflow_cents": 28000000
+  },
+  "ForecastPoint": {
+    "start_at": "2026-10-17T12:00:00Z",
+    "end_at": "2026-10-17T13:00:00Z",
+    "inflow_cents": 22000000,
+    "outflow_cents": 28000000,
+    "uncertainty_cents": 2500000
+  },
+  "ForecastResult": {
+    "generated_at": "2026-10-17T12:00:00Z",
+    "model_version": "baseline-v1",
+    "points": [
+      {
+        "start_at": "2026-10-17T12:00:00Z",
+        "end_at": "2026-10-17T13:00:00Z",
+        "inflow_cents": 22000000,
+        "outflow_cents": 28000000,
+        "uncertainty_cents": 2500000
+      }
+    ]
+  },
+  "TreasuryContext": {
+    "as_of": "2026-10-17T12:00:00Z",
+    "currency": "USD",
+    "checking_balance_cents": 20000000,
+    "vaults": [
+      {
+        "vault_id": "liquid-usd",
+        "balance_cents": 30000000,
+        "withdrawable_cents": 30000000,
+        "annual_yield_bps": 425,
+        "withdrawal_delay_minutes": 0
+      }
+    ]
+  },
+  "VaultPosition": {
+    "vault_id": "liquid-usd",
+    "balance_cents": 30000000,
+    "withdrawable_cents": 30000000,
+    "annual_yield_bps": 425,
+    "withdrawal_delay_minutes": 0
+  },
+  "TreasuryPolicy": {
+    "base_buffer_cents": 5000000,
+    "uncertainty_multiplier_bps": 19600,
+    "tolerance_bps": 500,
+    "min_transfer_cents": 1000000,
+    "max_allocation_bps": 6000
+  },
+  "ReserveResult": {
+    "as_of": "2026-10-17T12:00:00Z",
+    "net_drain_cents": 6000000,
+    "uncertainty_buffer_cents": 4900000,
+    "base_buffer_cents": 5000000,
+    "required_reserve_cents": 15900000
+  },
+  "DecisionResult": {
+    "as_of": "2026-10-17T12:00:00Z",
+    "recommendation_only": true,
+    "action": "SWEEP",
+    "amount_cents": 4100000,
+    "vault_id": "liquid-usd",
+    "reserve": {
+      "as_of": "2026-10-17T12:00:00Z",
+      "net_drain_cents": 6000000,
+      "uncertainty_buffer_cents": 4900000,
+      "base_buffer_cents": 5000000,
+      "required_reserve_cents": 15900000
+    },
+    "reason": "Checking exceeds the reserve corridor."
+  },
+  "EvaluationResult": {
+    "model_version": "baseline-v1",
+    "sample_count": 168,
+    "mean_absolute_error_cents": 850000,
+    "root_mean_squared_error_cents": 1100000,
+    "coverage_bps": 9500
+  },
+  "RiskScenarioResult": {
+    "scenario_id": "outflow-stress",
+    "seed": 42,
+    "probability_bps": 1000,
+    "forecast": {
+      "generated_at": "2026-10-17T12:00:00Z",
+      "model_version": "baseline-v1",
+      "points": [
+        {
+          "start_at": "2026-10-17T12:00:00Z",
+          "end_at": "2026-10-17T13:00:00Z",
+          "inflow_cents": 22000000,
+          "outflow_cents": 28000000,
+          "uncertainty_cents": 2500000
+        }
+      ]
+    },
+    "reserve": {
+      "as_of": "2026-10-17T12:00:00Z",
+      "net_drain_cents": 6000000,
+      "uncertainty_buffer_cents": 4900000,
+      "base_buffer_cents": 5000000,
+      "required_reserve_cents": 15900000
+    },
+    "liquidity_shortfall_cents": 0
+  },
+  "OptimizationResult": {
+    "candidate_id": "allocation-2000",
+    "recommendation_only": true,
+    "allocation_bps": 2000,
+    "allocation_cents": 4000000,
+    "expected_yield_cents": 170000,
+    "liquidity_shortfall_cents": 0,
+    "feasible": true,
+    "reason": "Leaves checking above required reserve."
+  }
+}
