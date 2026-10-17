@@ -926,3 +926,217 @@ public contracts/OpenAPI and frontend are inherited unchanged from the verified
 follow-up. Graphify updates in that commit are inherited; owned graph regeneration
 is still deferred under the existing path restriction. No push or main integration
 is authorized by this verification.
+
+
+## Focused Agent 1 release-blocker handoff after verification 8c49078
+
+Current verified runtime remains 483936c7e8d6c37c682886deb2e17503bf6d752c.
+Verification evidence is committed as 8c49078e3718083ed56314860ae597565e05fe55,
+after integration merge 94272ddae0738a63811556a96400ce95527996ec.
+The branch is feat/backtesting-engine. This handoff requests corrections; it
+does not authorize this workstream to modify the shared executor or API files.
+
+Acceptance here has two separate meanings: Agent 1 explicitly accepting ownership
+of a requested fix, and an implemented fix passing positive financial acceptance
+tests. Neither follows from the user acknowledging an audit or from a passing
+diagnostic probe. No direct Agent 1 messaging destination has been verified;
+this document remains the handoff, not evidence of a delivered chat message.
+
+### Requested-fix acknowledgement register
+
+| Handoff item | Requested owner | Explicit owner acceptance | Corrected runtime SHA / positive verification |
+| --- | --- | --- | --- |
+| H1 Canonical optimizer-to-execution integration | Agent 1, with Member 1 contract review | Not confirmed | Not supplied / not verified |
+| H2 Financed payouts, financing receipts and NAV | Agent 1 | Not confirmed | Not supplied / not verified |
+| H3 Complete early-redemption proceeds | Agent 1 | Not confirmed | Not supplied / not verified |
+| H4 First-observation timing and exact replay interval | Agent 1 | Not confirmed | Not supplied / not verified |
+| H5 Canonical market-position hydration and market-P&L attribution | Agent 1, with Member 1 contract review | Not confirmed | Not supplied / not verified |
+| H6 Backtest/report route and response integration | Agent 1, coordinated with backtesting owner | Not confirmed | Not supplied / not verified |
+
+Update a row only with an explicit acknowledgement or an identified commit and
+actual test evidence. Do not mark these fixes accepted, implemented or verified
+based on a branch name, runtime summary or an unrelated passing suite. The enum,
+fee-field and forecast-query improvements already verified on 483936c do not
+close H1-H6.
+
+### Explicit positive acceptance tests required before closing each item
+
+The following are REQUIRED TEST SCENARIOS, not claims that new positive tests
+already exist or pass. Existing diagnostic node IDs below reproduce the current
+failures; their expectations must be upgraded once the corrected real path is
+exercised. Do not replace financial execution with a fake or mock optimizer
+result merely to satisfy these gates.
+
+**H1 — Actual canonical allocation call and order execution**
+
+Starting evidence: test_reserve_juggler_still_omits_canonical_allocation_optimizer
+records 17 risk-helper calls and zero optimizer calls through the 17:00 sweep.
+
+Required positive tests:
+
+1. Trace actual shared RESERVE_JUGGLER decision execution and demonstrate a call
+   to Member 1's canonical recommend_four_tier_allocation(), using its agreed
+   canonical request/result contracts. Review those inputs with Member 1:
+   real current portfolio, causal information and actual policy/assumptions,
+   not invented allocation targets or a second portfolio definition.
+2. For an eligible nonempty recommendation, demonstrate the returned order is
+   consumed by the SAME hourly executor and linked to its executed movement,
+   cash ledger, position change and decision explanation. Also cover legitimate
+   HOLD/rejected recommendations with explicit execution status/rationale.
+   Merely invoking the optimizer and discarding the result is not sufficient.
+3. Verify STATIC and REACTIVE retain their explicit baseline paths and isolated
+   equal source/capital/seed/scenario/policy conditions. Compare IDs and actual
+   persisted balances, not just returned strategy labels.
+4. Mutate only unavailable current/future source information in an isolated test
+   DB and show the earlier forecast AND optimizer recommendation are unchanged.
+   Include rejection of future-dated model/calibration inputs. The existing
+   cash-flow forecast invariance test must remain passing.
+
+**H2 — Financed customer payouts, financing costs and net asset value**
+
+Starting evidence: test_shock_still_has_incomplete_payout_and_financing_nav_receipts
+and test_incomplete_shock_receipt_rolls_back_atomic_execution.
+
+Required positive tests:
+
+1. Execute a real liquidity shock that needs borrowing. Every settled customer
+   payment, including the financed remainder, must have complete auditable cash
+   legs. Reconcile requested amount to actual paid plus explicitly recorded
+   unpaid/failed amount. A loan draw is financing, never income or a payout
+   success signal by itself.
+2. Reconstruct opening/closing checking from customer, investment, funding,
+   interest and disjoint cost postings. Reconcile each principal movement to
+   the liability and require unique audit/idempotency references.
+3. Incur financing expense at the source APR, leave it unpaid, then pay it later.
+   Require hourly incurred/paid/unpaid cost evidence, not only the current
+   cumulative liability field. Paying an already expensed cost must not expense
+   it again. Include repayment with more than one outstanding loan and ensure
+   per-loan cash/event references do not collide.
+4. Require NAV = Tier 0 + Tier 1 + Tier 2 + Tier 3 asset amounts minus outstanding
+   principal minus unpaid financing costs. Reconcile change in NAV excluding
+   external customer flows to interest/accrual changes, market P&L and all costs.
+   Debt-funded cash must never inflate net benefit.
+5. Execute through execute_persisted_hour and reconstruct through report_run;
+   both must agree with the real persisted receipts. Inject a receipt inconsistency
+   and retain the existing atomic rollback/conflict protections. Do not remove
+   the current strict error merely to let incomplete records pass.
+
+**H3 — Preserve all repo redemption proceeds**
+
+Starting evidence: test_repo_redemption_still_loses_proceeds_beyond_customer_shortfall;
+the fee-field mapping test alone does not establish correctness.
+
+Required positive tests:
+
+1. Reuse the real sweep and partial-shortfall fixture. After redemption, the
+   proceeds not consumed by the customer payment must remain in Tier 0, or the
+   unsold principal must remain in a correctly represented partial position.
+   Prove that no principal disappears.
+2. Reconcile gross principal, any realized interest, the source-supplied
+   early-redemption haircut and net proceeds to movement/ledger records. Record
+   a cost exactly once; never disguise it as negative interest or market loss.
+3. Cover sufficient proceeds, exact coverage and insufficient proceeds, including
+   multiple repo positions. Do not break extra positions after the shortfall is
+   satisfied. Borrow only the residual deficit when applicable.
+4. Confirm a redeemed position cannot mature or credit proceeds again. Preserve
+   the real 17:00 sweep / next-day 08:00 maturity regression and receipt/report
+   accounting identities. The shared runtime owns rounding/fill behavior;
+   the backtester must not calculate replacement proceeds.
+
+**H4 — First organizer row and causal replay timing**
+
+Starting evidence: the complete-hour probe currently executes January 1 01:00
+from a January 1 00:00 source start; runtime computes start + target_step hours.
+
+Required positive tests:
+
+1. Execute the first requested organizer observation, including the dataset's
+   very first row, exactly once. Do not fabricate an earlier observation, alter
+   the immutable CSV, insert a negative persisted step, or weaken source FKs
+   merely to work around the offset.
+2. Execute exactly 168, 336 and 720 hourly source rows for 7/14/30-day windows;
+   prove the first and last included rows and exclusive end. Include month/year
+   boundaries, the last complete supported window and incomplete-window errors.
+3. Preserve naive source timestamps and native hourly resolution; do not invent
+   UTC or resample to 15-minute rows. Warm-up history must not create pre-window
+   portfolio activity, balances, income or liability.
+4. Keep customer/market information unavailable until its agreed observation
+   boundary. Verify the corrected first-row handling together with no-lookahead
+   features, optimizer decisions and model/artifact cutoffs, not only row counts.
+   Preserve source net_flow and the original one-cent reconciliation differences.
+
+**H5 — Market hydration and honest market-return attribution**
+
+Starting evidence: test_open_market_positions_still_fail_canonical_hydration
+for BOTH BOND and EQUITY.
+
+Required positive tests:
+
+1. Seed an explicit real bond/equity position fixture and exercise the unchanged
+   shared financial path. Canonical hydration must validate without relaxing
+   Member 1 contracts: position mark timestamps/prices must match their supplied
+   market observation, and duration/yield/volatility must match applicable inputs.
+   Preserve Decimal precision and position/run/source identity.
+2. Across at least two source marks, persist auditable position/portfolio values
+   and signed unrealized P&L. On a real sale/liquidation, persist cost basis,
+   gross realized P&L, released unrealized P&L, haircut/slippage and net cash.
+   A previously marked gain must not be earned twice when realized.
+3. Reconcile position movements and market attribution to the report's NAV/net
+   benefit. Equity market gains are NOT guaranteed interest; haircut/slippage
+   is separate from market price loss and financing expense.
+4. If a case is deliberately unsupported, publish the precise unsupported
+   instruments/operations and fail it explicitly. Do not output placeholder
+   zero P&L or claim a complete four-tier comparison. Any narrowed evaluation
+   scope requires an explicit agreement; it is not automatically release-ready.
+
+**H6 — Versioned endpoint wiring and response contracts**
+
+Starting evidence: test_backtest_and_report_routes_still_return_501 for POST/GET.
+Shared route, public Pydantic and OpenAPI changes remain Agent 1's ownership.
+
+Required positive tests:
+
+1. Exercise actual /api/v1/runs/{id}/backtest and /report HTTP requests against
+   migrated PostgreSQL, with the REAL backtesting/report services and executor.
+   Valid supported requests must return the agreed successful schema, rather
+   than unconditional 501, a fabricated comparison or silently dropped fields.
+2. Verify explicit parent-run mapping for initial capital, source/window,
+   7/14/30-day duration, seed, immutable policy and scenario schedule. Never use
+   the parent's current mutated ledger as the next strategy's starting state.
+   Agree handling of requested strategy aliases/order/subsets with the service.
+3. Validate nested sampled history, separated accounting totals and
+   model_evaluation:null against the agreed public Pydantic/OpenAPI contract.
+   Assert JavaScript-safe integer cents, signed net benefit, actual payout
+   unpaid amounts distinct from debt, causal source timestamps and provenance.
+   Prove sampling uses actual points while metrics use every executed receipt.
+4. Test unknown IDs, invalid parameters, step conflicts and unsupported/incomplete
+   financial state using the agreed error contract. A ready run with no executed
+   receipts must preserve honest unavailable metrics; incomplete accounting must
+   not become a successful partial report.
+5. Check route/schema parity and serialization/deserialization with the frontend
+   contract. These service-level checks do not authorize frontend edits here.
+
+### Verification sequence and Member 1 coordination
+
+Once a corrected commit and Agent 1's acknowledgement arrive, record the FULL
+runtime SHA, its base/ancestry, changed receipt/model contracts, migration status
+and actual commands/results per H1-H6. Verify the object locally or use a
+controlled transfer; never fetch a local-only SHA from GitHub by assumption.
+Preserve 8c49078 and its predecessors; do not reset, rewrite or merge main.
+
+Use the PostgreSQL harness commands in the current follow-up review to run
+targeted probes, backtesting/runtime/API regressions and the complete suite.
+Only after the positive optimizer-to-order, accounting, observation-timing and
+API checks pass may the seven pending full-comparison acceptance cases run
+against the actual provider. Diagnostic passes remain evidence of defects.
+
+The user will coordinate end-to-end validation with Member 1, including
+**RJ-M1-16**. No tracked RJ-M1-16 specification was located in this checkout;
+its task-specific requirements, owner sign-off and evidence must be supplied by
+Member 1/user. Do not infer that it is implemented, accepted or passed, and do
+not invent its scope from its identifier. H1-H6 are this handoff's release gates,
+not a replacement specification for RJ-M1-16.
+
+Current closeout: no new corrected runtime SHA supplied; no H1-H6 owner acceptance
+confirmed; historical strategy comparisons remain BLOCKED. This document is the
+focused Agent 1 handoff until a verified messaging destination is available.
