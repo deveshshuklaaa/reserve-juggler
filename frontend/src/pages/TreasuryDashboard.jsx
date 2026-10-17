@@ -7,6 +7,7 @@ import { Allocation, AuditLog, DecisionCard, TransactionFeed, VaultPositions } f
 import { TimeChart } from '../components/Charts';
 import { ScrollStory } from '../components/ScrollStory';
 import LandingExperience from '../components/LandingExperience';
+import FourTierPortfolio from '../components/FourTierPortfolio';
 import { exportCsv, money, rate, utc } from '../utils/format';
 
 export function StartState() {
@@ -35,8 +36,12 @@ export default function TreasuryDashboard() {
       <div className="metrics-grid supporting-metrics"><Metric label="Yield vault principal" value={snapshot.vault_locked_cents + snapshot.vault_redeemable_cents} note={`${money(snapshot.vault_locked_cents, true)} locked earning interest`} /><Metric label="Realized interest" value={snapshot.realized_interest_cents ?? '—'} note={`${money(snapshot.accrued_interest_cents)} accrued · Ready at maturity`} /><Metric label="Net financial benefit" value={snapshot.net_benefit_cents ?? '—'} note="Total net profit after subtracting all costs" /></div>
       </div></section>
       {snapshot.alerts?.map((alert, index) => <Alert key={`${snapshot.step}-${index}`} tone={alert.severity === 'CRITICAL' ? 'danger' : alert.severity === 'WARNING' ? 'warning' : 'info'}>{alert.severity} — {alert.message}</Alert>)}
+      <section id="four-tier-section" className="story-section" aria-label="Four-tier portfolio architecture"><div data-story-reveal>
+      <div className="section-intro"><div><span className="eyebrow">02 / Institutional Capital Architecture</span><h2>Four-Tier Capital Engine.</h2></div><span className="model-caption">Multi-asset framework across Cash, Repo, Sovereign Bonds, and Equities</span></div>
+      <FourTierPortfolio snapshot={snapshot} />
+      </div></section>
       <section id="intelligence" className="story-section" aria-label="Treasury intelligence"><div data-story-reveal>
-      <div className="section-intro"><div><span className="eyebrow">02 / Intelligence</span><h2>Movement, made clear.</h2></div><span className="model-caption">{snapshot.forecast?.model_version ?? 'Model unavailable'}<br />{sim.mode === 'mock' ? 'Deterministic development model' : 'Backend forecasting model'}</span></div>
+      <div className="section-intro"><div><span className="eyebrow">03 / Intelligence</span><h2>Movement, made clear.</h2></div><span className="model-caption">{snapshot.forecast?.model_version ?? 'Model unavailable'}<br />{sim.mode === 'mock' ? 'Deterministic development model' : 'Backend forecasting model'}</span></div>
       <div className="dashboard-grid"><div className="dashboard-charts">
         <Panel title={chartView === 'flows' ? 'Cash-flow activity' : chartView === 'reserve' ? 'Liquidity & required reserve' : 'Realized yield history'} subtitle="Recorded simulation activity · USD" action={<div className="segmented" aria-label="History time window">{[1, 6, 24].map((hours) => <button key={hours} onClick={() => setWindowHours(hours)} className={windowHours === hours ? 'active' : ''} aria-pressed={windowHours === hours}>{hours}H</button>)}</div>}>
           <div className="chart-tabs">{[['flows', 'Cash flows'], ['reserve', 'Reserve coverage'], ['yield', 'Earned yield']].map(([key, label]) => <button key={key} onClick={() => setChartView(key)} className={chartView === key ? 'active' : ''}>{label}</button>)}</div>

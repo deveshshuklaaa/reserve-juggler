@@ -7,6 +7,7 @@ import { Alert, Badge, Button, Empty, Field, Panel } from '../components/ui';
 import { TimeChart } from '../components/Charts';
 import { DecisionCard } from '../components/Treasury';
 import { StartState } from './TreasuryDashboard';
+import StressMatrix from '../components/StressMatrix';
 
 function PolicyControls() {
   const { snapshot, updatePolicy, busy, playing } = useSimulation();
@@ -84,6 +85,7 @@ function LabContent() {
       </Panel>
       <PolicyControls key={snapshot.run_id} />
     </div></div>
+    <StressMatrix scenario={scenario} snapshot={snapshot} beforeShock={beforeShock} executed={executed} />
     {snapshot.alerts?.map((alert, index) => <Alert key={`${snapshot.step}-${index}`} tone={alert.severity === 'CRITICAL' ? 'danger' : 'warning'}>{alert.severity} — {alert.message}</Alert>)}
     <div className="lab-bottom"><DecisionCard snapshot={snapshot} /><Panel title="Scenario activity" subtitle="Scheduled and observed events belong to this run.">
       {!snapshot.scenarios?.length ? <p className="panel-copy">No scenarios have been submitted. Choose a stress test to begin.</p> : <div className="event-list">{snapshot.scenarios.slice().reverse().map((event) => <div key={event.id}><span className="event-node" /><div><strong>{SCENARIOS.find((s) => s.id === event.scenario)?.name ?? event.scenario}</strong><small>Effective step {event.effective_step} · Submitted at step {event.submitted_step}</small></div><Badge tone={event.status === 'ACTIVE' ? 'warning' : 'neutral'}>{event.status}</Badge></div>)}</div>}
