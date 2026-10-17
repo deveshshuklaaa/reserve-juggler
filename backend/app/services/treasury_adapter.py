@@ -19,6 +19,8 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from app.services.accounting import paid_financing_costs, repo_interest_cents
+from treasury_intelligence.instrument_economics import usd_to_ledger_cents, percentage_cost_cents
 
 from app.persistence.models import (
     BondPosition as DbBondPosition,
@@ -94,6 +96,8 @@ def build_four_tier_policy(
             "minimum_liquid_reserve_cents", 50000000
         ),
         allow_overdraft=policy_dict.get("allow_overdraft", True),
+        allow_bond_liquidation=policy_dict.get("allow_bond_liquidation", False),
+        allow_emergency_equity_liquidation=policy_dict.get("allow_emergency_equity_liquidation", False),
         max_overdraft_cents=policy_dict.get("max_overdraft_cents", 5000000000),
     )
 
@@ -145,7 +149,7 @@ def hydrate_portfolio_state(
         session.scalars(
             select(DbRepoPosition).where(
                 DbRepoPosition.run_id == run.id,
-                DbRepoPosition.status.in_(["LOCKED", "MATURED"]),
+                DbRepoPosition.status == "LOCKED",
             ).order_by(DbRepoPosition.entered_at)
         ).all()
     )
@@ -160,19 +164,12 @@ def hydrate_portfolio_state(
                     // 3600
                 ),
             )
-            accrued = int(
-                round(
-                    r.principal_cents
-                    * (r.applicable_apy_pct / Decimal(100))
-                    * Decimal(dur_hrs)
-                    / Decimal(365 * 24)
-                )
-            )
+            accrued = repo_interest_cents(session, r, as_of)
             market_val = r.principal_cents + accrued
             avail = 0
             locked = market_val
             haircut_pct = r.early_redemption_haircut_pct
-            liquidatable = int(round(market_val * (Decimal(100) - haircut_pct) / Decimal(100)))
+            liquidatable = r.principal_cents - percentage_cost_cents(r.principal_cents, haircut_pct)
             cls_name = "LOCKED"
         else:  # MATURED
             accrued = r.realized_interest_cents or r.accrued_interest_cents or 0
@@ -219,7 +216,7 @@ def hydrate_portfolio_state(
     m1_bonds: list[M1BondPosition] = []
     for b in db_bonds:
         cur_price = observation.tier2_bond_price_index
-        cur_market_val = int(round(b.quantity * cur_price * Decimal(100)))
+        cur_market_val = usd_to_ledger_cents(b.quantity * cur_price)
         haircut = b.liquidation_haircut_pct
         liq_val = int(round(cur_market_val * (Decimal(100) - haircut) / Decimal(100)))
         b.market_observation_timestamp = observation.timestamp
@@ -266,7 +263,7 @@ def hydrate_portfolio_state(
     m1_equities: list[M1EquityPosition] = []
     for eq in db_equities:
         cur_price = observation.tier3_stock_index_price
-        cur_market_val = int(round(eq.quantity * cur_price * Decimal(100)))
+        cur_market_val = usd_to_ledger_cents(eq.quantity * cur_price)
         haircut = eq.liquidation_haircut_pct
         liq_val = int(round(cur_market_val * (Decimal(100) - haircut) / Decimal(100)))
         eq.market_observation_timestamp = observation.timestamp
@@ -304,13 +301,16 @@ def hydrate_portfolio_state(
         session.scalars(
             select(DbOverdraftLiability).where(
                 DbOverdraftLiability.run_id == run.id,
-                DbOverdraftLiability.outstanding_principal_cents > 0,
             ).order_by(DbOverdraftLiability.borrowed_at)
         ).all()
     )
     m1_overdrafts: list[M1OverdraftLiability] = []
+    paid_costs = paid_financing_costs(session, run.id)
     for od in db_overdrafts:
         fin_cost = od.financing_cost_cents or 0
+        paid_cost = paid_costs.get(od.id, 0)
+        if od.outstanding_principal_cents == 0 and fin_cost == paid_cost:
+            continue
         m1_overdrafts.append(
             M1OverdraftLiability(
                 id=od.id,
@@ -325,8 +325,8 @@ def hydrate_portfolio_state(
                 repaid_principal_cents=od.repaid_principal_cents,
                 apr_pct=od.apr_pct,
                 financing_cost_cents=fin_cost,
-                paid_financing_cost_cents=0,
-                outstanding_financing_cost_cents=fin_cost,
+                paid_financing_cost_cents=paid_cost,
+                outstanding_financing_cost_cents=fin_cost - paid_cost,
                 breach_id=od.breach_id,
                 reference_id=od.reference_id,
             )
@@ -501,7 +501,7 @@ def evaluate_liquidity_risk(
             time_basis=portfolio.time_basis,
             amount_cents=policy.base_buffer_cents,
             confidence=Decimal("0.95"),
-            calibration_reference="calibrated-baseline",
+            calibration_reference="fallback-baseline-v1",
             calibrated_through=cutoff,
         )
 
@@ -566,7 +566,7 @@ def recommend_four_tier_allocation_decision(
             time_basis=portfolio.time_basis,
             amount_cents=policy.base_buffer_cents,
             confidence=Decimal("0.95"),
-            calibration_reference="calibrated-baseline",
+            calibration_reference="fallback-baseline-v1",
             calibrated_through=cutoff,
         )
 
@@ -640,7 +640,7 @@ def recommend_four_tier_allocation_decision(
         time_basis="UNSPECIFIED",
         model_version="hourly-runtime-v1",
         policy_version="v1",
-        assumption_reference="organizer-historical-calibrated",
+        assumption_reference="organizer-source-rates-policy-baseline",
         assumptions_available_at=observation.timestamp,
         holding_hours=15,
         risk_aversion=Decimal(str(risk_aversion)),

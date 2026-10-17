@@ -174,7 +174,7 @@ def test_strategy_dispatch_policy_paths(session, dataset):
     res_juggler = execute_hourly_step(session, run_juggler.id, expected_step=0)
     assert res_juggler["strategy"] == "RESERVE_JUGGLER"
     assert "RESERVE_JUGGLER: dynamic required reserve" in res_juggler["decision"]["explanation"][0]
-    assert res_juggler["forecast"]["model_version"] == "evaluated-gb-v1"
+    assert res_juggler["forecast"]["model_version"] == "hourly-seasonal-naive-v1"
 
 
 def test_strategy_run_and_ledger_state_isolation(session, dataset):

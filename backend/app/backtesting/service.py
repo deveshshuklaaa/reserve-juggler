@@ -32,7 +32,7 @@ def conditions_digest(request, metadata, capabilities):
                 initial_capital_cents=request.initial_capital_cents, seed=request.seed,
                 scenario=request.scenario.model_dump(mode="json"), policy_json=request.policy_json,
                 engine_version=capabilities.engine_version, integration_sha=capabilities.integration_sha,
-                protocol_version=capabilities.protocol_version)
+                protocol_version=capabilities.protocol_version, strategies=request.strategies)
     return hashlib.sha256(json.dumps(wire, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 
@@ -51,7 +51,7 @@ class BacktestService:
         caps = EngineCapabilities.model_validate(factory.capabilities)
         if caps.execution_kind == "TEST_DOUBLE" and not self.allow_test_double:
             raise SharedEngineUnavailable("Test-double performance is unit-test-only; explicitly opt in in tests")
-        if not set(STRATEGIES) <= set(caps.strategies) or request.scenario.name not in caps.scenarios:
+        if not set(request.strategies) <= set(caps.strategies) or request.scenario.name not in caps.scenarios:
             raise SharedEngineUnavailable("Provider does not support all requested strategies/scenario")
         dataset = self.source.load()
         if dataset.metadata.content_hash != ORGANIZER_SHA256 or len(dataset) != 8760:
@@ -64,7 +64,7 @@ class BacktestService:
         conditions = conditions_digest(request, dataset.metadata, caps)
         metrics = []
         sessions = []  # retain identity until completion to detect a factory reusing run objects
-        for strategy in STRATEGIES:
+        for strategy in request.strategies:
             spec = RunSpec(comparison_id=request.comparison_id, run_id=uuid5(request.comparison_id, strategy),
                 strategy=strategy, start=request.start, end_exclusive=request.end_exclusive, steps=request.steps,
                 initial_capital_cents=request.initial_capital_cents, seed=request.seed, scenario=request.scenario,
@@ -93,7 +93,7 @@ class BacktestService:
             steps=request.steps, initial_capital_cents=request.initial_capital_cents, seed=request.seed,
             scenario=request.scenario, policy_json=request.policy_json, conditions_sha256=conditions,
             engine_version=caps.engine_version, engine_integration_sha=caps.integration_sha,
-            execution_kind=caps.execution_kind, results=tuple(metrics))
+            execution_kind=caps.execution_kind, results=tuple(metrics), strategies=request.strategies)
 
     @staticmethod
     def _evaluate(run, spec, dataset, start_index, initial):

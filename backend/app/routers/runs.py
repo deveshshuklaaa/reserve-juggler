@@ -4,6 +4,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from app.backtesting.reports import BacktestReport, RunReport
 
 from app.database import get_db
 from app.services.hourly_engine import StepConflictError
@@ -183,7 +184,7 @@ def transactions(id: UUID, limit: int = Query(50, ge=1, le=200), db: Session = D
         })
 
 
-@router.post("/{id}/backtest", response_model=BacktestResult)
+@router.post("/{id}/backtest", response_model=BacktestReport)
 def backtest(id: UUID, request: BacktestRequest, db: Session = Depends(get_db)):
     from app.persistence.models import SimulationRun
     run = db.get(SimulationRun, id)
@@ -206,15 +207,11 @@ def backtest(id: UUID, request: BacktestRequest, db: Session = Depends(get_db)):
             "details": {},
         })
 
-    days = 7
-    if run.duration_steps == 168:
-        days = 7
-    elif run.duration_steps == 336:
-        days = 14
-    elif run.duration_steps == 720:
-        days = 30
-    elif run.duration_steps and run.duration_steps // 24 in (7, 14, 30):
-        days = run.duration_steps // 24
+    if run.duration_steps not in (168, 336, 720):
+        raise HTTPException(status_code=422, detail={
+            "error_code": "UNPROCESSABLE_ENTITY", "message": "Backtest duration must be exactly 168, 336 or 720 hours",
+            "details": {}})
+    days = run.duration_steps // 24
 
     import json
     from app.backtesting.contracts import BacktestRequest as InternalBacktestRequest, ScenarioSpec, canonical_config
@@ -233,6 +230,10 @@ def backtest(id: UUID, request: BacktestRequest, db: Session = Depends(get_db)):
 
     policy_str = canonical_config(json.dumps(_sanitize_json_for_config(run.policy_json or {})))
     scen_params = (run.policy_json or {}).get("scenario_parameters", {})
+    initial_events = [event for event in (run.policy_json or {}).get("scenarios", [])
+                      if event.get("effective_step") == 1]
+    if len(initial_events) == 1 and initial_events[0].get("scenario") == run.scenario:
+        scen_params = initial_events[0].get("parameters", {})
     scen_spec = ScenarioSpec(name=run.scenario, parameters_json=canonical_config(json.dumps(_sanitize_json_for_config(scen_params))))
 
     bt_req = InternalBacktestRequest(
@@ -243,12 +244,21 @@ def backtest(id: UUID, request: BacktestRequest, db: Session = Depends(get_db)):
         seed=run.seed,
         scenario=scen_spec,
         policy_json=policy_str,
+        strategies=tuple({"STATIC_RESERVE": "STATIC", "REACTIVE_RESERVE": "REACTIVE",
+                          "RESERVE_JUGGLER": "RESERVE_JUGGLER"}[name] for name in request.strategies),
     )
     try:
         report_svc = BacktestReportService(BacktestService(SharedRuntimeFactory(session=db)))
-        result = report_svc.compare(bt_req)
-        return result
-    except Exception as exc:
+        # Ephemeral evaluation: reuse deterministic comparison/run identities
+        # safely on repeated requests, and never mutate the parent's live ledger.
+        # The validated response is materialized before rolling back child runs.
+        with db.begin_nested() as evaluation:
+            result = report_svc.compare(bt_req)
+            evaluation.rollback()
+        selected = {row.strategy: row for row in result.results}
+        return BacktestReport(**(result.model_dump() | {
+            "results": tuple(selected[name] for name in request.strategies)}))
+    except (ValueError, RuntimeError) as exc:
         raise HTTPException(status_code=422, detail={
             "error_code": "UNPROCESSABLE_ENTITY",
             "message": str(exc),
@@ -256,7 +266,7 @@ def backtest(id: UUID, request: BacktestRequest, db: Session = Depends(get_db)):
         })
 
 
-@router.get("/{id}/report", response_model=PerformanceReport)
+@router.get("/{id}/report", response_model=RunReport)
 def report(id: UUID, db: Session = Depends(get_db)):
     from app.persistence.models import SimulationRun
     from app.backtesting.reports import BacktestReportService

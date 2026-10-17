@@ -88,7 +88,6 @@ def test_optimizer_order_reaches_real_repo_ledger(runtime_session):
         assert ledger.amount_cents == movement.principal_cents == -movement.cash_delta_cents
 
 
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason="H1: REACTIVE no-history fallback leaks unpublished current flow; Agent 1")
 def test_reactive_first_decision_is_invariant_to_unavailable_current_flow(runtime_session):
     session = runtime_session
     left, right = create_run(session), create_run(session)
@@ -155,14 +154,19 @@ def test_funded_market_marks_reconcile_signed_pnl_and_report(runtime_session, in
         PositionValuation.run_id == run.id)))) == 2
 
 
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason="H2: hydration drops unpaid fees on fully repaid principal; Agent 1")
 def test_repaid_principal_does_not_hide_unpaid_financing_liability(runtime_session):
     session = runtime_session
     run = create_run(session, initial=1_000_000)
     apply_simulation_scenario(session, run.id, ScenarioRequest(
         scenario="LIQUIDITY_SHOCK", parameters={"amount_cents": 1_000_000}, effective_step=1))
     execute_persisted_hour(session, run.id, 0)
-    apply_simulation_scenario(session, run.id, ScenarioRequest(scenario="NORMAL", effective_step=2))
+    principal = session.scalar(select(OverdraftLiability.outstanding_principal_cents).where(
+        OverdraftLiability.run_id == run.id))
+    next_row = session.scalar(select(OrganizerObservation).where(
+        OrganizerObservation.dataset_id == run.dataset_id, OrganizerObservation.timestamp == datetime(2026, 1, 1, 1)))
+    shock = int((next_row.deposits_usd - next_row.withdrawals_usd) * 100) - principal
+    apply_simulation_scenario(session, run.id, ScenarioRequest(
+        scenario="LIQUIDITY_SHOCK", parameters={"amount_cents": shock}, effective_step=2))
     receipt = execute_persisted_hour(session, run.id, 1)
     debt = session.scalar(select(OverdraftLiability).where(OverdraftLiability.run_id == run.id))
     assert debt.outstanding_principal_cents == 0 and debt.financing_cost_cents > 0
@@ -174,7 +178,6 @@ def test_repaid_principal_does_not_hide_unpaid_financing_liability(runtime_sessi
         "Canonical optimizer hydration discarded unpaid financing expense after principal repayment")
 
 
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason="H3: repo NAV accrual uses only one hour, not cumulative earned interest; Agent 1")
 def test_repo_accrual_grows_over_two_held_hours(runtime_session):
     session = runtime_session
     run = create_run(session, initial=100_000_000_000, buffer=5_000_000_000)
@@ -183,7 +186,6 @@ def test_repo_accrual_grows_over_two_held_hours(runtime_session):
         "Closing repo accrual is only a single-hour amount rather than accumulated earned interest")
 
 
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason="H6: public PerformanceReport filters out detailed owned report fields; Agent 1")
 def test_public_report_retains_owned_accounting_and_history(runtime_session, runtime_client):
     run = create_run(runtime_session)
     execute_persisted_hour(runtime_session, run.id, 0)
@@ -196,7 +198,6 @@ def test_public_report_retains_owned_accounting_and_history(runtime_session, run
     assert len(data["history"]) == 1
 
 
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason="H6: public backtest silently ignores requested strategy subset; Agent 1")
 def test_public_backtest_retains_fields_and_honors_requested_subset(runtime_session, runtime_client):
     run = create_run(runtime_session, duration_steps=168)
     response = runtime_client.post(f"/api/v1/runs/{run.id}/backtest", json={"strategies": ["STATIC_RESERVE"]})

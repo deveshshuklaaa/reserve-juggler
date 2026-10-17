@@ -23,14 +23,15 @@ from .service import EngineContractError, SharedEngineUnavailable, observation_d
 RUNTIME_SHA = "dee0aae3cbd77ed4ad4e6f0961b9594ad53461d2"
 RUNTIME_BLOCKERS = (
     "Historical-comparison release gates remain unaccepted; configured sessions enable diagnostic execution only.",
-    "REACTIVE no-history fallback reads unpublished current withdrawals.",
-    "Optimizer hydration omits unpaid financing costs once principal is repaid.",
-    "Repo accrued interest is not cumulative; market liquidation/realized-P&L execution is unsupported.",
-    "Public response/scenario/transaction contracts still need integration-owner verification.",
+    "Canonical non-repo recommendation orders, including market purchases and partial sales, are explicitly rejected.",
+    "Complete 7/14/30-day scenario acceptance and Member 1 availability/optimizer sign-off remain pending.",
+    "Legacy public aware start_time remains a wall-clock compatibility selector, not source timezone provenance.",
 )
 KNOWN_LEDGER_KINDS = frozenset((
     "CUSTOMER_DEPOSIT_INFLOW", "CUSTOMER_WITHDRAWAL_OUTFLOW", "OVERNIGHT_REPO_SWEEP_DEBIT",
     "REPO_MATURITY_CREDIT", "REPO_EARLY_REDEMPTION", "OVERDRAFT_DRAW_BORROW", "OVERDRAFT_REPAYMENT",
+    "OVERDRAFT_FINANCING_PAYMENT",
+    "MARKET_LIQUIDATION_CREDIT",
 ))
 
 
@@ -137,14 +138,11 @@ class SharedRuntimeFactory:
             raise EngineContractError("Scenario schedule needs unique in-window explicit effective steps")
         policy_for_model = {k: v for k, v in policy_dict.items() if k not in ("scenarios", "scenario_parameters", "strategy")}
         policy_obj = TreasuryPolicy.model_validate(policy_for_model) if policy_for_model else TreasuryPolicy()
-        from datetime import timezone
-        utc_start = spec.start if spec.start.tzinfo else spec.start.replace(tzinfo=timezone.utc)
         create_req = CreateRunRequest(
             initial_cash_cents=spec.initial_capital_cents,
             duration_steps=spec.steps,
             seed=spec.seed,
             scenario=spec.scenario.name,
-            start_time=utc_start,
             policy=policy_obj,
         )
         owns_session = self.session is None
@@ -153,7 +151,7 @@ class SharedRuntimeFactory:
             if session.get(SimulationRun, spec.run_id) is not None:
                 raise EngineContractError("Strategy run ID already exists; use a fresh comparison ID, never reuse a mutated ledger")
             with session.begin_nested():
-                create_simulation_run(session, create_req, run_id=spec.run_id)
+                create_simulation_run(session, create_req, run_id=spec.run_id, source_start_timestamp=spec.start)
                 created = session.get(SimulationRun, spec.run_id)
                 if (created.dataset_id != spec.dataset_id or created.source_start_timestamp != spec.start
                         or created.native_interval_seconds != 3600):
@@ -199,8 +197,10 @@ def _state(session, run_id, valuation):
             OverdraftMovement.occurred_at < valuation.valued_at,
         )
     ).all()
-    borrowing_principal = sum(row[1] for row in loans_rows if row[0] in ("BORROW", "REPAYMENT"))
-    unpaid_costs = sum((row[2] or row[3] or 0) for row in loans_rows if row[0] == "FINANCING_COST")
+    borrowing_principal = sum(row[3] if row[0] == "BORROW" else -row[3]
+                              for row in loans_rows if row[0] in ("BORROW", "REPAYMENT"))
+    unpaid_costs = (sum(row[2] for row in loans_rows if row[0] == "FINANCING_COST")
+                    - sum(row[2] for row in loans_rows if row[0] == "REPAYMENT"))
 
     return EngineState(
         checking_cents=valuation.tier0_cash_cents,
@@ -258,7 +258,9 @@ def read_hour_receipt(session: Session, run_id: UUID, step: int) -> HourReceipt:
     if inflow != decision.expected_inflow_cents or outflow != decision.expected_outflow_cents:
         raise RuntimeReceiptUnavailable("Requested customer flow lacks complete settled-payout ledger legs")
 
-    if any(m.kind not in ("INVESTMENT", "MATURITY", "REDEMPTION") or m.tier != 1
+    if any((m.tier == 1 and m.kind not in ("INVESTMENT", "MATURITY", "REDEMPTION"))
+           or (m.tier in (2, 3) and m.kind != "LIQUIDATION")
+           or m.tier not in (1, 2, 3)
            or m.interest_cents is None or m.haircut_cost_cents is None for m in movements):
         raise RuntimeReceiptUnavailable("Unrecognized or incomplete investment receipt")
     if any(m.kind not in ("BORROW", "REPAYMENT", "FINANCING_COST") for m in loans):
@@ -269,8 +271,18 @@ def read_hour_receipt(session: Session, run_id: UUID, step: int) -> HourReceipt:
         if m.ledger_entry_id not in ledger_ids:
             raise RuntimeReceiptUnavailable("Financial movement lacks its same-hour cash ledger")
     for m in loans:
+        expected_cash = (m.principal_cents if m.kind == "BORROW" else
+                         -(m.principal_cents + m.financing_cost_cents) if m.kind == "REPAYMENT" else 0)
+        if (m.cash_delta_cents != expected_cash
+                or (m.kind == "BORROW" and m.financing_cost_cents != 0)
+                or (m.kind == "FINANCING_COST" and m.principal_cents != 0)):
+            raise RuntimeReceiptUnavailable("Financing principal, paid expense and cash legs disagree")
         if m.kind in ("BORROW", "REPAYMENT") and m.ledger_entry_id not in ledger_ids:
             raise RuntimeReceiptUnavailable("Financial movement lacks its same-hour cash ledger")
+        if m.kind in ("BORROW", "REPAYMENT"):
+            ledger = next(row for row in ledgers if row.id == m.ledger_entry_id)
+            if ledger.amount_cents != abs(expected_cash) or ledger.balance_after_cents - ledger.balance_before_cents != expected_cash:
+                raise RuntimeReceiptUnavailable("Financing movement does not match its cash-ledger amount/direction")
         if m.kind == "FINANCING_COST" and m.cash_delta_cents != 0:
             raise RuntimeReceiptUnavailable("Financing cost movement must have zero cash delta")
 
@@ -279,8 +291,10 @@ def read_hour_receipt(session: Session, run_id: UUID, step: int) -> HourReceipt:
     if step == run.current_step and (cash is None or cash.balance_cents != closing.checking_cents):
         raise RuntimeReceiptUnavailable("Latest valuation and cash account disagree")
 
-    borrowing_costs = sum((m.financing_cost_cents or m.principal_cents or 0) for m in loans if m.kind == "FINANCING_COST")
-    financing_cash_delta = sum(m.cash_delta_cents for m in loans if m.kind in ("BORROW", "REPAYMENT"))
+    borrowing_costs = sum(m.financing_cost_cents for m in loans if m.kind == "FINANCING_COST")
+    paid_borrowing_costs = sum(m.financing_cost_cents for m in loans if m.kind == "REPAYMENT")
+    financing_cash_delta = sum(m.principal_cents if m.kind == "BORROW" else -m.principal_cents
+                               for m in loans if m.kind in ("BORROW", "REPAYMENT"))
     realized_mkt_pnl = sum(pv.realized_pnl_cents for pv in pos_vals_curr)
 
     observation = HourlyObservation(**{name: getattr(source, name) for name in EXPECTED_COLUMNS})
@@ -291,9 +305,10 @@ def read_hour_receipt(session: Session, run_id: UUID, step: int) -> HourReceipt:
         financing_cash_delta_cents=financing_cash_delta,
         realized_interest_cents=sum(m.interest_cents for m in movements),
         realized_market_pnl_cents=realized_mkt_pnl,
-        contractual_penalties_cents=sum(m.haircut_cost_cents for m in movements),
-        liquidation_losses_cents=0, transaction_costs_cents=0,
-        borrowing_costs_cents=borrowing_costs, paid_borrowing_costs_cents=0,
+        contractual_penalties_cents=sum(m.haircut_cost_cents for m in movements if m.tier == 1),
+        liquidation_losses_cents=sum(m.haircut_cost_cents for m in movements if m.tier in (2, 3)),
+        transaction_costs_cents=0,
+        borrowing_costs_cents=borrowing_costs, paid_borrowing_costs_cents=paid_borrowing_costs,
         reserve_breaches=len(breaches), emergency_events=len(breaches), failed_payouts=0, unpaid_payouts_cents=0,
         sweeps=sum(m.kind == "INVESTMENT" for m in movements),
         event_ids=tuple(f"{type(row).__name__}:{row.id}" for row in

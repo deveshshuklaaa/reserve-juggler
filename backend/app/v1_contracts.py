@@ -44,6 +44,8 @@ class TreasuryPolicy(ContractModel):
     vault_lock_steps: PositiveSteps = 96
     early_redemption_allowed: bool = True
     early_redemption_penalty_bps: BasisPoints = 200
+    allow_bond_liquidation: bool = Field(default=False, strict=True)
+    allow_emergency_equity_liquidation: bool = Field(default=False, strict=True)
 
     @model_validator(mode="before")
     @classmethod
@@ -119,6 +121,8 @@ class PolicyPatch(ContractModel):
     vault_lock_steps: PositiveSteps | None = None
     early_redemption_allowed: bool | None = None
     early_redemption_penalty_bps: BasisPoints | None = None
+    allow_bond_liquidation: bool | None = Field(default=None, strict=True)
+    allow_emergency_equity_liquidation: bool | None = Field(default=None, strict=True)
 
     @model_validator(mode="before")
     @classmethod
@@ -388,6 +392,13 @@ class BacktestRequest(ContractModel):
         default_factory=lambda: ["STATIC_RESERVE", "REACTIVE_RESERVE", "RESERVE_JUGGLER"],
         min_length=1,
     )
+
+    @field_validator("strategies")
+    @classmethod
+    def unique_strategies(cls, value):
+        if len(set(value)) != len(value):
+            raise ValueError("Requested strategies must be unique")
+        return value
 
 
 class StrategyResult(ContractModel):

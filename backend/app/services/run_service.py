@@ -95,14 +95,28 @@ def _get_or_load_dataset(session: Session) -> DbDatasetSource:
     raise RuntimeError("No organizer dataset found in database.")
 
 
-def create_simulation_run(session: Session, request: CreateRunRequest, run_id: UUID | None = None) -> RunCreated:
+def create_simulation_run(session: Session, request: CreateRunRequest, run_id: UUID | None = None,
+                          *, source_start_timestamp: datetime | None = None) -> RunCreated:
     """Creates a new simulation run with default $20 million in Tier 0 checking."""
     ds = _get_or_load_dataset(session)
     policy_dict = request.policy.model_dump(mode="json")
     policy_dict.setdefault("scenarios", [])
 
     actual_run_id = run_id or uuid4()
-    start_ts = request.start_time.replace(tzinfo=None) if request.start_time is not None else ds.first_timestamp
+    if source_start_timestamp is not None:
+        if source_start_timestamp.tzinfo is not None:
+            raise ValueError("Organizer source time has unspecified timezone; supply a naive source timestamp")
+        if request.start_time is not None:
+            raise ValueError("Supply source time or legacy start_time, not both")
+        start_ts = source_start_timestamp
+    else:
+        # Legacy API compatibility: wall-clock source selection, NOT a claim
+        # that organizer timestamps have UTC provenance.
+        start_ts = request.start_time.replace(tzinfo=None) if request.start_time is not None else ds.first_timestamp
+    if (start_ts.minute or start_ts.second or start_ts.microsecond
+            or start_ts < ds.first_timestamp
+            or start_ts + timedelta(hours=request.duration_steps - 1) > ds.last_timestamp):
+        raise ValueError("Complete hourly run window must lie inside the organizer source")
     run = DbSimulationRun(
         id=actual_run_id,
         seed=request.seed,
@@ -115,7 +129,7 @@ def create_simulation_run(session: Session, request: CreateRunRequest, run_id: U
         source_type="ORGANIZER_HISTORICAL",
         dataset_id=ds.dataset_id,
         source_start_timestamp=start_ts,
-        source_end_timestamp=ds.last_timestamp,
+        source_end_timestamp=start_ts + timedelta(hours=request.duration_steps - 1),
         native_interval_seconds=ds.native_interval_seconds,
         source_timezone_status="UNSPECIFIED",
         configuration_hash=configuration_identity(policy_dict),
@@ -389,7 +403,7 @@ def get_simulation_snapshot(session: Session, run_id: UUID) -> SimulationSnapsho
         peak_shortfall_cents=0,
         uncertainty_buffer_cents=policy_obj.base_buffer_cents,
         operational_buffer_cents=policy_obj.base_buffer_cents,
-        model_version="evaluated-gb-v1",
+        model_version="hourly-seasonal-naive-v1",
     )
 
     return SimulationSnapshot(
@@ -607,6 +621,6 @@ def get_simulation_forecast(
             peak_shortfall_cents=0,
             uncertainty_buffer_cents=points[0].upper_cents - points[0].predicted_net_cents if points else 0,
             operational_buffer_cents=50000000,
-            model_version="evaluated-gb-v1",
+            model_version="hourly-seasonal-naive-v1",
         ),
     )

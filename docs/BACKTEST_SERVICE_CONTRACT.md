@@ -2,7 +2,8 @@
 
 Status: orchestration, persisted receipt/report integration and real PostgreSQL
 probes implemented. **Full historical strategy comparisons remain blocked.**
-Current runtime checkpoint: **dee0aae3cbd77ed4ad4e6f0961b9594ad53461d2**.
+Verified base: **dee0aae3cbd77ed4ad4e6f0961b9594ad53461d2**; authorized runtime/API
+fixes are isolated on codex/runtime-api-acceptance (latest checkpoint section).
 The final independent-checkpoint verification below is authoritative; earlier
 082f019/483936c reviews and expectations are retained as historical evidence.
 This is a Python service boundary, not a new API, simulator, strategy algorithm,
@@ -1355,3 +1356,164 @@ must address the core/route defects, fee settlement and market trade coverage,
 source-time boundary, repeat-comparison lifecycle and stale API tests.
 Verify a new exact checkpoint, rerun strict gates without xfail masking, then
 obtain Member 1/user approval before historical-comparison or RJ-M1-16 acceptance.
+
+
+## Authorized runtime/API ownership checkpoint (2026-10-18)
+
+The user explicitly transferred shared runtime/API ownership to this chat and
+confirmed the other runtime agent is paused. Work is isolated on
+codex/runtime-api-acceptance in its own managed worktree, based on verified local
+f8df0e38ceed0c0247f24fa4843873a8fafdda04. The shared checkout (which has unrelated
+frontend-audit edits) and feat/backtesting-engine are unchanged. No push or main
+merge is performed. This section supersedes the older blocker lists above.
+
+### Implemented corrections and financial conventions
+
+- REACTIVE uses only finalized rows strictly before the decision timestamp.
+  With no history it uses the configured buffer, never current withdrawals.
+- Canonical optimizer planning uses the immutable opening portfolio and
+  source-market inputs at T; current hour customer flows are execution outcomes.
+  Historical flow features are cut off at T-1. Member 1/source-publication sign-off
+  for contemporaneous price/rate visibility is still required.
+- Fee-only overdraft liabilities remain in canonical hydration after principal
+  repayment. A fully settled liability is excluded.
+- Financing expense accrues at the existing simple hourly APR convention
+  (integer-cent truncation each hour, charged on principal before repayment).
+  Repayment pays principal first, then incurred expense from remaining cash.
+  financing_cost_cents on the liability is CUMULATIVE incurred expense, not
+  outstanding expense. Paid expense is derived from REPAYMENT movements.
+- A REPAYMENT movement has cash_delta = -(principal_cents + financing_cost_cents).
+  Expense-only payment uses principal_cents=0 and its own linked
+  OVERDRAFT_FINANCING_PAYMENT ledger entry. FINANCING_COST accrual has zero cash.
+  Receipts separately reconcile principal funding, incurred/paid/unpaid expense
+  and NAV; paying an already-incurred expense does not recognize a second cost.
+- Repo accrual sums source APYs across earned hourly intervals using simple
+  ACT/365. Each claim is rounded HALF_UP once to cents. Entry T=17:00 first earns
+  [17:00,18:00); 08:00 maturity pays exactly the accumulated 15-hour claim and
+  clears accrued interest. No extra 08:00 rate is applied to completed hours.
+- Redeemed/matured repo principal is not hydrated again after its proceeds have
+  been paid into cash. Early break forfeits positive accrued interest; fee
+  rounding follows Member 1's percentage_cost_cents (ceiling once).
+- Real whole-position emergency bond/equity liquidation now uses the SAME hourly
+  executor before residual overdraft. Member 1's existing scalar economics
+  functions provide index valuation and source 2% haircut / 15% emergency
+  slippage. No guaranteed equity income or bond coupon is fabricated.
+- Liquidation permissions are explicit policy booleans, disabled by default to
+  match Member 1. They are available on TreasuryPolicy and PolicyPatch.
+  Complete net proceeds are credited; unused proceeds remain cash. A CLOSED
+  position cannot sell again. Only a remaining shortfall is borrowed.
+- InvestmentMovement records the real net sale proceeds and separate haircut.
+  PositionValuation at the closing boundary records gross realized market P&L
+  (market value minus basis), zero remaining market value and zero unrealized
+  P&L. Fees remain liquidation_losses_cents, not negative interest or a second
+  subtraction from realized market P&L. Receipt NAV identities enforce release
+  of previously marked unrealized P&L without counting it twice.
+- Open market marks use HALF_UP USD-to-cent conversion and update the stored
+  observation/price/value/unrealized-P&L fields.
+- The actual forecast is named hourly-seasonal-naive-v1. The policy allowance
+  fallback is explicitly fallback-baseline-v1, not a claimed evaluated GB model
+  or empirical calibration. model_evaluation remains null.
+
+### API and orchestration acceptance
+
+POST /api/v1/runs/{id}/backtest now declares BacktestReport; GET /report declares
+RunReport. Live OpenAPI and contracts/openapi.yaml are generated together by
+scripts/export-openapi.py. Existing frontend fields are retained, with typed
+history/accounting/model_evaluation/scenario/provenance detail.
+
+BacktestRequest strategies are unique and ordered. The service defaults to all
+three strategies, but explicitly selected subsets actually execute ONLY those
+strategies and preserve requested order. ComparisonResult declares and validates
+that selection; isolation, source/window and accounting validation remain intact.
+Selection is bound into the comparison conditions hash.
+
+The HTTP backtest is explicitly EPHEMERAL: all child runs and ledgers execute in
+a savepoint, the immutable response is materialized, then the child state is
+rolled back. The parent ledger is never used as child starting state or mutated.
+Identical requests reuse deterministic child IDs safely because no previous
+evaluation's child state is retained. Returned financial results/history repeat
+exactly; operation timestamps naturally differ. Standalone factory use still
+rejects existing retained IDs rather than resetting a ledger.
+
+Only exact 168/336/720-hour durations are accepted. Unknown run IDs return 404
+NOT_FOUND, as already declared by OpenAPI; the two stale 501 assertions are
+updated to this intended contract. Duplicate strategy selection is 422.
+
+Internal run creation takes a validated naive source_start_timestamp directly,
+without attaching UTC. It validates complete hourly windows including the final
+source observation, stores the actual final included row, and execution cannot
+advance beyond duration_steps. The old public aware start_time remains a
+documented wall-clock compatibility selector, NOT evidence of a source timezone.
+
+### Remaining release blockers — historical comparisons stay BLOCKED
+
+1. Canonical BUY_BONDS/BUY_EQUITIES and recommendation-driven partial/full sales,
+   repo redemption and explicit borrowing/repayment order execution are not
+   fully integrated. Non-INVEST_REPO recommendation orders are now explicitly
+   recorded as rejected, with executed=false and an explanation, not silently
+   counted as fills. The separately verified emergency-liquidity path is NOT
+   proof of complete canonical recommendation execution.
+2. Whole-position emergency liquidation is verified; partial quantities, explicit
+   investment acquisition/fills, fees beyond organizer haircuts, and settlement
+   delays on market trades remain unsupported. Do not imply full four-tier
+   strategy optimization or silently narrow the accepted evaluation scope.
+3. Seven full 7/14/30-day scenario comparison cases remain pending. They require
+   owner-approved market/optimizer coverage and actual shared execution, not
+   canned fixtures. The old opt-in fixture policy reserve_fraction is not a
+   supported public policy; a published provider and accepted policy are needed.
+4. Contemporaneous source market-price/rate availability, legacy aware start_time
+   migration, and empirically calibrated uncertainty/risk confidence need Member 1
+   and integration-owner agreement. The fallback allowance is a named assumption,
+   not an evaluated/calibrated artifact; null evaluation is intentional.
+5. No RJ-M1-16 specification or owner acceptance has been supplied here. Do not
+   infer completion from the passing diagnostic probes.
+
+No persistence schema/migration, frontend implementation or Member 1 source is
+changed. New modules are shared-executor accounting/market-posting helpers, not a
+second execution engine.
+
+Graphify code indexing succeeded (2054 nodes / 5911 relationships). SQL parser is
+unavailable; the existing read-only schema synchronizer was run successfully
+against the active freshly migrated PostgreSQL test database and verified 22
+tables. An earlier attempt against the empty base test database failed safely;
+it did not migrate or mutate that database.
+
+
+### Runtime/API checkpoint verification results
+
+Full integrated PostgreSQL command:
+
+~~~powershell
+$env:BACKTEST_TEST_DATABASE_URL = 'postgresql+psycopg2://postgres:postgres@127.0.0.1:5432/reserve_juggler_m2_test'
+$env:PYTHONDONTWRITEBYTECODE = '1'
+& 'D:\Hackathon\projects\reserve-juggler\.venv\Scripts\python.exe' -u tests/backtesting/run_postgres_suite.py tests -q -p no:cacheprovider --tb=short -rs
+~~~
+
+Result: **777 passed, 9 skipped in 188.92 seconds; exit 0**.
+No xfails, no failures, no serialization warnings. All five previously expected
+failures are ordinary passing assertions. The revised fee-only-liability probe
+deliberately leaves exactly enough cash for principal and not fees, preserving
+the original regression rather than bypassing it through eager fee payment.
+
+The skips remain seven full shared-comparison acceptance cases plus two external
+Downloads dataset checks. They are not financial release passes.
+
+Additional real PostgreSQL checks:
+
+- Original fixed probes excluding expensive POST: 19 passed, 1 deselected.
+- New acceptance plus original checkpoint probes initially: 25 passed, 4 failed.
+  The four new sales fixtures failed because canonical liquidation permission is
+  disabled by default. Explicit policy mapping/opt-in fixed that test setup.
+- Re-run of the four real emergency-sale cases: 4 passed, 5 deselected.
+- Final complete suite above includes all nine new acceptance cases, all original
+  checkpoint probes, both actual successful HTTP endpoints, and all regressions.
+
+Full captured output:
+C:\Users\DEVESH SHUKLA\AppData\Local\Temp\reserve-juggler-runtime-acceptance-8cb8ba6469f24c92980820fbf9507378\complete-postgres-suite.log
+
+The original CSV remains byte-identical:
+2e7c1d2e5b678e9975250211e7e0017022049c510e1dd90cd7f29e931837b0c5.
+
+The next small provenance follow-up pins the actual runtime checkpoint SHA into
+the receipt/report provider, rather than labeling these fixes as the old dee0aae
+runtime. Arbitrary persisted runs still do NOT invent execution SHA provenance.

@@ -212,7 +212,8 @@ def test_runtime_repo_fee_field_mapping_no_longer_raises_attribute_error(runtime
     movement = session.scalar(select(InvestmentMovement).where(
         InvestmentMovement.run_id == run.id, InvestmentMovement.kind == "REDEMPTION"))
     assert position.status == "REDEEMED"
-    assert movement.haircut_cost_cents == int(position.principal_cents * position.early_redemption_haircut_pct / 100)
+    from treasury_intelligence.instrument_economics import percentage_cost_cents
+    assert movement.haircut_cost_cents == percentage_cost_cents(position.principal_cents, position.early_redemption_haircut_pct)
     assert movement.cash_delta_cents == position.principal_cents - movement.haircut_cost_cents
 
 
@@ -308,7 +309,11 @@ def test_all_dispatches_have_equal_independent_initial_conditions(runtime_sessio
     reserves = {strategy: session.scalar(select(TreasuryDecision).where(
         TreasuryDecision.run_id == run.id)).required_reserve_cents for strategy, run in runs.items()}
     assert reserves["STATIC"] == 50_000_000
-    assert reserves["REACTIVE"] != reserves["STATIC"]
+    assert reserves["REACTIVE"] == reserves["STATIC"]  # no past data at the first source hour
+    execute_hourly_step(session, runs["REACTIVE"].id, 1, strategy="REACTIVE")
+    later = session.scalar(select(TreasuryDecision).where(
+        TreasuryDecision.run_id == runs["REACTIVE"].id, TreasuryDecision.step == 2))
+    assert later.required_reserve_cents > reserves["REACTIVE"]
     ledger_ids = [set(session.scalars(select(LedgerEntry.id).where(LedgerEntry.run_id == run.id))) for run in runs.values()]
     assert all(a.isdisjoint(b) for i, a in enumerate(ledger_ids) for b in ledger_ids[i + 1:])
 

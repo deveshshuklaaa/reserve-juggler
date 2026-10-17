@@ -86,6 +86,14 @@ class BacktestRequest(Contract):
     seed: Count
     scenario: ScenarioSpec = Field(default_factory=ScenarioSpec)
     policy_json: str = "{}"
+    strategies: tuple[Strategy, ...] = STRATEGIES
+
+    @field_validator("strategies")
+    @classmethod
+    def selected_strategies(cls, value):
+        if not value or len(set(value)) != len(value):
+            raise ValueError("Select one or more unique strategies in the desired order")
+        return value
 
     @field_validator("days", mode="before")
     @classmethod
@@ -261,12 +269,14 @@ class ComparisonResult(Contract):
     engine_integration_sha: str | None
     execution_kind: Literal["SHARED", "TEST_DOUBLE"]
     results: tuple[StrategyMetrics, ...]
+    strategies: tuple[Strategy, ...] = STRATEGIES
 
     @model_validator(mode="after")
     def comparable(self):
-        if tuple(item.strategy for item in self.results) != STRATEGIES:
-            raise ValueError("Return exactly STATIC, REACTIVE, RESERVE_JUGGLER in stable order")
-        if len({item.run_id for item in self.results}) != 3:
+        if (not self.strategies or len(set(self.strategies)) != len(self.strategies)
+                or tuple(item.strategy for item in self.results) != self.strategies):
+            raise ValueError("Return exactly the requested unique strategies in their declared order")
+        if len({item.run_id for item in self.results}) != len(self.strategies):
             raise ValueError("Strategy runs must be isolated")
         if self.end_exclusive - self.start != timedelta(hours=self.steps):
             raise ValueError("Window length and steps must agree")

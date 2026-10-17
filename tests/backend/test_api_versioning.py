@@ -58,12 +58,12 @@ def test_implemented_routes_return_not_found_for_missing_run(method, suffix, bod
     ("post", "/backtest", {}),
     ("get", "/report", None),
 ])
-def test_backtest_routes_return_honest_unimplemented_error(method, suffix, body):
+def test_backtest_routes_return_not_found_for_missing_run(method, suffix, body):
     path = f"/api/v1/runs/{uuid4()}{suffix}"
     response = client.request(method, path, **({"json": body} if body is not None else {}))
-    assert response.status_code == 501
+    assert response.status_code == 404
     assert response.json() == {
-        "error_code": "NOT_IMPLEMENTED",
+        "error_code": "NOT_FOUND",
         "message": response.json()["message"],
         "details": {},
     }
