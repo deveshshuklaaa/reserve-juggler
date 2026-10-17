@@ -33,6 +33,16 @@ from .ml_forecasting import (
     evaluate_hourly_forecast_models,
     hourly_ml_forecast,
 )
+from .monte_carlo_risk import (
+    MONTE_CARLO_RISK_MODEL_VERSION,
+    MarketRiskSummary,
+    MultiAssetMonteCarloRiskResult,
+    PercentileSummary,
+    PortfolioDownsideRiskSummary,
+    ShortfallDistributionSummary,
+    generate_multi_asset_scenarios,
+    simulate_multi_asset_monte_carlo_risk,
+)
 
 
 def forecast_cashflows(history: Sequence[CashFlowBucket], *, as_of: datetime,

@@ -1165,3 +1165,62 @@ evaluate_hourly_forecast_models(
 - `peak_shortfall_mae_usd`: Maximum cumulative liquidity shortfall prediction error.
 - `baseline_mae_net_usd`, `baseline_rmse_net_usd`: Comparative seasonal-naive baseline errors.
 - `net_mae_improvement_pct`, `net_rmse_improvement_pct`: Measured improvement percentages without manual inflation.
+
+## RJ-M1-12 Multi-Asset Monte Carlo Risk Simulation
+
+`treasury_intelligence.monte_carlo_risk` models the joint uncertainty of cash flows, bond prices,
+and equity returns using historical block bootstrap sampling, connecting directly with
+`FourTierLiquidityRiskRequest` and `calculate_four_tier_liquidity_risk`.
+
+### Public Signatures and Contracts
+
+```python
+from treasury_intelligence.monte_carlo_risk import (
+    generate_multi_asset_scenarios,
+    simulate_multi_asset_monte_carlo_risk,
+    MultiAssetMonteCarloRiskResult,
+    PercentileSummary,
+    MarketRiskSummary,
+    ShortfallDistributionSummary,
+    PortfolioDownsideRiskSummary,
+    MONTE_CARLO_RISK_MODEL_VERSION,
+)
+
+scenarios = generate_multi_asset_scenarios(
+    history: Sequence[OrganizerHourlyObservation],
+    nominal_forecast: Sequence[HourlyForecastPoint],
+    *,
+    as_of: datetime,
+    planning_horizon_hours: int = 24,
+    scenario_count: int = 500,
+    seed: int = 42,
+    time_basis: Literal["UNSPECIFIED", "UTC"] = "UNSPECIFIED",
+) -> tuple[LiquidityScenario, ...]
+
+result = simulate_multi_asset_monte_carlo_risk(
+    portfolio: PortfolioState,
+    history: Sequence[OrganizerHourlyObservation],
+    nominal_forecast: Sequence[HourlyForecastPoint],
+    policy: FourTierTreasuryPolicy,
+    *,
+    planning_horizon_hours: int = 24,
+    scenario_count: int = 500,
+    seed: int = 42,
+    confidence: Decimal = Decimal("0.95"),
+    repo_settlements: Sequence[RepoCashSettlement] = (),
+    obligations: Sequence[CommittedObligation] = (),
+    available_overdraft_credit_cents: int = 0,
+    operational_buffer_cents: int | None = None,
+) -> MultiAssetMonteCarloRiskResult
+```
+
+### Statistical Methodology and Joint Innovations
+
+1. **Strictly Causal Block Bootstrap**: Samples contiguous historical blocks of length $H$ from observations $t \le \text{as\_of}$. Future observations are completely hidden from the sampler.
+2. **Forecast Residuals**: Cash-flow uncertainty is modeled using 24-hour seasonal forecast residuals. Residuals are added to nominal predictions and clipped to $\ge 0$ (`sim_deposits >= 0`, `sim_withdrawals >= 0`).
+3. **Contemporaneous Market Drawdowns**: Captures joint contemporaneous bond price index and equity index drawdowns within each sampled historical block, preserving empirical correlations without imposing artificial Gaussian copula assumptions.
+4. **Observed Equity Volatility**: Uses observed `tier3_stock_volatility_pct` rather than claiming non-existent time-varying volatility dynamics.
+5. **Repo Maturity Schedule**: 15-hour overnight repo entered at 17:00 matures at 08:00 next day; cash is not available earlier unless broken early.
+6. **Pathwise Revaluation & Forced Costs**: Revalues ending portfolio cash, held positions, debt liabilities, forced liquidation haircuts, and overdraft financing costs along each path.
+7. **Percentiles & Outputs**: Produces P90, P95, and P99 percentiles for peak cash requirements, shortfalls, market losses, portfolio value, and downside losses. All scenario probabilities sum exactly to `Decimal("1")`.
+8. **Disclosed Confidence**: Notes explicitly state that scenario probabilities are empirical relative frequencies, avoiding claims of guaranteed real-world confidence intervals.

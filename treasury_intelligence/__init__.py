@@ -77,6 +77,16 @@ from .optimizer import (
     AssetRewardAssumption, AllocationRewardModel, AllocationOptimizerRequest,
     CandidateAssessment, AllocationOptimizerResult, recommend_four_tier_allocation,
 )
+from .monte_carlo_risk import (
+    MONTE_CARLO_RISK_MODEL_VERSION,
+    MarketRiskSummary,
+    MultiAssetMonteCarloRiskResult,
+    PercentileSummary,
+    PortfolioDownsideRiskSummary,
+    ShortfallDistributionSummary,
+    generate_multi_asset_scenarios,
+    simulate_multi_asset_monte_carlo_risk,
+)
 
 __all__ = [
     "CashFlowBucket", "ForecastPoint", "ForecastResult", "TreasuryContext",
@@ -116,4 +126,7 @@ __all__ = [
     "calculate_four_tier_liquidity_risk",
     "AssetRewardAssumption", "AllocationRewardModel", "AllocationOptimizerRequest",
     "CandidateAssessment", "AllocationOptimizerResult", "recommend_four_tier_allocation",
+    "MONTE_CARLO_RISK_MODEL_VERSION", "MarketRiskSummary", "MultiAssetMonteCarloRiskResult",
+    "PercentileSummary", "PortfolioDownsideRiskSummary", "ShortfallDistributionSummary",
+    "generate_multi_asset_scenarios", "simulate_multi_asset_monte_carlo_risk",
 ]
