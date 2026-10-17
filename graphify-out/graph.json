@@ -535,7 +535,7 @@
       "label": ".safe_money()",
       "file_type": "code",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L32",
+      "source_location": "L40",
       "_callable": true,
       "_origin": "ast"
     },
@@ -544,7 +544,7 @@
       "label": "ReportStrategyResult",
       "file_type": "code",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L38",
+      "source_location": "L46",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -554,7 +554,7 @@
       "label": "BacktestReport",
       "file_type": "code",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L46",
+      "source_location": "L54",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -564,7 +564,7 @@
       "label": "RunReport",
       "file_type": "code",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L56",
+      "source_location": "L64",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -574,7 +574,7 @@
       "label": "sample_history()",
       "file_type": "code",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L68",
+      "source_location": "L76",
       "_callable": true,
       "_origin": "ast"
     },
@@ -583,7 +583,7 @@
       "label": "frontend_metrics()",
       "file_type": "code",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L77",
+      "source_location": "L85",
       "_callable": true,
       "_origin": "ast"
     },
@@ -592,7 +592,7 @@
       "label": "project_comparison()",
       "file_type": "code",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L95",
+      "source_location": "L103",
       "_callable": true,
       "_origin": "ast"
     },
@@ -601,7 +601,7 @@
       "label": "BacktestReportService",
       "file_type": "code",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L114",
+      "source_location": "L122",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -611,7 +611,7 @@
       "label": ".__init__()",
       "file_type": "code",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L115",
+      "source_location": "L123",
       "_callable": true,
       "_origin": "ast"
     },
@@ -620,7 +620,7 @@
       "label": ".compare()",
       "file_type": "code",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L118",
+      "source_location": "L126",
       "_callable": true,
       "_origin": "ast"
     },
@@ -629,7 +629,7 @@
       "label": ".report_run()",
       "file_type": "code",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L126",
+      "source_location": "L134",
       "_callable": true,
       "_origin": "ast"
     },
@@ -642,27 +642,27 @@
       "_origin": "ast"
     },
     {
-      "id": "backend_app_backtesting_reports_rationale_69",
+      "id": "backend_app_backtesting_reports_rationale_77",
       "label": "Keep actual points, both endpoints, deterministic spacing; no interpolation.",
       "file_type": "rationale",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L69",
+      "source_location": "L77",
       "_origin": "ast"
     },
     {
-      "id": "backend_app_backtesting_reports_rationale_78",
+      "id": "backend_app_backtesting_reports_rationale_86",
       "label": "Legacy name mapping; no fabricated zero metrics or substitution of debt for…",
       "file_type": "rationale",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L78",
+      "source_location": "L86",
       "_origin": "ast"
     },
     {
-      "id": "backend_app_backtesting_reports_rationale_96",
+      "id": "backend_app_backtesting_reports_rationale_104",
       "label": "Project an already validated evaluation, retaining safe money and test-double…",
       "file_type": "rationale",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L96",
+      "source_location": "L104",
       "_origin": "ast"
     },
     {
@@ -820,7 +820,7 @@
     },
     {
       "id": "backend_app_backtesting_runtime_rationale_1",
-      "label": "Receipt integration with the dee0aae runtime checkpoint. No prices, yields,…",
+      "label": "Receipt integration with the verified 1ff1e65 financial runtime checkpoint. No…",
       "file_type": "rationale",
       "source_file": "backend/app/backtesting/runtime.py",
       "source_location": "L1",
@@ -5513,7 +5513,7 @@
       "label": "test_factory_does_not_silently_discard_scenario_schedule()",
       "file_type": "code",
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L218",
+      "source_location": "L219",
       "_callable": true,
       "_origin": "ast"
     },
@@ -5522,7 +5522,7 @@
       "label": "test_factory_initial_scenario_is_not_applied_twice()",
       "file_type": "code",
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L229",
+      "source_location": "L230",
       "_callable": true,
       "_origin": "ast"
     },
@@ -5531,7 +5531,7 @@
       "label": "test_factory_rejects_ambiguous_schedule_before_creating_run()",
       "file_type": "code",
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L245",
+      "source_location": "L246",
       "_callable": true,
       "_origin": "ast"
     },
@@ -5540,7 +5540,7 @@
       "label": "test_factory_forwards_sorted_scenario_changes_to_shared_executor()",
       "file_type": "code",
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L253",
+      "source_location": "L254",
       "_callable": true,
       "_origin": "ast"
     },
@@ -5549,7 +5549,7 @@
       "label": "test_factory_duplicate_id_is_explicit_and_does_not_poison_session()",
       "file_type": "code",
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L270",
+      "source_location": "L271",
       "_callable": true,
       "_origin": "ast"
     },
@@ -5558,7 +5558,7 @@
       "label": "test_factory_execute_rolls_back_a_rejected_receipt()",
       "file_type": "code",
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L282",
+      "source_location": "L283",
       "_callable": true,
       "_origin": "ast"
     },
@@ -5567,7 +5567,7 @@
       "label": "test_factory_rejects_invalid_execution_before_posting()",
       "file_type": "code",
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L307",
+      "source_location": "L308",
       "_callable": true,
       "_origin": "ast"
     },
@@ -5848,6 +5848,33 @@
       "file_type": "code",
       "source_file": "tests/backtesting/test_runtime_acceptance.py",
       "source_location": "L123",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_backtesting_test_runtime_acceptance_test_canonical_optimizer_targets_ignore_unavailable_current_and_future_flows",
+      "label": "test_canonical_optimizer_targets_ignore_unavailable_current_and_future_flows()",
+      "file_type": "code",
+      "source_file": "tests/backtesting/test_runtime_acceptance.py",
+      "source_location": "L139",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_backtesting_test_runtime_acceptance_test_canonical_optimizer_targets_ignore_unavailable_current_and_future_flows_trace",
+      "label": "trace()",
+      "file_type": "code",
+      "source_file": "tests/backtesting/test_runtime_acceptance.py",
+      "source_location": "L145",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_backtesting_test_runtime_acceptance_test_live_report_contract_declares_javascript_safe_money",
+      "label": "test_live_report_contract_declares_javascript_safe_money()",
+      "file_type": "code",
+      "source_file": "tests/backtesting/test_runtime_acceptance.py",
+      "source_location": "L166",
       "_callable": true,
       "_origin": "ast"
     },
@@ -14326,7 +14353,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L11",
+      "source_location": "L12",
       "_origin": "ast"
     },
     {
@@ -14335,7 +14362,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L43",
+      "source_location": "L44",
       "_origin": "ast"
     },
     {
@@ -14344,7 +14371,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L109",
+      "source_location": "L110",
       "_origin": "ast"
     },
     {
@@ -14353,7 +14380,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L117",
+      "source_location": "L118",
       "_origin": "ast"
     },
     {
@@ -14362,7 +14389,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L180",
+      "source_location": "L181",
       "_origin": "ast"
     },
     {
@@ -14371,7 +14398,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L201",
+      "source_location": "L202",
       "_origin": "ast"
     },
     {
@@ -14380,7 +14407,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L267",
+      "source_location": "L268",
       "_origin": "ast"
     },
     {
@@ -14389,7 +14416,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L304",
+      "source_location": "L305",
       "_origin": "ast"
     },
     {
@@ -14398,7 +14425,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L365",
+      "source_location": "L366",
       "_origin": "ast"
     },
     {
@@ -14407,7 +14434,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L395",
+      "source_location": "L396",
       "_origin": "ast"
     },
     {
@@ -14416,7 +14443,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L452",
+      "source_location": "L453",
       "_origin": "ast"
     },
     {
@@ -14425,7 +14452,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L487",
+      "source_location": "L488",
       "_origin": "ast"
     },
     {
@@ -14434,7 +14461,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L534",
+      "source_location": "L535",
       "_origin": "ast"
     },
     {
@@ -14443,7 +14470,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L548",
+      "source_location": "L549",
       "_origin": "ast"
     },
     {
@@ -14452,7 +14479,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L555",
+      "source_location": "L556",
       "_origin": "ast"
     },
     {
@@ -14461,7 +14488,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L574",
+      "source_location": "L575",
       "_origin": "ast"
     },
     {
@@ -14470,7 +14497,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L583",
+      "source_location": "L584",
       "_origin": "ast"
     },
     {
@@ -14479,7 +14506,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L666",
+      "source_location": "L667",
       "_origin": "ast"
     },
     {
@@ -14488,7 +14515,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L729",
+      "source_location": "L730",
       "_origin": "ast"
     },
     {
@@ -14497,7 +14524,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L788",
+      "source_location": "L789",
       "_origin": "ast"
     },
     {
@@ -14506,7 +14533,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L809",
+      "source_location": "L810",
       "_origin": "ast"
     },
     {
@@ -14515,7 +14542,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L840",
+      "source_location": "L841",
       "_origin": "ast"
     },
     {
@@ -14524,7 +14551,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L860",
+      "source_location": "L861",
       "_origin": "ast"
     },
     {
@@ -14533,7 +14560,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L882",
+      "source_location": "L883",
       "_origin": "ast"
     },
     {
@@ -14542,7 +14569,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L909",
+      "source_location": "L910",
       "_origin": "ast"
     },
     {
@@ -14551,7 +14578,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L931",
+      "source_location": "L932",
       "_origin": "ast"
     },
     {
@@ -14560,7 +14587,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L945",
+      "source_location": "L946",
       "_origin": "ast"
     },
     {
@@ -14569,7 +14596,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L962",
+      "source_location": "L963",
       "_origin": "ast"
     },
     {
@@ -14578,7 +14605,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L1119",
+      "source_location": "L1120",
       "_origin": "ast"
     },
     {
@@ -14587,7 +14614,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L1145",
+      "source_location": "L1146",
       "_origin": "ast"
     },
     {
@@ -14596,7 +14623,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L1151",
+      "source_location": "L1152",
       "_origin": "ast"
     },
     {
@@ -14605,7 +14632,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L1182",
+      "source_location": "L1183",
       "_origin": "ast"
     },
     {
@@ -14614,7 +14641,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L1197",
+      "source_location": "L1198",
       "_origin": "ast"
     },
     {
@@ -14623,7 +14650,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L1224",
+      "source_location": "L1225",
       "_origin": "ast"
     },
     {
@@ -14632,7 +14659,7 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L1271",
+      "source_location": "L1272",
       "_origin": "ast"
     },
     {
@@ -14641,7 +14668,52 @@
       "file_type": "document",
       "node_kind": "heading",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L1329",
+      "source_location": "L1330",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_backtest_service_contract_authorized_runtime_api_ownership_checkpoint_2026_10_18",
+      "label": "Authorized runtime/API ownership checkpoint (2026-10-18)",
+      "file_type": "document",
+      "node_kind": "heading",
+      "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
+      "source_location": "L1361",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_backtest_service_contract_implemented_corrections_and_financial_conventions",
+      "label": "Implemented corrections and financial conventions",
+      "file_type": "document",
+      "node_kind": "heading",
+      "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
+      "source_location": "L1370",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_backtest_service_contract_api_and_orchestration_acceptance",
+      "label": "API and orchestration acceptance",
+      "file_type": "document",
+      "node_kind": "heading",
+      "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
+      "source_location": "L1417",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_backtest_service_contract_remaining_release_blockers_historical_comparisons_stay_blocked",
+      "label": "Remaining release blockers — historical comparisons stay BLOCKED",
+      "file_type": "document",
+      "node_kind": "heading",
+      "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
+      "source_location": "L1448",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_backtest_service_contract_runtime_api_checkpoint_verification_results",
+      "label": "Runtime/API checkpoint verification results",
+      "file_type": "document",
+      "node_kind": "heading",
+      "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
+      "source_location": "L1482",
       "_origin": "ast"
     },
     {
@@ -18180,7 +18252,8 @@
       "file_type": "concept",
       "type": "external",
       "external": true,
-      "source_file": ""
+      "source_file": "",
+      "_origin": "semantic"
     },
     {
       "id": "decimal",
@@ -18188,7 +18261,8 @@
       "file_type": "concept",
       "type": "external",
       "external": true,
-      "source_file": ""
+      "source_file": "",
+      "_origin": "semantic"
     },
     {
       "id": "persistence_migration_003",
@@ -19552,7 +19626,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L30",
+      "source_location": "L38",
       "weight": 1.0,
       "context": "decorator",
       "_origin": "ast"
@@ -19563,7 +19637,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L32",
+      "source_location": "L40",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -19573,7 +19647,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L38",
+      "source_location": "L46",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -19583,7 +19657,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L38",
+      "source_location": "L46",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -19593,7 +19667,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L46",
+      "source_location": "L54",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -19603,7 +19677,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L46",
+      "source_location": "L54",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -19613,7 +19687,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L56",
+      "source_location": "L64",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -19623,7 +19697,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L56",
+      "source_location": "L64",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -19633,7 +19707,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L68",
+      "source_location": "L76",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -19643,7 +19717,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L77",
+      "source_location": "L85",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -19654,7 +19728,7 @@
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L77",
+      "source_location": "L85",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -19665,7 +19739,7 @@
       "context": "return_type",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L77",
+      "source_location": "L85",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -19675,7 +19749,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L95",
+      "source_location": "L103",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -19686,7 +19760,7 @@
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L95",
+      "source_location": "L103",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -19697,7 +19771,7 @@
       "context": "return_type",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L95",
+      "source_location": "L103",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -19707,7 +19781,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L114",
+      "source_location": "L122",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -19717,7 +19791,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L115",
+      "source_location": "L123",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -19727,7 +19801,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L118",
+      "source_location": "L126",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -19738,7 +19812,7 @@
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L118",
+      "source_location": "L126",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -19749,7 +19823,7 @@
       "context": "return_type",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L118",
+      "source_location": "L126",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -19759,7 +19833,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L126",
+      "source_location": "L134",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -19770,7 +19844,7 @@
       "context": "return_type",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L126",
+      "source_location": "L134",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -19781,7 +19855,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L80",
+      "source_location": "L88",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -19792,7 +19866,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L102",
+      "source_location": "L110",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -19803,7 +19877,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L103",
+      "source_location": "L111",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -19814,7 +19888,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L104",
+      "source_location": "L112",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -19825,34 +19899,12 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L106",
+      "source_location": "L114",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "backend_app_backtesting_reports_backtestreportservice_compare",
-      "target": "backend_app_backtesting_reports_sample_history",
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L119",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "backend_app_backtesting_reports_backtestreportservice_compare",
-      "target": "backend_app_backtesting_reports_project_comparison",
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L122",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "backend_app_backtesting_reports_backtestreportservice_report_run",
       "target": "backend_app_backtesting_reports_sample_history",
       "relation": "calls",
       "context": "call",
@@ -19863,13 +19915,35 @@
       "_origin": "ast"
     },
     {
+      "source": "backend_app_backtesting_reports_backtestreportservice_compare",
+      "target": "backend_app_backtesting_reports_project_comparison",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/app/backtesting/reports.py",
+      "source_location": "L130",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_app_backtesting_reports_backtestreportservice_report_run",
+      "target": "backend_app_backtesting_reports_sample_history",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/app/backtesting/reports.py",
+      "source_location": "L135",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
       "source": "backend_app_backtesting_reports_backtestreportservice_report_run",
       "target": "backend_app_backtesting_reports_runreport",
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L142",
+      "source_location": "L150",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -19880,7 +19954,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L145",
+      "source_location": "L153",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -19895,32 +19969,32 @@
       "_origin": "ast"
     },
     {
-      "source": "backend_app_backtesting_reports_rationale_69",
+      "source": "backend_app_backtesting_reports_rationale_77",
       "target": "backend_app_backtesting_reports_sample_history",
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L69",
+      "source_location": "L77",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
-      "source": "backend_app_backtesting_reports_rationale_78",
+      "source": "backend_app_backtesting_reports_rationale_86",
       "target": "backend_app_backtesting_reports_frontend_metrics",
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L78",
+      "source_location": "L86",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
-      "source": "backend_app_backtesting_reports_rationale_96",
+      "source": "backend_app_backtesting_reports_rationale_104",
       "target": "backend_app_backtesting_reports_project_comparison",
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L96",
+      "source_location": "L104",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -31960,7 +32034,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L218",
+      "source_location": "L219",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -31970,7 +32044,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L229",
+      "source_location": "L230",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -31980,7 +32054,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L240",
+      "source_location": "L241",
       "weight": 1.0,
       "context": "decorator",
       "_origin": "ast"
@@ -31991,7 +32065,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L245",
+      "source_location": "L246",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -32001,7 +32075,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L253",
+      "source_location": "L254",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -32011,7 +32085,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L270",
+      "source_location": "L271",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -32021,7 +32095,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L282",
+      "source_location": "L283",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -32031,7 +32105,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L306",
+      "source_location": "L307",
       "weight": 1.0,
       "context": "decorator",
       "_origin": "ast"
@@ -32042,7 +32116,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L307",
+      "source_location": "L308",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -32076,7 +32150,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L219",
+      "source_location": "L220",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -32087,7 +32161,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L230",
+      "source_location": "L231",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -32098,7 +32172,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L246",
+      "source_location": "L247",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -32109,7 +32183,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L254",
+      "source_location": "L255",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -32120,7 +32194,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L272",
+      "source_location": "L273",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -32131,7 +32205,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L284",
+      "source_location": "L285",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -32142,7 +32216,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L308",
+      "source_location": "L309",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -32832,6 +32906,48 @@
       "confidence": "EXTRACTED",
       "source_file": "tests/backtesting/test_runtime_acceptance.py",
       "source_location": "L123",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_backtesting_test_runtime_acceptance",
+      "target": "tests_backtesting_test_runtime_acceptance_test_canonical_optimizer_targets_ignore_unavailable_current_and_future_flows",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/backtesting/test_runtime_acceptance.py",
+      "source_location": "L139",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_backtesting_test_runtime_acceptance_test_canonical_optimizer_targets_ignore_unavailable_current_and_future_flows",
+      "target": "tests_backtesting_test_runtime_acceptance_test_canonical_optimizer_targets_ignore_unavailable_current_and_future_flows_trace",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/backtesting/test_runtime_acceptance.py",
+      "source_location": "L145",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_backtesting_test_runtime_acceptance",
+      "target": "tests_backtesting_test_runtime_acceptance_test_live_report_contract_declares_javascript_safe_money",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/backtesting/test_runtime_acceptance.py",
+      "source_location": "L166",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_backtesting_test_runtime_acceptance_test_canonical_optimizer_targets_ignore_unavailable_current_and_future_flows",
+      "target": "tests_backtesting_test_runtime_acceptance_test_canonical_optimizer_targets_ignore_unavailable_current_and_future_flows_trace",
+      "relation": "indirect_call",
+      "context": "argument",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "tests/backtesting/test_runtime_acceptance.py",
+      "source_location": "L150",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -55967,7 +56083,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L11",
+      "source_location": "L12",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -55977,7 +56093,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L43",
+      "source_location": "L44",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -55987,7 +56103,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L109",
+      "source_location": "L110",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -55997,7 +56113,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L117",
+      "source_location": "L118",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -56007,7 +56123,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L180",
+      "source_location": "L181",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -56017,7 +56133,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L201",
+      "source_location": "L202",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -56027,7 +56143,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L267",
+      "source_location": "L268",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -56037,7 +56153,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L304",
+      "source_location": "L305",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -56047,7 +56163,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L365",
+      "source_location": "L366",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -56057,7 +56173,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L395",
+      "source_location": "L396",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -56067,7 +56183,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L452",
+      "source_location": "L453",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -56077,7 +56193,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L487",
+      "source_location": "L488",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -56087,7 +56203,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L534",
+      "source_location": "L535",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -56097,7 +56213,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L548",
+      "source_location": "L549",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -56107,7 +56223,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L555",
+      "source_location": "L556",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -56117,7 +56233,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L574",
+      "source_location": "L575",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -56127,7 +56243,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L583",
+      "source_location": "L584",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -56137,7 +56253,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L666",
+      "source_location": "L667",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -56147,7 +56263,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L729",
+      "source_location": "L730",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -56157,7 +56273,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L788",
+      "source_location": "L789",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -56167,7 +56283,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L809",
+      "source_location": "L810",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -56177,7 +56293,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L840",
+      "source_location": "L841",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -56187,7 +56303,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L860",
+      "source_location": "L861",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -56197,7 +56313,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L882",
+      "source_location": "L883",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -56207,7 +56323,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L909",
+      "source_location": "L910",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -56217,7 +56333,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L931",
+      "source_location": "L932",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -56227,7 +56343,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L945",
+      "source_location": "L946",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -56237,7 +56353,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L962",
+      "source_location": "L963",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -56247,7 +56363,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L1119",
+      "source_location": "L1120",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -56257,7 +56373,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L1145",
+      "source_location": "L1146",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -56267,7 +56383,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L1151",
+      "source_location": "L1152",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -56277,7 +56393,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L1182",
+      "source_location": "L1183",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -56287,7 +56403,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L1197",
+      "source_location": "L1198",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -56297,7 +56413,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L1224",
+      "source_location": "L1225",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -56307,7 +56423,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L1271",
+      "source_location": "L1272",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -56317,7 +56433,57 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
-      "source_location": "L1329",
+      "source_location": "L1330",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_backtest_service_contract_set_backtest_test_database_url_to_the_dedicated_local_test_database_url",
+      "target": "docs_backtest_service_contract_authorized_runtime_api_ownership_checkpoint_2026_10_18",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
+      "source_location": "L1361",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_backtest_service_contract_authorized_runtime_api_ownership_checkpoint_2026_10_18",
+      "target": "docs_backtest_service_contract_implemented_corrections_and_financial_conventions",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
+      "source_location": "L1370",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_backtest_service_contract_authorized_runtime_api_ownership_checkpoint_2026_10_18",
+      "target": "docs_backtest_service_contract_api_and_orchestration_acceptance",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
+      "source_location": "L1417",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_backtest_service_contract_authorized_runtime_api_ownership_checkpoint_2026_10_18",
+      "target": "docs_backtest_service_contract_remaining_release_blockers_historical_comparisons_stay_blocked",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
+      "source_location": "L1448",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "docs_backtest_service_contract_authorized_runtime_api_ownership_checkpoint_2026_10_18",
+      "target": "docs_backtest_service_contract_runtime_api_checkpoint_verification_results",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/BACKTEST_SERVICE_CONTRACT.md",
+      "source_location": "L1482",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -62935,6 +63101,17 @@
       "_origin": "ast"
     },
     {
+      "source": "tests_backtesting_test_runtime_acceptance",
+      "target": "treasury_intelligence_optimizer_recommend_four_tier_allocation",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/backtesting/test_runtime_acceptance.py",
+      "source_location": "L141",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
       "source": "tests_backtesting_test_runtime_persistence",
       "target": "treasury_intelligence_instrument_economics_percentage_cost_cents",
       "relation": "imports",
@@ -66637,7 +66814,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L101",
+      "source_location": "L109",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -66648,7 +66825,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L105",
+      "source_location": "L113",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68090,6 +68267,17 @@
       "confidence": "EXTRACTED",
       "source_file": "tests/backtesting/test_runtime_acceptance.py",
       "source_location": "L117",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_backtesting_test_runtime_acceptance_test_canonical_optimizer_targets_ignore_unavailable_current_and_future_flows",
+      "target": "tests_backtesting_test_runtime_persistence_create_run",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/backtesting/test_runtime_acceptance.py",
+      "source_location": "L143",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -70179,7 +70367,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L131",
+      "source_location": "L139",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -70190,7 +70378,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L128",
+      "source_location": "L136",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -70201,7 +70389,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L46",
+      "source_location": "L54",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -70223,7 +70411,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L56",
+      "source_location": "L64",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -70234,7 +70422,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L38",
+      "source_location": "L46",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -70245,7 +70433,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L77",
+      "source_location": "L85",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -70256,7 +70444,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L101",
+      "source_location": "L109",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -70267,7 +70455,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L42",
+      "source_location": "L50",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -70278,7 +70466,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L60",
+      "source_location": "L68",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -70289,7 +70477,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L105",
+      "source_location": "L113",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -70300,7 +70488,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L147",
+      "source_location": "L155",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -70311,7 +70499,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L118",
+      "source_location": "L126",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -70322,7 +70510,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L95",
+      "source_location": "L103",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -70333,7 +70521,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L41",
+      "source_location": "L49",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -70344,7 +70532,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L59",
+      "source_location": "L67",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -70355,7 +70543,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L116",
+      "source_location": "L124",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -70366,7 +70554,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L133",
+      "source_location": "L141",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -70377,7 +70565,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L116",
+      "source_location": "L124",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73611,46 +73799,13 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L230",
+      "source_location": "L231",
       "weight": 0.8,
       "_origin": "ast"
     },
     {
       "source": "tests_backtesting_test_checkpoint_verification_test_factory_forwards_sorted_scenario_changes_to_shared_executor",
       "target": "backend_app_backtesting_protocol_decisionframe",
-      "relation": "uses",
-      "confidence": "INFERRED",
-      "confidence_score": 0.95,
-      "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L259",
-      "weight": 0.8,
-      "_origin": "ast"
-    },
-    {
-      "source": "tests_backtesting_test_checkpoint_verification_test_factory_execute_rolls_back_a_rejected_receipt",
-      "target": "backend_app_backtesting_protocol_decisionframe",
-      "relation": "uses",
-      "confidence": "INFERRED",
-      "confidence_score": 0.95,
-      "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L295",
-      "weight": 0.8,
-      "_origin": "ast"
-    },
-    {
-      "source": "tests_backtesting_test_checkpoint_verification_test_factory_rejects_invalid_execution_before_posting",
-      "target": "backend_app_backtesting_protocol_decisionframe",
-      "relation": "uses",
-      "confidence": "INFERRED",
-      "confidence_score": 0.95,
-      "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L312",
-      "weight": 0.8,
-      "_origin": "ast"
-    },
-    {
-      "source": "tests_backtesting_test_checkpoint_verification_test_factory_forwards_sorted_scenario_changes_to_shared_executor",
-      "target": "backend_app_backtesting_protocol_executionframe",
       "relation": "uses",
       "confidence": "INFERRED",
       "confidence_score": 0.95,
@@ -73661,12 +73816,45 @@
     },
     {
       "source": "tests_backtesting_test_checkpoint_verification_test_factory_execute_rolls_back_a_rejected_receipt",
+      "target": "backend_app_backtesting_protocol_decisionframe",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "tests/backtesting/test_checkpoint_verification.py",
+      "source_location": "L296",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_backtesting_test_checkpoint_verification_test_factory_rejects_invalid_execution_before_posting",
+      "target": "backend_app_backtesting_protocol_decisionframe",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "tests/backtesting/test_checkpoint_verification.py",
+      "source_location": "L313",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_backtesting_test_checkpoint_verification_test_factory_forwards_sorted_scenario_changes_to_shared_executor",
       "target": "backend_app_backtesting_protocol_executionframe",
       "relation": "uses",
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L297",
+      "source_location": "L261",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_backtesting_test_checkpoint_verification_test_factory_execute_rolls_back_a_rejected_receipt",
+      "target": "backend_app_backtesting_protocol_executionframe",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "tests/backtesting/test_checkpoint_verification.py",
+      "source_location": "L298",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73677,7 +73865,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L316",
+      "source_location": "L317",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73710,7 +73898,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L220",
+      "source_location": "L221",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73721,7 +73909,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L232",
+      "source_location": "L233",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73732,7 +73920,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L248",
+      "source_location": "L249",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73743,7 +73931,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L255",
+      "source_location": "L256",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73754,7 +73942,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L271",
+      "source_location": "L272",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73765,7 +73953,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L285",
+      "source_location": "L286",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73776,7 +73964,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L309",
+      "source_location": "L310",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73787,7 +73975,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L247",
+      "source_location": "L248",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73798,7 +73986,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L275",
+      "source_location": "L276",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73809,7 +73997,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L315",
+      "source_location": "L316",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73842,7 +74030,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L300",
+      "source_location": "L301",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73941,7 +74129,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L288",
+      "source_location": "L289",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73963,7 +74151,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L222",
+      "source_location": "L223",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73974,7 +74162,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L234",
+      "source_location": "L235",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73985,7 +74173,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L249",
+      "source_location": "L250",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73996,7 +74184,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L277",
+      "source_location": "L278",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -74007,7 +74195,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L298",
+      "source_location": "L299",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -74018,7 +74206,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L318",
+      "source_location": "L319",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -74051,7 +74239,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L262",
+      "source_location": "L263",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -74062,7 +74250,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L299",
+      "source_location": "L300",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -74327,6 +74515,17 @@
       "confidence_score": 0.95,
       "source_file": "tests/backtesting/test_runtime_acceptance.py",
       "source_location": "L69",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_backtesting_test_runtime_acceptance_test_canonical_optimizer_targets_ignore_unavailable_current_and_future_flows",
+      "target": "backend_app_persistence_models_organizerobservation",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "tests/backtesting/test_runtime_acceptance.py",
+      "source_location": "L152",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -77429,7 +77628,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L116",
+      "source_location": "L124",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -77441,7 +77640,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L116",
+      "source_location": "L124",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -77453,7 +77652,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L133",
+      "source_location": "L141",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -77465,7 +77664,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L136",
+      "source_location": "L144",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -77477,7 +77676,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L140",
+      "source_location": "L148",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -77489,7 +77688,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L141",
+      "source_location": "L149",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -77501,7 +77700,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/app/backtesting/reports.py",
-      "source_location": "L147",
+      "source_location": "L155",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -78113,7 +78312,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L260",
+      "source_location": "L261",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -78125,7 +78324,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L297",
+      "source_location": "L298",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -78137,7 +78336,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tests/backtesting/test_checkpoint_verification.py",
-      "source_location": "L316",
+      "source_location": "L317",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -78450,6 +78649,30 @@
       "confidence_score": 1.0,
       "source_file": "tests/backtesting/test_runtime_acceptance.py",
       "source_location": "L130",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_backtesting_test_runtime_acceptance_test_source_time_creation_does_not_invent_utc_and_allows_final_observation",
+      "target": "backend_app_services_hourly_engine_execute_hourly_step",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/backtesting/test_runtime_acceptance.py",
+      "source_location": "L136",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_backtesting_test_runtime_acceptance_test_canonical_optimizer_targets_ignore_unavailable_current_and_future_flows",
+      "target": "backend_app_services_hourly_engine_execute_hourly_step",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/backtesting/test_runtime_acceptance.py",
+      "source_location": "L151",
       "weight": 1.0,
       "_origin": "ast"
     },

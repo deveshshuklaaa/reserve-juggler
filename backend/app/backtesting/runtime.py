@@ -1,4 +1,4 @@
-"""Receipt integration with the dee0aae runtime checkpoint.
+"""Receipt integration with the verified 1ff1e65 financial runtime checkpoint.
 
 No prices, yields, cash flows, strategy actions, or posting amounts are calculated
 here. Incomplete receipts are errors, not opportunities to repair the executor.
@@ -20,7 +20,7 @@ from .contracts import EngineState, HourReceipt
 from .protocol import DecisionFrame, EngineCapabilities, ExecutionFrame, HourlyRun, RunSpec
 from .service import EngineContractError, SharedEngineUnavailable, observation_digest
 
-RUNTIME_SHA = "dee0aae3cbd77ed4ad4e6f0961b9594ad53461d2"
+RUNTIME_SHA = "1ff1e655070d6b13e24c060d30c9782457d01598"
 RUNTIME_BLOCKERS = (
     "Historical-comparison release gates remain unaccepted; configured sessions enable diagnostic execution only.",
     "Canonical non-repo recommendation orders, including market purchases and partial sales, are explicitly rejected.",
@@ -94,7 +94,7 @@ class SharedRuntimeFactory:
     closed (and uncommitted work rolled back) at run close.
     """
     capabilities = EngineCapabilities(
-        engine_version="hourly-runtime-dee0aae", integration_sha=RUNTIME_SHA,
+        engine_version="hourly-runtime-1ff1e65", integration_sha=RUNTIME_SHA,
         execution_kind="SHARED", strategies=(), scenarios=(),
     )
     blocking_reasons = RUNTIME_BLOCKERS
@@ -104,7 +104,7 @@ class SharedRuntimeFactory:
         self.session_factory = session_factory
         if session is not None or session_factory is not None:
             self.capabilities = EngineCapabilities(
-                engine_version="hourly-runtime-dee0aae", integration_sha=RUNTIME_SHA,
+                engine_version="hourly-runtime-1ff1e65", integration_sha=RUNTIME_SHA,
                 execution_kind="SHARED", strategies=("STATIC", "REACTIVE", "RESERVE_JUGGLER"),
                 scenarios=("NORMAL", "HIGH_WITHDRAWAL", "LOW_DEPOSIT", "SETTLEMENT_DELAY", "LIQUIDITY_SHOCK"),
             )

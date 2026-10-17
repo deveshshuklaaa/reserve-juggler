@@ -1229,32 +1229,32 @@ components:
       properties:
         realized_interest_cents:
           type: integer
-          maximum: 9.223372036854776e+18
+          maximum: 9007199254740991.0
           minimum: 0.0
           title: Realized Interest Cents
         accrued_interest_cents:
           type: integer
-          maximum: 9.223372036854776e+18
+          maximum: 9007199254740991.0
           minimum: 0.0
           title: Accrued Interest Cents
         average_checking_cents:
           type: integer
-          maximum: 9.223372036854776e+18
+          maximum: 9007199254740991.0
           minimum: 0.0
           title: Average Checking Cents
         average_vault_cents:
           type: integer
-          maximum: 9.223372036854776e+18
+          maximum: 9007199254740991.0
           minimum: 0.0
           title: Average Vault Cents
         redemption_penalties_cents:
           type: integer
-          maximum: 9.223372036854776e+18
+          maximum: 9007199254740991.0
           minimum: 0.0
           title: Redemption Penalties Cents
         emergency_borrowing_cost_cents:
           type: integer
-          maximum: 9.223372036854776e+18
+          maximum: 9007199254740991.0
           minimum: 0.0
           title: Emergency Borrowing Cost Cents
         emergency_events:
@@ -1271,11 +1271,13 @@ components:
           title: Failed Payouts
         unpaid_cents:
           type: integer
-          maximum: 9.223372036854776e+18
+          maximum: 9007199254740991.0
           minimum: 0.0
           title: Unpaid Cents
         net_benefit_cents:
           type: integer
+          maximum: 9007199254740991.0
+          minimum: -9007199254740991.0
           title: Net Benefit Cents
       additionalProperties: false
       type: object
@@ -1537,7 +1539,7 @@ components:
         runtime_commit_verified_by_reporter:
           type: string
           title: Runtime Commit Verified By Reporter
-          default: dee0aae3cbd77ed4ad4e6f0961b9594ad53461d2
+          default: 1ff1e655070d6b13e24c060d30c9782457d01598
         execution_provenance:
           type: string
           const: NOT_RECORDED_BY_RUNTIME

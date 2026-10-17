@@ -132,3 +132,43 @@ def test_source_time_creation_does_not_invent_utc_and_allows_final_observation(r
     with pytest.raises(ValueError, match="window"):
         create_simulation_run(session, CreateRunRequest(duration_steps=2),
             source_start_timestamp=source_time)
+    with pytest.raises(ValueError, match="completed"):
+        execute_hourly_step(session, run.id, 1)
+
+
+def test_canonical_optimizer_targets_ignore_unavailable_current_and_future_flows(runtime_session):
+    import sys
+    from treasury_intelligence.optimizer import recommend_four_tier_allocation
+    session = runtime_session
+    left, right = create_run(session), create_run(session)
+    targets = []
+    def trace(frame, event, arg):
+        if frame.f_code is recommend_four_tier_allocation.__code__ and event == "return":
+            targets.append(arg.decision.targets.model_dump())
+    previous = sys.getprofile()
+    try:
+        sys.setprofile(trace)
+        execute_hourly_step(session, left.id, 0, strategy="RESERVE_JUGGLER")
+        rows = list(session.scalars(select(OrganizerObservation).where(
+            OrganizerObservation.dataset_id == right.dataset_id,
+            OrganizerObservation.timestamp >= right.source_start_timestamp,
+            OrganizerObservation.timestamp < right.source_start_timestamp + timedelta(hours=7))))
+        for row in rows:
+            row.withdrawals_usd += Decimal("1000000.00")
+            row.deposits_usd += Decimal("2000000.00")
+        session.flush()
+        execute_hourly_step(session, right.id, 0, strategy="RESERVE_JUGGLER")
+    finally:
+        sys.setprofile(previous)
+    assert len(targets) == 2 and targets[0] == targets[1]
+
+
+def test_live_report_contract_declares_javascript_safe_money():
+    from app.main import app
+    from app.backtesting.contracts import JS_MAX
+    schemas = app.openapi()["components"]["schemas"]
+    money = schemas["FrontendFinancialMetrics"]["properties"]
+    for name, definition in money.items():
+        if name.endswith("_cents"):
+            assert definition["maximum"] == JS_MAX
+            assert definition["minimum"] == (-JS_MAX if name == "net_benefit_cents" else 0)

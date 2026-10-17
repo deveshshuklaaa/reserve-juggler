@@ -210,7 +210,8 @@ def test_public_backtest_retains_fields_and_honors_requested_subset(runtime_sess
         for name in ("history", "accounting", "model_evaluation"):
             if name not in result:
                 violations.append(f"{result['strategy']} lost {name}")
-    if data.get("engine_integration_sha") != "dee0aae3cbd77ed4ad4e6f0961b9594ad53461d2":
+    from app.backtesting.runtime import RUNTIME_SHA
+    if data.get("engine_integration_sha") != RUNTIME_SHA:
         violations.append("missing or incorrect checkpoint provenance")
     assert not violations, "; ".join(violations)
 

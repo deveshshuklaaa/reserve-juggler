@@ -276,9 +276,9 @@
     "semantic_hash": ""
   },
   "contracts/openapi.yaml": {
-    "mtime": 1792279120.1431687,
-    "seen": 1792279130.7036886,
-    "ast_hash": "77416f20a5db81359bafdab34c679e24",
+    "mtime": 1792279445.490968,
+    "seen": 1792279453.972916,
+    "ast_hash": "dea6060375f6ab48adb2795b75bbcdf9",
     "semantic_hash": ""
   },
   "docker-compose.yml": {
@@ -648,15 +648,15 @@
     "semantic_hash": "7fd47a809a52df63097ff778d0dcd073"
   },
   "backend/app/backtesting/reports.py": {
-    "mtime": 1792278400.64681,
-    "seen": 1792279130.7036886,
-    "ast_hash": "c70fc8a73d6e5bc7a1633b935732c08d",
-    "semantic_hash": "c70fc8a73d6e5bc7a1633b935732c08d"
+    "mtime": 1792279438.3220203,
+    "seen": 1792279453.9357767,
+    "ast_hash": "bb03df34cb738da57945b4cde04298a1",
+    "semantic_hash": ""
   },
   "backend/app/backtesting/runtime.py": {
-    "mtime": 1792279039.080925,
-    "seen": 1792279130.7036886,
-    "ast_hash": "75328321afca6f54788104ca5130117e",
+    "mtime": 1792279438.3210313,
+    "seen": 1792279453.9357767,
+    "ast_hash": "caea94aa26a82e02d457eb3423876c03",
     "semantic_hash": ""
   },
   "backend/app/backtesting/service.py": {
@@ -738,21 +738,21 @@
     "semantic_hash": ""
   },
   "tests/backtesting/test_checkpoint_verification.py": {
-    "mtime": 1792278632.2051873,
-    "seen": 1792279130.7036886,
-    "ast_hash": "491afa2adf07e095effb0c5c2b7267be",
+    "mtime": 1792279438.3230324,
+    "seen": 1792279453.9543211,
+    "ast_hash": "2c51fb0c5d6ccd1ac3882fb41920afef",
     "semantic_hash": ""
   },
   "tests/backtesting/test_runtime_acceptance.py": {
-    "mtime": 1792278929.734471,
-    "seen": 1792279130.7036886,
-    "ast_hash": "48dd3b33000c0e77aec95677b5d55a8f",
+    "mtime": 1792279438.3246284,
+    "seen": 1792279453.9543211,
+    "ast_hash": "df4e2dc6bda51bc760398fa57e06b26d",
     "semantic_hash": ""
   },
   "docs/BACKTEST_SERVICE_CONTRACT.md": {
-    "mtime": 1792278400.6870182,
-    "seen": 1792279130.7036886,
-    "ast_hash": "d163479c92a632a31ac3afc581806860",
+    "mtime": 1792279390.9548109,
+    "seen": 1792279453.9739158,
+    "ast_hash": "ae8f670efc58adcc67326f9b3172dace",
     "semantic_hash": ""
   },
   "docs/member1/CANONICAL_ALIGNMENT_CHECK.md": {

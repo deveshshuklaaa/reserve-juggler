@@ -15,7 +15,7 @@ from app.v1_contracts import (
     PerformanceReport as PublicPerformanceReport, StrategyResult as PublicStrategyResult,
 )
 from .contracts import (
-    AccountingMetrics, AccountingTotals, BacktestRequest, ComparisonResult, HistoryPoint, JS_MAX, canonical_config,
+    AccountingMetrics, AccountingTotals, BacktestRequest, ComparisonResult, HistoryPoint, JS_MAX, Cash, Money, canonical_config,
 )
 from .runtime import RUNTIME_SHA, SharedRuntimeFactory, RuntimeReceiptUnavailable, read_hour_receipt
 from .service import BacktestService, ORGANIZER_SHA256, summarize_receipts
@@ -26,6 +26,14 @@ PUBLIC_STRATEGIES = {"STATIC":"STATIC_RESERVE", "REACTIVE":"REACTIVE_RESERVE",
 
 class FrontendFinancialMetrics(FinancialMetrics):
     model_config = ConfigDict(frozen=True, extra="forbid")
+    realized_interest_cents: Cash
+    accrued_interest_cents: Cash
+    average_checking_cents: Cash
+    average_vault_cents: Cash
+    redemption_penalties_cents: Cash
+    emergency_borrowing_cost_cents: Cash
+    unpaid_cents: Cash
+    net_benefit_cents: Money
 
     @field_validator("*", mode="after")
     @classmethod

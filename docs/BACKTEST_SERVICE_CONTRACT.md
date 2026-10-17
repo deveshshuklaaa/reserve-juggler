@@ -3,7 +3,8 @@
 Status: orchestration, persisted receipt/report integration and real PostgreSQL
 probes implemented. **Full historical strategy comparisons remain blocked.**
 Verified base: **dee0aae3cbd77ed4ad4e6f0961b9594ad53461d2**; authorized runtime/API
-fixes are isolated on codex/runtime-api-acceptance (latest checkpoint section).
+fixes are committed as **1ff1e655070d6b13e24c060d30c9782457d01598** on
+codex/runtime-api-acceptance (latest checkpoint section).
 The final independent-checkpoint verification below is authoritative; earlier
 082f019/483936c reviews and expectations are retained as historical evidence.
 This is a Python service boundary, not a new API, simulator, strategy algorithm,
@@ -1517,3 +1518,47 @@ The original CSV remains byte-identical:
 The next small provenance follow-up pins the actual runtime checkpoint SHA into
 the receipt/report provider, rather than labeling these fixes as the old dee0aae
 runtime. Arbitrary persisted runs still do NOT invent execution SHA provenance.
+
+### Provenance and acceptance follow-up
+
+Core runtime/API commit: 1ff1e655070d6b13e24c060d30c9782457d01598.
+The provider now names that immutable core revision, whose actual execution,
+API, persistence and Member 1 regression suite passed above. The small follow-up
+does not change the shared hourly financial implementation.
+
+Report metric OpenAPI properties now declare exactly the JavaScript-safe ranges
+already enforced at runtime: 0..9007199254740991 cents, or the signed equivalent
+for net_benefit_cents. A new schema assertion covers every monetary metric.
+A second new real-engine test traces actual canonical optimizer targets before
+and after modifying unavailable current/future flows in a rolled-back PostgreSQL
+fixture; the earlier targets must remain invariant.
+
+Additional unresolved policy boundary: the residual emergency draw path does not
+consult Member 1's allow_overdraft/max_overdraft_cents policy fields. Those fields
+currently constrain recommendations, not emergency execution. Execution-level
+cap enforcement and durable failed/unpaid payout semantics need an explicit
+contract and acceptance tests before declaring this a financially complete
+policy-controlled runtime. No unlimited-borrowing result is presented as evidence
+of successful liquidity management.
+
+
+Final follow-up verification used the same full PostgreSQL harness command above
+against the final code and regenerated OpenAPI:
+**779 passed, 9 skipped in 192.54 seconds; exit 0**. No failures, xfails or
+serialization warnings. This includes the direct canonical optimizer target
+invariance test and JavaScript-safe OpenAPI range assertions.
+
+Captured final output:
+C:\Users\DEVESH SHUKLA\AppData\Local\Temp\reserve-juggler-runtime-acceptance-8cb8ba6469f24c92980820fbf9507378\final-complete-postgres-suite.log
+
+Final Graphify follow-up: **2062 nodes / 5925 relationships**, with the existing
+schema synchronizer verifying **22 PostgreSQL tables**. No new Graphify project,
+application migration, source dataset change, Member 1 implementation edit or
+frontend edit. Both local checkpoints must be integrated together: the first
+contains financial/API fixes; the follow-up pins that immutable runtime revision
+and aligns public monetary schema bounds with existing validation.
+
+**Checkpoint verification is complete; historical-comparison release approval is
+NOT complete.** The remaining blockers above require explicit implementation/
+contract agreement and the seven gated historical acceptance cases. Passing
+regression counts do not replace that financial sign-off.
