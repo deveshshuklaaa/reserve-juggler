@@ -22,6 +22,8 @@ from .forecasting import (
     rolling_mean_forecast, seasonal_naive_forecast,
 )
 from .policy import TreasuryDecisionPolicy, VaultTerms
+from .pipeline import TreasuryPipelineResult, run_treasury_pipeline
+from .demo import run_demo
 
 __all__ = [
     "CashFlowBucket", "ForecastPoint", "ForecastResult", "TreasuryContext",
@@ -35,4 +37,5 @@ __all__ = [
     "extract_calendar_features", "compute_lag_features", "compute_rolling_features",
     "build_feature_matrix", "rolling_mean_forecast", "seasonal_naive_forecast",
     "TreasuryDecisionPolicy", "VaultTerms",
+    "TreasuryPipelineResult", "run_treasury_pipeline", "run_demo",
 ]

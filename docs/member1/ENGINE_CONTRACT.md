@@ -264,3 +264,42 @@ Every result sets recommendation_only=true and includes calculation values in
 integer cents in its reason. No execution, ledger mutation, future-maturity cash
 credit, database access, or random simulation occurs. Expected yield is never
 reported as realized earnings. Balances and forecasts remain immutable snapshots.
+
+## RJ-M1-05 Standalone treasury pipeline demo
+
+Connects all Member 1 modules into an executable pure Python pipeline:
+
+```python
+run_treasury_pipeline(scenario_name: str, history: Sequence[CashFlowBucket],
+                     context: TreasuryContext,
+                     policy: TreasuryPolicy | TreasuryDecisionPolicy, *,
+                     horizon_minutes: int = 60, bucket_minutes: int = 15,
+                     model_version: str = "baseline-v1",
+                     forecast: ForecastResult | None = None) -> TreasuryPipelineResult
+run_demo() -> None
+```
+
+### Pipeline Flow
+1. Historical Cash Flows ->
+2. Baseline Forecast (or supplied path) ->
+3. Supplied Provisional Uncertainty Policy ->
+4. Required Reserve ->
+5. Treasury Recommendation ->
+6. Expected Economic Result ->
+7. Structured Explanation
+
+### Executable Demo
+Run standalone without web framework or database:
+```powershell
+$env:PYTHONPATH="."
+uv run python -m treasury_intelligence.demo
+```
+Demonstrates five deterministic operational scenarios:
+1. Normal operation (`HOLD`)
+2. Valid safe sweep (`SWEEP`)
+3. High-withdrawal stress (`WITHDRAW`)
+4. Locked vault with insufficient liquidity (`LIQUIDITY_WARNING`)
+5. Successful HOLD (`HOLD`)
+6. Full JSON serialization and 100% round-trip validation.
+
+Uncertainty is explicitly marked as `provisional_uncalibrated`.

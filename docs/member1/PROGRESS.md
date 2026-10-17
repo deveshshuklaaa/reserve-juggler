@@ -8,6 +8,36 @@
 
 ## Task Log
 
+### [RJ-M1-05] Standalone Treasury Decision Pipeline and Demo
+- **Status**: COMPLETED
+- **Scope**: Connected all Member 1 quantitative modules into an end-to-end pure Python
+  pipeline (`Historical cash flows -> Baseline forecast -> Supplied provisional uncertainty policy -> Required reserve -> Treasury recommendation -> Expected economic result -> Structured explanation`).
+- **Pipeline Implementation**: Implemented `treasury_intelligence/pipeline.py` with
+  immutable `TreasuryPipelineResult` and `run_treasury_pipeline`.
+- **Executable Demo**: Implemented `treasury_intelligence/demo.py` with deterministic
+  local fixtures demonstrating all five required operational scenarios and JSON serialization:
+  1. Normal operation: balanced checking liquidity operating within policy buffer (`HOLD`).
+  2. Valid safe sweep: surplus cash swept to liquid yield vault with positive modeled net benefit (`SWEEP`).
+  3. High-withdrawal stress: large forecasted outflow deficit replenished from liquid vault (`WITHDRAW`).
+  4. Locked vault with insufficient liquidity: deficit cannot be covered by locked vault (`LIQUIDITY_WARNING`).
+  5. Successful HOLD: checking balance within equilibrium tolerance corridor (`HOLD`).
+  6. JSON serialization: full engine pipeline result serialized and deserialized with 100% round-trip fidelity.
+- **Uncertainty Governance**: Policy-supplied uncertainty is explicitly marked as `provisional_uncalibrated`
+  with explicit explanatory notes, without fabricating completed model evaluation.
+- **Dependencies**: Pure Python only. No FastAPI or PostgreSQL dependencies added.
+- **Demo Command**:
+  ```powershell
+  $env:PYTHONPATH="."; uv run python -m treasury_intelligence.demo
+  ```
+- **Tests**: 181 passed (8 new pipeline integration tests; 173 previous tests preserved).
+  Command: `$env:PYTHONPATH=".;backend"; uv run --with pytest --with fastapi --with pydantic --with httpx --with sqlalchemy --with pydantic-settings pytest tests/ -q`
+- **Files**: `treasury_intelligence/pipeline.py`, `treasury_intelligence/demo.py`,
+  `treasury_intelligence/__init__.py`, `tests/treasury_intelligence/test_demo_pipeline.py`,
+  `docs/member1/ENGINE_CONTRACT.md`, and this progress log.
+- **Commit**: `feat(engine): complete standalone treasury decision pipeline`
+- **Push Target**: `origin/feat/treasury-intelligence`
+- **Next Task**: Await explicit assignment; stop after RJ-M1-05.
+
 ### [RJ-M1-04] Treasury Decisions and Explanations
 - **Status**: COMPLETED
 - **Scope**: Implemented pure HOLD, SWEEP, WITHDRAW, and LIQUIDITY_WARNING
