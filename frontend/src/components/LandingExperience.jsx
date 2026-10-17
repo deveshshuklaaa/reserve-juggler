@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowDown, ArrowRight, MoveUpRight, Sparkles, Shield, Cpu, Activity, Zap } from 'lucide-react';
 import { useSimulation } from '../context/SimulationContext';
 import { Button } from './ui';
+import RJQuantumPrism from './RJQuantumPrism';
 import AppleSiliconChip from './AppleSiliconChip';
 import InteractiveSandbox from './InteractiveSandbox';
 import AppleBentoGrid from './AppleBentoGrid';
@@ -169,15 +170,48 @@ function ArenaScene() {
 
 const scenes = [FlowScene, ShockScene, ArenaScene];
 
+const windows = [
+  { id: 'window-hero', num: '01', label: 'Overview' },
+  { id: 'silicon-specs', num: '02', label: 'RJ-1 Silicon' },
+  { id: 'interactive-lab', num: '03', label: 'Interactive Lab' },
+  { id: 'landing-story', num: '04', label: 'Strategy Arena' },
+  { id: 'window-bento', num: '05', label: 'Architecture' },
+];
+
 export default function LandingExperience() {
   const { createRun, busy } = useSimulation();
   const root = useRef(null);
   const [active, setActive] = useState(0);
+  const [activeWindow, setActiveWindow] = useState('window-hero');
 
   useEffect(() => {
     const element = root.current;
-    if (!element || !('IntersectionObserver' in window)) return undefined;
-    const observer = new IntersectionObserver(
+    if (!element || typeof window === 'undefined' || !('IntersectionObserver' in window)) return undefined;
+
+    // Window scroll transition observer
+    const windowObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const id = entry.target.id;
+          if (entry.isIntersecting) {
+            entry.target.classList.add('window-in-view');
+            entry.target.classList.remove('window-scrolled-past');
+            setActiveWindow(id);
+          } else if (entry.boundingClientRect.top < 0) {
+            entry.target.classList.add('window-scrolled-past');
+            entry.target.classList.remove('window-in-view');
+          } else {
+            entry.target.classList.remove('window-in-view', 'window-scrolled-past');
+          }
+        });
+      },
+      { threshold: 0.22 }
+    );
+
+    element.querySelectorAll('.apple-window').forEach((w) => windowObserver.observe(w));
+
+    // Story step observer for the 3-scene arena
+    const storyObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
@@ -188,29 +222,65 @@ export default function LandingExperience() {
       },
       { rootMargin: '-32% 0px -32% 0px' }
     );
-    element.querySelectorAll('[data-scene]').forEach((scene) => observer.observe(scene));
-    return () => observer.disconnect();
+
+    element.querySelectorAll('[data-scene]').forEach((scene) => storyObserver.observe(scene));
+
+    return () => {
+      windowObserver.disconnect();
+      storyObserver.disconnect();
+    };
   }, []);
+
+  const scrollToWindow = (id) => {
+    const target = document.getElementById(id);
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   return (
     <div className="landing-experience" ref={root}>
+      {/* Floating Vertical Apple Window Navigator (Desktop) */}
+      <nav className="apple-scroll-tracker" aria-label="Page section navigation">
+        <div className="tracker-rail">
+          {windows.map((win) => {
+            const isActive = activeWindow === win.id;
+            return (
+              <button
+                key={win.id}
+                className={`tracker-dot ${isActive ? 'is-active' : ''}`}
+                onClick={() => scrollToWindow(win.id)}
+                aria-label={`Jump to ${win.label}`}
+                title={win.label}
+              >
+                <span className="tracker-dot-pip" />
+                <span className="tracker-tooltip">
+                  <small>{win.num}</small> {win.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+
       {/* Apple Sub-Navigation Bar Ribbon */}
       <div className="apple-subnav-ribbon">
         <div className="subnav-inner">
           <span className="subnav-title">Reserve Juggler Pro</span>
           <div className="subnav-links">
-            <a href="#landing-story">Overview</a>
-            <a href="#silicon-specs">RJ-1 Silicon</a>
-            <a href="#interactive-lab">Interactive Lab</a>
+            <a href="#window-hero" className={activeWindow === 'window-hero' ? 'active-link' : ''}>Overview</a>
+            <a href="#silicon-specs" className={activeWindow === 'silicon-specs' ? 'active-link' : ''}>RJ-1 Silicon</a>
+            <a href="#interactive-lab" className={activeWindow === 'interactive-lab' ? 'active-link' : ''}>Interactive Lab</a>
+            <a href="#landing-story" className={activeWindow === 'landing-story' ? 'active-link' : ''}>Strategy Arena</a>
             <Button variant="primary" busy={busy} onClick={() => createRun()} className="subnav-cta">
-              Launch Simulator <ArrowRight size={14} />
+              Create simulation <ArrowRight size={14} />
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Hero Section */}
-      <section className="landing-opening" aria-labelledby="landing-title">
+      {/* Window 0: Hero Section ("The RJ Part") */}
+      <section className="apple-window landing-opening window-in-view" id="window-hero" aria-labelledby="landing-title">
         <div className="landing-opening-copy">
           <div className="hero-pill-badge">
             <Sparkles size={14} className="text-blue" />
@@ -257,43 +327,26 @@ export default function LandingExperience() {
           </div>
         </div>
 
-        {/* 3D Holographic Orbit Gyroscope Hero Art */}
-        <div className="landing-hero-art" aria-hidden="true">
-          <div className="hero-art-glow" />
-          <div className="hero-art-orbit orbit-outer" />
-          <div className="hero-art-orbit orbit-middle" />
-          <div className="hero-art-orbit orbit-inner" />
-          
-          <div className="hero-art-center">
-            <span>RJ</span>
-            <small>CAPITAL IN BALANCE</small>
-          </div>
+        {/* Brand New 3D Sapphire Glass Monolith Core with Kinetic Wave Streams (Zero AI Orbit Rings) */}
+        <RJQuantumPrism />
 
-          <div className="hero-art-chip chip-cash">
-            <i /> <strong>$20M</strong> CASH
-          </div>
-          <div className="hero-art-chip chip-reserve">
-            <i /> <strong>99%</strong> RESERVE
-          </div>
-          <div className="hero-art-chip chip-yield">
-            <i /> <strong>+5.2%</strong> YIELD
-          </div>
-        </div>
-
-        <div className="landing-scroll-note">
-          <span>Scroll to explore</span>
-          <ArrowDown size={16} />
+        {/* Transition cue to Window 1 */}
+        <div className="landing-scroll-cue">
+          <a href="#silicon-specs" className="window-scroll-prompt">
+            <span>Scroll to explore RJ-1 Silicon</span>
+            <ArrowDown size={15} />
+          </a>
         </div>
       </section>
 
-      {/* Apple Silicon Hardware Showcase */}
+      {/* Window 1: Apple Silicon Hardware Showcase */}
       <AppleSiliconChip />
 
-      {/* Hands-On Interactive Sandbox Playground */}
+      {/* Window 2: Hands-On Interactive Sandbox Playground */}
       <InteractiveSandbox />
 
-      {/* Apple Sticky Scroll Narrative */}
-      <section className="landing-narrative" id="landing-story" aria-label="Explore Reserve Juggler">
+      {/* Window 3: Apple Sticky Scroll Narrative */}
+      <section className="apple-window landing-narrative" id="landing-story" aria-label="Explore Reserve Juggler">
         <div className="landing-narrative-track">
           <div className="landing-narrative-inner">
             <div className="landing-stage-top">
@@ -334,11 +387,11 @@ export default function LandingExperience() {
         </div>
       </section>
 
-      {/* Apple Bento Grid Section */}
+      {/* Window 4: Apple Bento Grid Section */}
       <AppleBentoGrid />
 
-      {/* Apple Keynote Finale CTA */}
-      <section className="landing-finale">
+      {/* Window 5: Apple Keynote Finale CTA */}
+      <section className="apple-window landing-finale" id="window-finale">
         <span className="landing-eyebrow">READY WHEN YOU ARE</span>
         <h2>
           See the whole picture.<br />
