@@ -30,6 +30,7 @@ from app.persistence.models import (
     OverdraftLiability as DbOverdraftLiability,
     OverdraftMovement as DbOverdraftMovement,
     PortfolioValuation as DbPortfolioValuation,
+    PositionValuation as DbPositionValuation,
     RepoPosition as DbRepoPosition,
     SimulationRun as DbSimulationRun,
     TreasuryDecision as DbTreasuryDecision,
@@ -40,6 +41,7 @@ from app.services.treasury_adapter import (
     get_hourly_forecasts_from_db,
     get_information_cutoff,
     hydrate_portfolio_state,
+    recommend_four_tier_allocation_decision,
 )
 
 STRATEGY_STATIC = "STATIC"
@@ -118,17 +120,18 @@ def execute_hourly_step(
         raise StepConflictError(expected_step=expected_step, current_step=run.current_step)
 
     target_step = run.current_step + 1
+    source_observation_timestamp = run.source_start_timestamp + timedelta(hours=run.current_step)
     target_timestamp = run.source_start_timestamp + timedelta(hours=target_step)
 
     observation = session.scalar(
         select(DbOrganizerObservation).where(
             DbOrganizerObservation.dataset_id == run.dataset_id,
-            DbOrganizerObservation.timestamp == target_timestamp,
+            DbOrganizerObservation.timestamp == source_observation_timestamp,
         )
     )
     if observation is None:
         raise RuntimeError(
-            f"Observation for dataset {run.dataset_id} at step {target_step} ({target_timestamp}) not found"
+            f"Observation for dataset {run.dataset_id} at step {target_step} ({source_observation_timestamp}) not found"
         )
 
     # 1. Hydrate current portfolio
@@ -306,16 +309,24 @@ def execute_hourly_step(
             )
 
         # Early repo break check
-        if policy_obj.allow_early_repo_redemption:
+        if policy_obj.allow_early_repo_redemption and cash_shortfall > 0:
             active_repos = [r for r in db_repos if r.status in ("ACTIVE", "LOCKED")]
             for r in active_repos:
+                if cash_shortfall <= 0:
+                    break
                 haircut = r.early_redemption_haircut_pct if r.early_redemption_haircut_pct is not None else Decimal("0.50")
                 penalty = int(r.principal_cents * (haircut / Decimal("100")))
                 recoverable = max(0, r.principal_cents - penalty)
                 use_amount = min(cash_shortfall, recoverable)
                 r.status = "REDEEMED"
+                r.early_redemption_at = observation.timestamp
+                r.early_redemption_cost_cents = penalty
+                r.proceeds_returned_cents = recoverable
                 cash_shortfall -= use_amount
-                
+
+                cash_before_redemption = cash_acc.balance_cents
+                cash_acc.balance_cents += recoverable
+
                 early_ledger = DbLedgerEntry(
                     id=uuid4(),
                     run_id=run.id,
@@ -323,8 +334,8 @@ def execute_hourly_step(
                     timestamp=None,
                     entry_type="REPO_EARLY_REDEMPTION",
                     amount_cents=recoverable,
-                    balance_before_cents=0,
-                    balance_after_cents=0,
+                    balance_before_cents=cash_before_redemption,
+                    balance_after_cents=cash_acc.balance_cents,
                     reference_id=f"REPO-EARLY-{r.id}",
                     source_type=run.source_type,
                     dataset_id=run.dataset_id,
@@ -351,6 +362,26 @@ def execute_hourly_step(
                         source_type=run.source_type,
                         dataset_id=run.dataset_id,
                         source_observation_timestamp=observation.timestamp,
+                    )
+                )
+
+                cash_before_payout = cash_acc.balance_cents
+                cash_acc.balance_cents -= use_amount
+                session.add(
+                    DbLedgerEntry(
+                        id=uuid4(),
+                        run_id=run.id,
+                        step=target_step,
+                        timestamp=None,
+                        entry_type="CUSTOMER_WITHDRAWAL_OUTFLOW",
+                        amount_cents=use_amount,
+                        balance_before_cents=cash_before_payout,
+                        balance_after_cents=cash_acc.balance_cents,
+                        reference_id=f"FLOW-OUT-REPO-{target_step}-{r.id}",
+                        source_type=run.source_type,
+                        dataset_id=run.dataset_id,
+                        source_observation_timestamp=observation.timestamp,
+                        event_at=observation.timestamp,
                     )
                 )
 
@@ -390,6 +421,9 @@ def execute_hourly_step(
             session.add(od_liability)
             session.flush()
 
+            cash_before_borrow = cash_acc.balance_cents
+            cash_acc.balance_cents += cash_shortfall
+
             od_ledger = DbLedgerEntry(
                 id=uuid4(),
                 run_id=run.id,
@@ -397,8 +431,8 @@ def execute_hourly_step(
                 timestamp=None,
                 entry_type="OVERDRAFT_DRAW_BORROW",
                 amount_cents=cash_shortfall,
-                balance_before_cents=0,
-                balance_after_cents=0,
+                balance_before_cents=cash_before_borrow,
+                balance_after_cents=cash_acc.balance_cents,
                 reference_id=f"OD-DRAW-{target_step}",
                 source_type=run.source_type,
                 dataset_id=run.dataset_id,
@@ -425,6 +459,27 @@ def execute_hourly_step(
                     source_observation_timestamp=observation.timestamp,
                 )
             )
+
+            cash_before_financed = cash_acc.balance_cents
+            cash_acc.balance_cents -= cash_shortfall
+            session.add(
+                DbLedgerEntry(
+                    id=uuid4(),
+                    run_id=run.id,
+                    step=target_step,
+                    timestamp=None,
+                    entry_type="CUSTOMER_WITHDRAWAL_OUTFLOW",
+                    amount_cents=cash_shortfall,
+                    balance_before_cents=cash_before_financed,
+                    balance_after_cents=cash_acc.balance_cents,
+                    reference_id=f"FLOW-OUT-FINANCED-{target_step}",
+                    source_type=run.source_type,
+                    dataset_id=run.dataset_id,
+                    source_observation_timestamp=observation.timestamp,
+                    event_at=observation.timestamp,
+                )
+            )
+
             action_decision = "LIQUIDITY_WARNING"
             decision_explanations.append(
                 f"Cash deficit of {cash_shortfall} cents covered via emergency overdraft."
@@ -445,7 +500,25 @@ def execute_hourly_step(
             * (od.apr_pct / Decimal("100"))
             / Decimal(8760)
         )
-        od.financing_cost_cents = (od.financing_cost_cents or 0) + hourly_fee
+        if hourly_fee > 0:
+            od.financing_cost_cents = (od.financing_cost_cents or 0) + hourly_fee
+            session.add(
+                DbOverdraftMovement(
+                    id=uuid4(),
+                    run_id=run.id,
+                    liability_id=od.id,
+                    occurred_at=observation.timestamp,
+                    kind="FINANCING_COST",
+                    principal_cents=0,
+                    financing_cost_cents=hourly_fee,
+                    cash_delta_cents=0,
+                    ledger_entry_id=None,
+                    reference_id=f"od-fee-{run.id}-{target_step}-{od.id}",
+                    source_type=run.source_type,
+                    dataset_id=run.dataset_id,
+                    source_observation_timestamp=observation.timestamp,
+                )
+            )
 
         if cash_acc.balance_cents > 0:
             repay_cents = min(cash_acc.balance_cents, od.outstanding_principal_cents)
@@ -462,7 +535,7 @@ def execute_hourly_step(
                 amount_cents=repay_cents,
                 balance_before_cents=cash_acc.balance_cents + repay_cents,
                 balance_after_cents=cash_acc.balance_cents,
-                reference_id=f"OD-REPAY-{target_step}",
+                reference_id=f"OD-REPAY-{target_step}-{od.id}",
                 source_type=run.source_type,
                 dataset_id=run.dataset_id,
                 source_observation_timestamp=observation.timestamp,
@@ -482,7 +555,7 @@ def execute_hourly_step(
                     financing_cost_cents=0,
                     cash_delta_cents=-repay_cents,
                     ledger_entry_id=repay_ledger.id,
-                    reference_id=f"od-repay-mov-{target_step}",
+                    reference_id=f"od-repay-mov-{target_step}-{od.id}",
                     source_type=run.source_type,
                     dataset_id=run.dataset_id,
                     source_observation_timestamp=observation.timestamp,
@@ -508,6 +581,8 @@ def execute_hourly_step(
                 )
             ).all()
         )
+        if not recent_obs:
+            recent_obs = [observation]
         max_withdrawal = max(
             [int(round(o.withdrawals_usd * 100)) for o in recent_obs],
             default=0,
@@ -521,19 +596,96 @@ def execute_hourly_step(
         )
     else:
         forecasts = get_hourly_forecasts_from_db(
-            session, run.dataset_id, observation.timestamp, horizon_hours=4
+            session, run.dataset_id, observation.timestamp, horizon_hours=15
         )
-        risk_result = evaluate_liquidity_risk(
-            portfolio, policy_obj, observation, forecasts=forecasts, horizon_hours=4
+        opt_result = recommend_four_tier_allocation_decision(
+            portfolio,
+            policy_obj,
+            observation,
+            forecasts=forecasts,
+            horizon_hours=15,
+            risk_aversion=policy_dict.get("risk_aversion", "1"),
         )
-        req_reserve = risk_result.reserve.required_reserve_cents
+        req_reserve = opt_result.decision.targets.tier0_target_cents
         strategy_rationale = (
-            f"RESERVE_JUGGLER: dynamic required reserve {req_reserve} cents (net drain: "
-            f"{risk_result.reserve.net_drain_cents} cents, uncertainty buffer: "
-            f"{risk_result.reserve.uncertainty_buffer_cents} cents)."
+            f"RESERVE_JUGGLER: dynamic required reserve {req_reserve} cents. "
+            f"RESERVE_JUGGLER: canonical optimizer recommended reserve {req_reserve} cents. "
+            f"Summary action: {opt_result.summary_action}."
         )
+        for order in opt_result.decision.orders:
+            if order.action == "INVEST_REPO" and order.amount_cents > 0:
+                sweep_cents = min(order.amount_cents, max(0, cash_acc.balance_cents - req_reserve))
+                if sweep_cents > 0:
+                    pre_sweep = cash_acc.balance_cents
+                    cash_acc.balance_cents -= sweep_cents
 
-    if observation.timestamp.hour == 17:
+                    sweep_ledger = DbLedgerEntry(
+                        id=uuid4(),
+                        run_id=run.id,
+                        step=target_step,
+                        timestamp=None,
+                        entry_type="OVERNIGHT_REPO_SWEEP_DEBIT",
+                        amount_cents=sweep_cents,
+                        balance_before_cents=pre_sweep,
+                        balance_after_cents=cash_acc.balance_cents,
+                        reference_id=f"REPO-SWEEP-{target_step}",
+                        source_type=run.source_type,
+                        dataset_id=run.dataset_id,
+                        source_observation_timestamp=observation.timestamp,
+                        event_at=observation.timestamp,
+                    )
+                    session.add(sweep_ledger)
+                    session.flush()
+
+                    maturity_time = observation.timestamp.replace(hour=8) + timedelta(days=1)
+                    new_repo = DbRepoPosition(
+                        id=uuid4(),
+                        run_id=run.id,
+                        source_type=run.source_type,
+                        dataset_id=run.dataset_id,
+                        source_observation_timestamp=observation.timestamp,
+                        principal_cents=sweep_cents,
+                        entered_at=observation.timestamp,
+                        scheduled_maturity_at=maturity_time,
+                        applicable_apy_pct=observation.tier1_repo_rate_apy,
+                        status="LOCKED",
+                        early_redemption_haircut_pct=observation.tier1_early_redemption_haircut_pct,
+                    )
+                    session.add(new_repo)
+                    session.flush()
+
+                    session.add(
+                        DbInvestmentMovement(
+                            id=uuid4(),
+                            run_id=run.id,
+                            tier=1,
+                            repo_position_id=new_repo.id,
+                            kind="INVESTMENT",
+                            occurred_at=observation.timestamp,
+                            cash_delta_cents=-sweep_cents,
+                            principal_cents=sweep_cents,
+                            interest_cents=0,
+                            haircut_cost_cents=0,
+                            ledger_entry_id=sweep_ledger.id,
+                            reference_id=f"mov-sweep-{target_step}",
+                            source_type=run.source_type,
+                            dataset_id=run.dataset_id,
+                            source_observation_timestamp=observation.timestamp,
+                        )
+                    )
+                    action_decision = "SWEEP"
+                    decision_amount = sweep_cents
+                    decision_explanations.append(
+                        f"Canonical optimizer executed repo sweep of {sweep_cents} cents. {strategy_rationale}"
+                    )
+                    orders_executed.append({
+                        "instrument": "OVERNIGHT_REPO",
+                        "action": "SWEEP",
+                        "amount_cents": sweep_cents,
+                        "order_id": str(order.id),
+                    })
+
+    if active_strategy in (STRATEGY_STATIC, STRATEGY_REACTIVE) and observation.timestamp.hour == 17:
         deployable_surplus = max(0, cash_acc.balance_cents - req_reserve)
         min_sweep = policy_dict.get("min_sweep_cents", policy_dict.get("minimum_sweep_cents", 1000000))
         if deployable_surplus >= min_sweep:
@@ -618,6 +770,25 @@ def execute_hourly_step(
         mkt_val = int(round(b.quantity * cur_p * Decimal(100))) if b.quantity > 0 else (b.current_market_value_cents or 0)
         tier2_mkt_val += mkt_val
         tier2_unrealized += (mkt_val - cost_b)
+        session.add(
+            DbPositionValuation(
+                id=uuid4(),
+                run_id=run.id,
+                tier=2,
+                bond_position_id=b.id,
+                repo_position_id=None,
+                equity_position_id=None,
+                valued_at=target_timestamp,
+                market_price_index=cur_p,
+                market_value_cents=mkt_val,
+                realized_pnl_cents=0,
+                unrealized_pnl_cents=mkt_val - cost_b,
+                reference_id=f"pos-val-b-{b.id}-{target_step}",
+                source_type=run.source_type,
+                dataset_id=run.dataset_id,
+                source_observation_timestamp=observation.timestamp,
+            )
+        )
 
     tier3_mkt_val = 0
     tier3_cost_basis = 0
@@ -630,6 +801,25 @@ def execute_hourly_step(
         mkt_val = int(round(eq.quantity * cur_p * Decimal(100))) if eq.quantity > 0 else (eq.current_market_value_cents or 0)
         tier3_mkt_val += mkt_val
         tier3_unrealized += (mkt_val - cost_b)
+        session.add(
+            DbPositionValuation(
+                id=uuid4(),
+                run_id=run.id,
+                tier=3,
+                bond_position_id=None,
+                repo_position_id=None,
+                equity_position_id=eq.id,
+                valued_at=target_timestamp,
+                market_price_index=cur_p,
+                market_value_cents=mkt_val,
+                realized_pnl_cents=0,
+                unrealized_pnl_cents=mkt_val - cost_b,
+                reference_id=f"pos-val-eq-{eq.id}-{target_step}",
+                source_type=run.source_type,
+                dataset_id=run.dataset_id,
+                source_observation_timestamp=observation.timestamp,
+            )
+        )
 
     active_repos_after = list(
         session.scalars(
@@ -655,9 +845,10 @@ def execute_hourly_step(
     )
     od_borrowing = sum(o.outstanding_principal_cents for o in all_ods)
     od_fees = sum(o.financing_cost_cents or 0 for o in all_ods)
+    total_liabilities = od_borrowing + od_fees
 
     gross_assets = cash_acc.balance_cents + tier1_principal + tier1_accrued + tier2_mkt_val + tier3_mkt_val
-    net_value = gross_assets - od_borrowing
+    net_value = gross_assets - total_liabilities
 
     # Haircut and slippage
     tier2_haircut_bps = int(observation.tier2_bond_liquidation_haircut_pct * 100) if observation else 200
@@ -685,7 +876,7 @@ def execute_hourly_step(
         source_type=run.source_type,
         dataset_id=run.dataset_id,
         source_observation_timestamp=observation.timestamp,
-        valued_at=observation.timestamp,
+        valued_at=target_timestamp,
         tier0_cash_cents=cash_acc.balance_cents,
         tier1_principal_cents=tier1_principal,
         tier1_value_cents=tier1_principal + tier1_accrued,
@@ -695,7 +886,7 @@ def execute_hourly_step(
         immediately_available_cents=cash_acc.balance_cents,
         liquidatable_value_cents=total_immediate_liquidity,
         restricted_value_cents=tier1_principal,
-        liabilities_cents=od_borrowing,
+        liabilities_cents=total_liabilities,
         net_portfolio_value_cents=net_value,
         reference_id=f"val-{run.id}-{target_step}",
     )

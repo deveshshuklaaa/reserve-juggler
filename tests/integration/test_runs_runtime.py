@@ -204,8 +204,8 @@ def test_repo_sweep_and_maturity_cycle(client):
     """7. Overnight repo 17:00 sweep window and 08:00 maturity settlement."""
     run_id = client.post("/api/v1/runs", json={}).json()["run_id"]
 
-    # Step up to hour 17 (step 17)
-    for step in range(17):
+    # Step up to hour 17 (step 17, 18 steps from 00:00)
+    for step in range(18):
         res = client.post(f"/api/v1/runs/{run_id}/advance", json={"expected_step": step})
         assert res.status_code == 200
 
@@ -215,8 +215,8 @@ def test_repo_sweep_and_maturity_cycle(client):
     assert snap_17["decision"]["action"] == "SWEEP"
     repo_principal = snap_17["vault_locked_cents"]
 
-    # Step from hour 17 to hour 32 (next day 08:00: step 32 = 24 + 8)
-    for step in range(17, 32):
+    # Step from hour 18 to hour 32 (next day 08:00: step 32 = 24 + 8)
+    for step in range(18, 33):
         res = client.post(f"/api/v1/runs/{run_id}/advance", json={"expected_step": step})
         assert res.status_code == 200
 

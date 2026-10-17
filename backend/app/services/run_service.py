@@ -95,15 +95,16 @@ def _get_or_load_dataset(session: Session) -> DbDatasetSource:
     raise RuntimeError("No organizer dataset found in database.")
 
 
-def create_simulation_run(session: Session, request: CreateRunRequest) -> RunCreated:
+def create_simulation_run(session: Session, request: CreateRunRequest, run_id: UUID | None = None) -> RunCreated:
     """Creates a new simulation run with default $20 million in Tier 0 checking."""
     ds = _get_or_load_dataset(session)
     policy_dict = request.policy.model_dump(mode="json")
     policy_dict.setdefault("scenarios", [])
 
-    run_id = uuid4()
+    actual_run_id = run_id or uuid4()
+    start_ts = request.start_time.replace(tzinfo=None) if request.start_time is not None else ds.first_timestamp
     run = DbSimulationRun(
-        id=run_id,
+        id=actual_run_id,
         seed=request.seed,
         scenario=request.scenario.value,
         status="READY",
@@ -113,7 +114,7 @@ def create_simulation_run(session: Session, request: CreateRunRequest) -> RunCre
         policy_json=policy_dict,
         source_type="ORGANIZER_HISTORICAL",
         dataset_id=ds.dataset_id,
-        source_start_timestamp=ds.first_timestamp,
+        source_start_timestamp=start_ts,
         source_end_timestamp=ds.last_timestamp,
         native_interval_seconds=ds.native_interval_seconds,
         source_timezone_status="UNSPECIFIED",
@@ -128,7 +129,7 @@ def create_simulation_run(session: Session, request: CreateRunRequest) -> RunCre
         run_id=run.id,
         source_type=run.source_type,
         dataset_id=run.dataset_id,
-        source_observation_timestamp=ds.first_timestamp,
+        source_observation_timestamp=start_ts,
         balance_cents=request.initial_cash_cents,
     )
     session.add(cash)
@@ -139,8 +140,8 @@ def create_simulation_run(session: Session, request: CreateRunRequest) -> RunCre
         run_id=run.id,
         source_type=run.source_type,
         dataset_id=run.dataset_id,
-        source_observation_timestamp=ds.first_timestamp,
-        valued_at=ds.first_timestamp,
+        source_observation_timestamp=start_ts,
+        valued_at=start_ts,
         tier0_cash_cents=request.initial_cash_cents,
         tier1_principal_cents=0,
         tier1_value_cents=0,
@@ -169,8 +170,8 @@ def create_simulation_run(session: Session, request: CreateRunRequest) -> RunCre
         reference_id=f"INITIAL-{run.id}",
         source_type=run.source_type,
         dataset_id=run.dataset_id,
-        source_observation_timestamp=ds.first_timestamp,
-        event_at=ds.first_timestamp,
+        source_observation_timestamp=start_ts,
+        event_at=start_ts,
     )
     session.add(ledger)
     session.flush()

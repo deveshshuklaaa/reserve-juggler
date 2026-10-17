@@ -184,18 +184,103 @@ def transactions(id: UUID, limit: int = Query(50, ge=1, le=200), db: Session = D
 
 
 @router.post("/{id}/backtest", response_model=BacktestResult)
-def backtest(id: UUID, request: BacktestRequest):
-    raise HTTPException(status_code=501, detail={
-        "error_code": "NOT_IMPLEMENTED",
-        "message": "Strategy backtesting engine integration is owned by Agent 2.",
-        "details": {},
-    })
+def backtest(id: UUID, request: BacktestRequest, db: Session = Depends(get_db)):
+    from app.persistence.models import SimulationRun
+    run = db.get(SimulationRun, id)
+    if run is None:
+        raise HTTPException(status_code=404, detail={
+            "error_code": "NOT_FOUND",
+            "message": f"Simulation run {id} not found.",
+            "details": {},
+        })
+    if run.source_type != "ORGANIZER_HISTORICAL":
+        raise HTTPException(status_code=422, detail={
+            "error_code": "UNPROCESSABLE_ENTITY",
+            "message": "Backtesting requires the authoritative organizer historical source",
+            "details": {},
+        })
+    if run.seed is None:
+        raise HTTPException(status_code=422, detail={
+            "error_code": "UNPROCESSABLE_ENTITY",
+            "message": "Run has no reproducible seed",
+            "details": {},
+        })
+
+    days = 7
+    if run.duration_steps == 168:
+        days = 7
+    elif run.duration_steps == 336:
+        days = 14
+    elif run.duration_steps == 720:
+        days = 30
+    elif run.duration_steps and run.duration_steps // 24 in (7, 14, 30):
+        days = run.duration_steps // 24
+
+    import json
+    from app.backtesting.contracts import BacktestRequest as InternalBacktestRequest, ScenarioSpec, canonical_config
+    from app.backtesting.reports import BacktestReportService
+    from app.backtesting.runtime import SharedRuntimeFactory
+    from app.backtesting.service import BacktestService
+
+    def _sanitize_json_for_config(obj):
+        if isinstance(obj, float):
+            return str(obj)
+        if isinstance(obj, dict):
+            return {k: _sanitize_json_for_config(v) for k, v in obj.items()}
+        if isinstance(obj, list):
+            return [_sanitize_json_for_config(v) for v in obj]
+        return obj
+
+    policy_str = canonical_config(json.dumps(_sanitize_json_for_config(run.policy_json or {})))
+    scen_params = (run.policy_json or {}).get("scenario_parameters", {})
+    scen_spec = ScenarioSpec(name=run.scenario, parameters_json=canonical_config(json.dumps(_sanitize_json_for_config(scen_params))))
+
+    bt_req = InternalBacktestRequest(
+        comparison_id=run.id,
+        start=run.source_start_timestamp,
+        days=days,
+        initial_capital_cents=run.initial_cash_cents,
+        seed=run.seed,
+        scenario=scen_spec,
+        policy_json=policy_str,
+    )
+    try:
+        report_svc = BacktestReportService(BacktestService(SharedRuntimeFactory(session=db)))
+        result = report_svc.compare(bt_req)
+        return result
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail={
+            "error_code": "UNPROCESSABLE_ENTITY",
+            "message": str(exc),
+            "details": {},
+        })
 
 
 @router.get("/{id}/report", response_model=PerformanceReport)
-def report(id: UUID):
-    raise HTTPException(status_code=501, detail={
-        "error_code": "NOT_IMPLEMENTED",
-        "message": "Backtest performance reporting is owned by Agent 2.",
-        "details": {},
-    })
+def report(id: UUID, db: Session = Depends(get_db)):
+    from app.persistence.models import SimulationRun
+    from app.backtesting.reports import BacktestReportService
+    from app.backtesting.runtime import RuntimeReceiptUnavailable
+
+    run = db.get(SimulationRun, id)
+    if run is None:
+        raise HTTPException(status_code=404, detail={
+            "error_code": "NOT_FOUND",
+            "message": f"Simulation run {id} not found.",
+            "details": {},
+        })
+    try:
+        return BacktestReportService.report_run(db, id)
+    except KeyError:
+        raise HTTPException(status_code=404, detail={
+            "error_code": "NOT_FOUND",
+            "message": f"Simulation run {id} not found.",
+            "details": {},
+        })
+    except RuntimeReceiptUnavailable as exc:
+        raise HTTPException(status_code=422, detail={
+            "error_code": "UNPROCESSABLE_ENTITY",
+            "message": str(exc),
+            "details": {},
+        })
+
