@@ -114,6 +114,8 @@
     "repaid_principal_cents": 0,
     "apr_pct": "12.0",
     "financing_cost_cents": 20,
+    "paid_financing_cost_cents": 20,
+    "outstanding_financing_cost_cents": 0,
     "breach_id": "00000000-0000-0000-0000-000000000015",
     "reference_id": "fixture-overdraft"
   }],

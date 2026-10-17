@@ -186,9 +186,9 @@
     "semantic_hash": ""
   },
   "tests/treasury_intelligence/fixtures/four_tier_portfolio.json": {
-    "mtime": 1792259693.6720908,
-    "seen": 1792259968.7953777,
-    "ast_hash": "f26f5aabfd15f3fd5bb0de17294bd6c3",
+    "mtime": 1792260558.1885378,
+    "seen": 1792261234.2912502,
+    "ast_hash": "d34842afc42078db3a30d8329cd08fb0",
     "semantic_hash": ""
   },
   "tests/treasury_intelligence/test_contracts.py": {
@@ -222,21 +222,21 @@
     "semantic_hash": ""
   },
   "tests/treasury_intelligence/test_four_tier_contracts.py": {
-    "mtime": 1792259800.8425722,
-    "seen": 1792259968.7953777,
-    "ast_hash": "3c57fe60bed893f4efef60486905e97d",
+    "mtime": 1792260767.4119582,
+    "seen": 1792261234.2927501,
+    "ast_hash": "e74af4037c43a44a84aa6afba2d55b09",
     "semantic_hash": ""
   },
   "treasury_intelligence/__init__.py": {
-    "mtime": 1792259591.150976,
-    "seen": 1792259968.7953777,
-    "ast_hash": "93e03f9fe14fc0072020ddfbcfc87822",
+    "mtime": 1792260557.630092,
+    "seen": 1792261234.2927501,
+    "ast_hash": "de2976b1775a276c8816a71f7c072fac",
     "semantic_hash": ""
   },
   "treasury_intelligence/api.py": {
-    "mtime": 1792259140.1981936,
-    "seen": 1792259968.7953777,
-    "ast_hash": "95f9cce1281727443159012c0013ae1d",
+    "mtime": 1792261035.6085527,
+    "seen": 1792261234.2927501,
+    "ast_hash": "61afdfb67e66413f41f15011a25f3813",
     "semantic_hash": ""
   },
   "treasury_intelligence/demo.py": {
@@ -276,9 +276,9 @@
     "semantic_hash": ""
   },
   "treasury_intelligence/portfolio.py": {
-    "mtime": 1792259914.8829699,
-    "seen": 1792259968.7953777,
-    "ast_hash": "65808f808fa95e390af2327572adea14",
+    "mtime": 1792261034.923633,
+    "seen": 1792261234.2952495,
+    "ast_hash": "034874c282f9200857cdc61e87af406a",
     "semantic_hash": ""
   },
   "treasury_intelligence/reserve.py": {
@@ -348,21 +348,21 @@
     "semantic_hash": ""
   },
   "docs/member1/ENGINE_CONTRACT.md": {
-    "mtime": 1792259915.443999,
-    "seen": 1792259968.7953777,
-    "ast_hash": "7d21218fe440e90d3ffed80952315c17",
+    "mtime": 1792260949.4287531,
+    "seen": 1792261234.300248,
+    "ast_hash": "1706538d704124877083354434655f4f",
     "semantic_hash": ""
   },
   "docs/member1/FOUR_TIER_HANDOFF.md": {
-    "mtime": 1792259915.9901783,
-    "seen": 1792259968.7953777,
-    "ast_hash": "cb00ca5396b11de7c7b01938341850e7",
+    "mtime": 1792260976.6510625,
+    "seen": 1792261234.300248,
+    "ast_hash": "d08ecb09594c946ba5be8c582a10e6ce",
     "semantic_hash": ""
   },
   "docs/member1/PROGRESS.md": {
-    "mtime": 1792259980.174473,
-    "seen": 1792260027.116762,
-    "ast_hash": "607423f187016b0a38fd7d8cebc253bb",
+    "mtime": 1792261217.5495348,
+    "seen": 1792261234.300248,
+    "ast_hash": "5b2721d06ea10a3a7c822a28b5e56dc8",
     "semantic_hash": ""
   },
   "docs/member1/REPO_AUDIT.md": {
@@ -387,6 +387,54 @@
     "mtime": 1792250170.9767287,
     "seen": 1792259968.7953777,
     "ast_hash": "46daa8e9d849cd8c78678b24dae44a83",
+    "semantic_hash": ""
+  },
+  "tests/treasury_intelligence/fixtures/four_tier_request.json": {
+    "mtime": 1792261073.1301963,
+    "seen": 1792261234.2912502,
+    "ast_hash": "3e575f55515f1f194e2f2c42e324355b",
+    "semantic_hash": ""
+  },
+  "tests/treasury_intelligence/fixtures/four_tier_response.json": {
+    "mtime": 1792261076.3155813,
+    "seen": 1792261234.2912502,
+    "ast_hash": "dc5cf51243f5d29a97f8f3a50dad8b47",
+    "semantic_hash": ""
+  },
+  "tests/treasury_intelligence/fixtures/organizer_history.json": {
+    "mtime": 1792260611.8817196,
+    "seen": 1792261234.2912502,
+    "ast_hash": "0ead3736501cc62ffc08ef5ab922a015",
+    "semantic_hash": ""
+  },
+  "tests/treasury_intelligence/fixtures/organizer_hourly_observation.json": {
+    "mtime": 1792260606.878857,
+    "seen": 1792261234.2912502,
+    "ast_hash": "8b842129c9cbacdefb6aa62baa8ad71e",
+    "semantic_hash": ""
+  },
+  "tests/treasury_intelligence/test_contract_reconciliation.py": {
+    "mtime": 1792261079.1884575,
+    "seen": 1792261234.2912502,
+    "ast_hash": "23a8c81a55d0f77909d149a2d33b778f",
+    "semantic_hash": ""
+  },
+  "docs/member1/CONTRACT_RECONCILIATION.md": {
+    "mtime": 1792260469.8870077,
+    "seen": 1792261234.300248,
+    "ast_hash": "74380973a8f701d3b0d919c4cb692beb",
+    "semantic_hash": ""
+  },
+  "docs/member1/MEMBER2_INTEGRATION.md": {
+    "mtime": 1792261126.0385194,
+    "seen": 1792261234.300248,
+    "ast_hash": "509ca0ac078efab58dbafd222f7692b7",
+    "semantic_hash": ""
+  },
+  "docs/member1/MEMBER3_FRONTEND_FIELDS.md": {
+    "mtime": 1792261126.671656,
+    "seen": 1792261234.300248,
+    "ast_hash": "588e1913b65cad2a2b33f0c7938d7727",
     "semantic_hash": ""
   }
 }

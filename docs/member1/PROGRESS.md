@@ -8,6 +8,40 @@
 
 ## Task Log
 
+### [RJ-M1-06 reconciliation] One canonical four-tier family
+- **Status**: Reconciled and tested; publication isolated on
+  `codex/rj-m1-06-contract-reconciliation` with explicit user approval.
+- **Compared**: `87a8217` and `974154e` field by field before integrating histories.
+  Decisions and every retained/renamed/removed schema are recorded in
+  `CONTRACT_RECONCILIATION.md`. Neither commit was automatically canonical.
+- **Canonical module**: `treasury_intelligence.portfolio`. Keep UUID/run/source
+  isolation, explicit cash/liquidity, per-loan liabilities, tier valuations and
+  signed P&L from the local implementation. Port the teammate's useful native
+  source/quote, schedule, cost, forecast-provenance, target and order-time checks.
+  Retire the competing four_tier.py module and old schema payloads; no adapter.
+- **Financial decisions**: No invented quantity-to-index conversion or half-up
+  market-value formula. Historical repo entry is 17:00 with next-day 08:00 maturity.
+  Estimates, accrued/realized interest, P&L, fees and stress are separate. Explicit
+  paid/unpaid financing splits reconcile net liabilities without double charging.
+- **Tests**: Contract suites **162 passed**; all Member 1 **329 passed**; complete
+  branch suite **343 passed**; existing pipeline groups **9 passed**. Commands use
+  `PYTHONPATH=.;backend`, `DATABASE_URL=sqlite:///:memory:` and pytest with
+  `-q -p no:cacheprovider`. Fixture-loop-scope deprecation warning is pre-existing.
+- **Handoff**: ENGINE_CONTRACT and FOUR_TIER_HANDOFF name the same canonical
+  module, exact fields, view-only metadata and unchanged Member 2 persistence.
+  Request/response fixtures use the canonical schema; original source rows retain
+  source net flow and Decimal precision. Contract-only recommendation declaration
+  raises NotImplementedError; no optimizer/forecast/replay is implemented.
+- **Concurrent later work**: The shared branch advanced to `4bcf19c` (hourly
+  forecasting) and `85d0c49` (instrument economics) during reconciliation. Those
+  commits are NOT integrated into this RJ-M1-06 review branch. Adapting later
+  algorithms to the approved canonical contracts is a separately authorized task.
+- **Verification/publishing**: Review Git diff/status, refresh repository Graphify,
+  preserve both audited histories without force-push, rerun the complete tests on
+  the resolved tree, and publish only the approved review branch. Resulting commit
+  hashes and remote confirmation are in the completion report.
+- **Stop**: No RJ-M1-07 work; no Member 2 database/API or frontend changes.
+
 ### [RJ-M1-06] Four-Tier Contract Migration
 - **Status**: COMPLETED (contract-only; no RJ-M1-07 work).
 - **Inspected bases**: Member 1 `c35da91`; Member 2 four-tier persistence `52e58bc`.

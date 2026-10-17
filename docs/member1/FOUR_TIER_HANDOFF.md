@@ -1,82 +1,94 @@
-# RJ-M1-06 — Member 2 four-tier contract handoff
+# Canonical Member 2 handoff — reconciled RJ-M1-06
 
-Authoritative wire types: `treasury_intelligence.portfolio`, also exported at the
-package root. Consume these classes rather than copying their definitions into a
-backend schema. This is a contract handoff, **not** an implemented backend adapter.
+**Import only treasury_intelligence.portfolio or its identical package-root
+exports.** four_tier.py, FourTierPortfolioState, PortfolioRecommendation and
+TradeRecommendation are retired, not parallel schemas. See
+[all field decisions](CONTRACT_RECONCILIATION.md). The pre-RJ-M1-06 generic-vault
+v1 pipeline remains legacy, not a four-tier adapter.
 
 ```python
-from treasury_intelligence import (
+from treasury_intelligence.portfolio import (
     PortfolioState, PortfolioTreasuryContext, CashPosition, RepoPosition,
     BondPosition, EquityPosition, OverdraftLiability, PortfolioValuation,
     FourTierTreasuryPolicy, FourTierReserveResult, RecommendedOrder,
-    FourTierDecisionResult,
+    AllocationTargets, FourTierDecisionResult, FourTierRecommendationRequest,
+    OrganizerHourlyObservation, recommend_portfolio_allocation,
 )
-
 snapshot = PortfolioState.model_validate_json(payload)
 assert PortfolioTreasuryContext is PortfolioState
 wire_json = snapshot.model_dump_json()
 ```
 
-## Existing storage mapping (Member 2 commit 52e58bc)
+The future boundary is recommend_portfolio_allocation(FourTierRecommendationRequest)
+-> FourTierDecisionResult. It raises NotImplementedError. Do not route to the old
+vault engine or regard fixture responses as optimizer output.
 
-Storage source: `backend/app/persistence/models.py` and additive migration
-`003_four_tier_persistence.sql` on `feat/simulation-backend`. These are not present
-on the Member 1 branch and are not recreated, imported or modified here.
+## Exact persistence mapping
 
-| Wire contract | Existing storage | Mapping / supplied view data |
-| --- | --- | --- |
-| `PortfolioSource` | Run/source and observation foreign keys | `run_id`, `source_type`, `dataset_id`, `source_observation_timestamp` have the existing names and units |
-| `CashPosition` | `cash_accounts` | `id`, `balance_cents`, `last_ledger_entry_id`, source fields map directly; tier/zero APY/liquidity are explicit view metadata |
-| `RepoPosition` | `repo_positions` | Principal, entry/maturity, applicable APY, status, early redemption, accrued/realized interest, cost/proceeds and IDs retain existing names |
-| Repo `market_value_cents` | `position_valuations.market_value_cents` | Supplied valuation, separate from position principal; no price or accrual calculation here |
-| `BondPosition` | `bond_positions` | Quantity, acquisition/current index/value, yield/duration, P&L, liquidation cost/proceeds, market observation time retain existing names |
-| `EquityPosition` | `equity_positions` | Same market fields, but volatility instead of yield/duration; no guaranteed interest |
-| `OverdraftLiability` | `overdraft_liabilities` | Borrowed/outstanding/repaid principal, APR, financing cost, breach/reference IDs and timestamps map directly |
-| `PortfolioValuation` | `portfolio_valuations` | All financial and source fields retain existing names; storage generates record ID and recorded_at |
-| `FourTierDecisionResult` | `treasury_decisions` | Its action fits the existing HOLD/ALLOCATE/LIQUIDITY_WARNING storage actions; retain the full typed plan in `decision_details_json` and explanation in `explanation_json` |
-| `RecommendedOrder` | Future execution -> `investment_movements` / `overdraft_movements` + ledger | Recommendation is not a movement. Executor supplies actual filled amounts, costs, times, ledger links and per-run idempotency references |
+Verified against Member 2 models/migration 003 at commit 52e58bc, without importing
+or modifying ORM code. These tables remain on feat/simulation-backend.
 
-Do **not** pass the full wire model directly to an ORM constructor. The wire
-`time_basis`, tier and `PositionLiquidity` are view/control metadata, not new table
-columns. Obtain time basis from the owning run's `source_timezone_status`.
-Member 2's synthetic event columns use naive UTC wall-clock values; an eventual
-adapter may remove timezone information **only after** verifying explicit UTC.
-Historical timestamps remain naive without conversion in both layers.
+| Canonical fields | Existing storage |
+| --- | --- |
+| run_id, source_type, dataset_id, source_observation_timestamp | Same-named source/run/observation references |
+| CashPosition id, balance_cents, last_ledger_entry_id | cash_accounts |
+| RepoPosition id, principal_cents, entered_at, scheduled_maturity_at, applicable_apy_pct, status, early_redemption_at, early_redemption_haircut_pct, accrued_interest_cents, realized_interest_cents, early_redemption_cost_cents, proceeds_returned_cents | repo_positions, same names/units |
+| RepoPosition market_value_cents | position_valuations.market_value_cents, never principal |
+| BondPosition/EquityPosition quantity, acquisition_price_index, acquired_at, current_market_price_index, current_market_value_cents, realized_pnl_cents, unrealized_pnl_cents, liquidation_haircut_pct, liquidation_cost_cents, liquidation_proceeds_cents, market_observation_timestamp, status | bond_positions / equity_positions, same names/units |
+| BondPosition supplied_yield_pct, modified_duration | bond_positions |
+| EquityPosition supplied_volatility_pct | equity_positions |
+| OverdraftLiability id, borrowed_at, borrowed_cents, outstanding_principal_cents, repaid_principal_cents, apr_pct, financing_cost_cents, breach_id, reference_id | overdraft_liabilities |
+| PortfolioValuation valued_at, tier0_cash_cents, tier1_principal_cents, tier1_value_cents, tier2_market_value_cents, tier3_market_value_cents, total_portfolio_value_cents, immediately_available_cents, liquidatable_value_cents, restricted_value_cents, liabilities_cents, net_portfolio_value_cents, reference_id | portfolio_valuations; storage supplies ID/recorded_at |
+| FourTierDecisionResult action / reserve.required_reserve_cents | treasury_decisions action / required_reserve_cents |
+| AllocationTargets four fields | treasury_decisions tier0_target_cents, tier1_allocation_cents, tier2_allocation_cents, tier3_allocation_cents |
+| Whole decision / reason and explanations | decision_details_json / explanation_json; preserve all typed orders and expected-only metadata |
+| RecommendedOrder | Not a financial movement; future executor writes actual fills/costs to investment_movements or overdraft_movements with ledger links |
 
-`PortfolioState.native_interval_seconds` comes from the owning run. Portfolio
-state is an aggregate view, not a new persistence table. Cash and investment
-liquidity, repo current value and portfolio totals must be supplied by the caller;
-this contract migration does not derive them. Database-only `recorded_at` stays
-outside quantitative models. Per-run idempotency and transaction atomicity remain
-the executor/repository's responsibility.
+Do not expand a complete wire dictionary into ORM constructors. These are
+view/control data, not new columns:
 
-The existing decision row still requires `step`, its legacy timestamp/amount fields
-and execution status. Member 2 supplies step/reference metadata; historical legacy
-timestamp stays NULL, action-plan `amount_cents` can remain 0 as its compatibility
-envelope, and recommendation status is PENDING, not EXECUTED. Preserve all orders
-in `decision_details_json`; never collapse multi-instrument amounts into one fake
-vault action. Optional target-allocation columns must not be populated by guessing
-an optimized portfolio from these orders. Source/run columns remain mandatory for
-new repository writes. No such persistence calls are implemented here.
+- time_basis, tier, liquidity and cash apy_pct; aggregate state and quotes;
+- repo market_value_cents (separate valuation), expected_interest_cents,
+  early_redemption_allowed;
+- market acquisition_cost_cents; bond tenor_years and contractual_maturity_at;
+- overdraft paid_financing_cost_cents and outstanding_financing_cost_cents.
 
-## Financial boundaries / unresolved execution questions
+The paid/unpaid split must come from actual supplied financing-movement/ledger
+history, not an assumption that cumulative cost was paid. Raw loan DTOs may leave
+it unknown; a complete portfolio rejects unknown splits. Cumulative incurred
+financing_cost_cents = paid + outstanding cost. Net liabilities include outstanding
+principal plus unpaid cost only; paid cost is already reflected in cash. These
+fields add no persistence mapper, column or posting implementation.
 
-- Supplied current market values and P&L are independent from acquisition values.
-  The contract deliberately does not invent a bond pricing model or an index-unit
-  conversion formula. The future valuation/execution milestone must agree the
-  quantity/notional convention and fill-price/rounding rules.
-- Repo entry/maturity are explicit, using the organizer clock. No guessed timezone,
-  automatic sweep, rollover, accrual day-count or rounding convention is introduced.
-- Financing cost is a supplied incurred/cumulative cost, not automatically added
-  to outstanding principal. Portfolio liabilities must cover outstanding principal
-  but may additionally include separately recognized unpaid financing costs.
-  Cost capitalization/payment treatment must be agreed before execution; otherwise
-  financing costs could be double-counted against cash and liabilities.
-- Model permissions/limits are not proof that an order is executable. Reserve,
-  cash, market prices, fees, maturity and source freshness require revalidation.
-- The old forecasting/pipeline contracts remain UTC generic-vault v1. Supporting
-  hourly organizer forecasts and four-tier decision mathematics belongs to a later
-  explicitly assigned task. No 15-minute organizer observations may be synthesized.
-- This branch does not modify the public API or OpenAPI. Member 2's earlier
-  API/adapter placeholders and this pure contract handoff still need an explicitly
-  approved integration milestone; no engine signatures are invented here.
+The run supplies time_basis from source_timezone_status and native_interval_seconds.
+Historical uses UNSPECIFIED/naive/hourly/USD. Explicit UTC synthetic events may
+lose their offset for Member 2's naive UTC columns only after UTC verification.
+No guessed timezone or synthetic source row is permitted.
+
+OrganizerHourlyObservation retains exactly 16 source columns. Quote mappings:
+repo_apy_pct -> tier1_repo_rate_apy; bond_yield_pct -> tier2_bond_yield_pct;
+equity_volatility_pct -> tier3_stock_volatility_pct; overdraft_apr_pct ->
+emergency_overdraft_penalty_apr_pct; bond_price_index -> tier2_bond_price_index;
+bond_modified_duration_years -> tier2_bond_mod_duration; equity_index_price ->
+tier3_stock_index_price. observed_at is the source timestamp. Preserve Decimal
+strings, supplied net_flow_usd, and fractional rate precision; never convert via float.
+
+Existing decision rows still require step/reference metadata, legacy timestamp/
+amount and execution status. Historical legacy timestamp stays NULL; the multi-
+order envelope amount can remain 0. Persist recommendation status PENDING, not
+EXECUTED. Fixed wire NOT_EXECUTED is not a database receipt. Do not guess targets
+when absent. Use order UUIDs for future idempotency and an atomic execution transaction.
+
+## Explicitly deferred execution questions
+
+- Quantity, acquisition cost, index, current market value and P&L remain supplied,
+  without an invented quantity × index × 100 formula. Agree exposure/notional,
+  fill/partial-fill, fee/accrual rounding and rate/day-count rules before execution.
+- history_available_at is a caller attestation, not derived from a row label.
+  Window eligibility, quote freshness, settlement and all cash legs need revalidation.
+- CostBreakdown contains fee/funding estimates, not market P&L. Observed bond marks
+  and duration stress are not two realized charges. Equity expectations are not interest.
+- Feasibility checks supplied policy/reserve/targets/risk, not actual fill-to-target
+  reconciliation. Response cost covers its modeled horizon, not just order fees.
+- This reconciliation adds no forecasting, optimizer, replay, API/OpenAPI,
+  persistence or frontend behavior. No RJ-M1-07 work is started.

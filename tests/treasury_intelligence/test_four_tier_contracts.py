@@ -175,6 +175,9 @@ def test_synthetic_utc_and_historical_naive_are_explicit_not_converted():
 def test_all_instrument_actions_are_recommendations_only(action, tier):
     data = order()
     data.update(action=action, tier=tier, position_id=UUID(int=10))
+    if action == "INVEST_REPO":
+        data.update(earliest_execution_at="2026-01-01T17:00:00", expected_settlement_at="2026-01-01T17:00:00",
+                    expected_maturity_at="2026-01-02T08:00:00")
     value = engine.RecommendedOrder.model_validate(data)
     assert value.recommendation_only is True
     assert engine.RecommendedOrder.model_validate_json(value.model_dump_json()) == value

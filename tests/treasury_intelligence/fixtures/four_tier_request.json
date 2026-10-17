@@ -1,0 +1,288 @@
+{
+  "request_id": "contract-example",
+  "portfolio": {
+    "time_basis": "UNSPECIFIED",
+    "run_id": "00000000-0000-0000-0000-000000000001",
+    "source_type": "ORGANIZER_HISTORICAL",
+    "dataset_id": "treasury_4tier_dataset:sha256:2e7c1d2e5b678e9975250211e7e0017022049c510e1dd90cd7f29e931837b0c5",
+    "source_observation_timestamp": "2026-01-01T17:00:00",
+    "as_of": "2026-01-01T17:00:00",
+    "native_interval_seconds": 3600,
+    "currency": "USD",
+    "cash": {
+      "time_basis": "UNSPECIFIED",
+      "run_id": "00000000-0000-0000-0000-000000000001",
+      "source_type": "ORGANIZER_HISTORICAL",
+      "dataset_id": "treasury_4tier_dataset:sha256:2e7c1d2e5b678e9975250211e7e0017022049c510e1dd90cd7f29e931837b0c5",
+      "source_observation_timestamp": "2026-01-01T17:00:00",
+      "id": "00000000-0000-0000-0000-000000000010",
+      "liquidity": {
+        "classification": "IMMEDIATE",
+        "available_cents": 200000,
+        "locked_cents": 0,
+        "liquidatable_value_cents": 200000
+      },
+      "tier": 0,
+      "balance_cents": 200000,
+      "last_ledger_entry_id": null,
+      "apy_pct": "0"
+    },
+    "repo_positions": [
+      {
+        "time_basis": "UNSPECIFIED",
+        "run_id": "00000000-0000-0000-0000-000000000001",
+        "source_type": "ORGANIZER_HISTORICAL",
+        "dataset_id": "treasury_4tier_dataset:sha256:2e7c1d2e5b678e9975250211e7e0017022049c510e1dd90cd7f29e931837b0c5",
+        "source_observation_timestamp": "2026-01-01T17:00:00",
+        "id": "00000000-0000-0000-0000-000000000011",
+        "liquidity": {
+          "classification": "LOCKED",
+          "available_cents": 0,
+          "locked_cents": 100010,
+          "liquidatable_value_cents": 99510
+        },
+        "tier": 1,
+        "principal_cents": 100000,
+        "entered_at": "2026-01-01T17:00:00",
+        "scheduled_maturity_at": "2026-01-02T08:00:00",
+        "applicable_apy_pct": "4.308",
+        "status": "LOCKED",
+        "early_redemption_at": null,
+        "early_redemption_haircut_pct": "0.5",
+        "accrued_interest_cents": 10,
+        "realized_interest_cents": null,
+        "early_redemption_cost_cents": null,
+        "proceeds_returned_cents": null,
+        "market_value_cents": 100010,
+        "early_redemption_allowed": null,
+        "expected_interest_cents": null
+      }
+    ],
+    "bond_positions": [
+      {
+        "time_basis": "UNSPECIFIED",
+        "run_id": "00000000-0000-0000-0000-000000000001",
+        "source_type": "ORGANIZER_HISTORICAL",
+        "dataset_id": "treasury_4tier_dataset:sha256:2e7c1d2e5b678e9975250211e7e0017022049c510e1dd90cd7f29e931837b0c5",
+        "source_observation_timestamp": "2026-01-01T17:00:00",
+        "id": "00000000-0000-0000-0000-000000000012",
+        "liquidity": {
+          "classification": "LIQUIDATABLE",
+          "available_cents": 0,
+          "locked_cents": 0,
+          "liquidatable_value_cents": 19590
+        },
+        "quantity": "2",
+        "acquisition_price_index": "100.00",
+        "acquired_at": "2026-01-01T16:00:00",
+        "current_market_price_index": "99.845",
+        "current_market_value_cents": 19990,
+        "realized_pnl_cents": 0,
+        "unrealized_pnl_cents": -10,
+        "liquidation_haircut_pct": "2.0",
+        "liquidation_cost_cents": null,
+        "liquidation_proceeds_cents": null,
+        "market_observation_timestamp": "2026-01-01T17:00:00",
+        "status": "OPEN",
+        "acquisition_cost_cents": null,
+        "tier": 2,
+        "supplied_yield_pct": "4.881",
+        "modified_duration": "1.92",
+        "tenor_years": 2,
+        "contractual_maturity_at": null
+      }
+    ],
+    "equity_positions": [
+      {
+        "time_basis": "UNSPECIFIED",
+        "run_id": "00000000-0000-0000-0000-000000000001",
+        "source_type": "ORGANIZER_HISTORICAL",
+        "dataset_id": "treasury_4tier_dataset:sha256:2e7c1d2e5b678e9975250211e7e0017022049c510e1dd90cd7f29e931837b0c5",
+        "source_observation_timestamp": "2026-01-01T17:00:00",
+        "id": "00000000-0000-0000-0000-000000000013",
+        "liquidity": {
+          "classification": "LIQUIDATABLE",
+          "available_cents": 0,
+          "locked_cents": 0,
+          "liquidatable_value_cents": 433500
+        },
+        "quantity": "1",
+        "acquisition_price_index": "5000.00",
+        "acquired_at": "2026-01-01T16:00:00",
+        "current_market_price_index": "4954.89",
+        "current_market_value_cents": 510000,
+        "realized_pnl_cents": 0,
+        "unrealized_pnl_cents": 10000,
+        "liquidation_haircut_pct": "15.0",
+        "liquidation_cost_cents": null,
+        "liquidation_proceeds_cents": null,
+        "market_observation_timestamp": "2026-01-01T17:00:00",
+        "status": "OPEN",
+        "acquisition_cost_cents": null,
+        "tier": 3,
+        "supplied_volatility_pct": "18.0"
+      }
+    ],
+    "overdrafts": [
+      {
+        "time_basis": "UNSPECIFIED",
+        "run_id": "00000000-0000-0000-0000-000000000001",
+        "source_type": "ORGANIZER_HISTORICAL",
+        "dataset_id": "treasury_4tier_dataset:sha256:2e7c1d2e5b678e9975250211e7e0017022049c510e1dd90cd7f29e931837b0c5",
+        "source_observation_timestamp": "2026-01-01T17:00:00",
+        "id": "00000000-0000-0000-0000-000000000014",
+        "borrowed_at": "2026-01-01T16:00:00",
+        "borrowed_cents": 10000,
+        "outstanding_principal_cents": 10000,
+        "repaid_principal_cents": 0,
+        "apr_pct": "12.0",
+        "financing_cost_cents": 20,
+        "paid_financing_cost_cents": 20,
+        "outstanding_financing_cost_cents": 0,
+        "breach_id": "00000000-0000-0000-0000-000000000015",
+        "reference_id": "fixture-overdraft"
+      }
+    ],
+    "valuation": {
+      "time_basis": "UNSPECIFIED",
+      "run_id": "00000000-0000-0000-0000-000000000001",
+      "source_type": "ORGANIZER_HISTORICAL",
+      "dataset_id": "treasury_4tier_dataset:sha256:2e7c1d2e5b678e9975250211e7e0017022049c510e1dd90cd7f29e931837b0c5",
+      "source_observation_timestamp": "2026-01-01T17:00:00",
+      "valued_at": "2026-01-01T17:00:00",
+      "tier0_cash_cents": 200000,
+      "tier1_principal_cents": 100000,
+      "tier1_value_cents": 100010,
+      "tier2_market_value_cents": 19990,
+      "tier3_market_value_cents": 510000,
+      "total_portfolio_value_cents": 830000,
+      "immediately_available_cents": 200000,
+      "liquidatable_value_cents": 752600,
+      "restricted_value_cents": 100010,
+      "liabilities_cents": 10000,
+      "net_portfolio_value_cents": 820000,
+      "reference_id": "fixture-valuation"
+    },
+    "market_rates": {
+      "time_basis": "UNSPECIFIED",
+      "observed_at": "2026-01-01T17:00:00",
+      "repo_apy_pct": "4.308",
+      "bond_yield_pct": "4.881",
+      "equity_volatility_pct": "18.0",
+      "overdraft_apr_pct": "12.0"
+    },
+    "market_prices": {
+      "time_basis": "UNSPECIFIED",
+      "observed_at": "2026-01-01T17:00:00",
+      "bond_price_index": "99.845",
+      "bond_modified_duration_years": "1.92",
+      "equity_index_price": "4954.89"
+    }
+  },
+  "history": [
+    {
+      "timestamp": "2026-01-01T16:00:00",
+      "deposits_usd": "15575194.12",
+      "withdrawals_usd": "14150610.98",
+      "net_flow_usd": "1424583.14",
+      "repo_sweep_window_open": false,
+      "repo_sweep_mature": false,
+      "tier1_repo_rate_apy": "4.309",
+      "tier2_bond_yield_pct": "4.872",
+      "tier2_bond_price_index": "99.861",
+      "tier2_bond_mod_duration": "1.92",
+      "tier3_stock_index_price": "4948.71",
+      "tier3_stock_volatility_pct": "18.0",
+      "tier1_early_redemption_haircut_pct": "0.5",
+      "tier2_bond_liquidation_haircut_pct": "2.0",
+      "tier3_stock_liquidation_haircut_pct": "15.0",
+      "emergency_overdraft_penalty_apr_pct": "12.0"
+    },
+    {
+      "timestamp": "2026-01-01T17:00:00",
+      "deposits_usd": "13143306.97",
+      "withdrawals_usd": "14653559.74",
+      "net_flow_usd": "-1510252.76",
+      "repo_sweep_window_open": true,
+      "repo_sweep_mature": false,
+      "tier1_repo_rate_apy": "4.308",
+      "tier2_bond_yield_pct": "4.881",
+      "tier2_bond_price_index": "99.845",
+      "tier2_bond_mod_duration": "1.92",
+      "tier3_stock_index_price": "4954.89",
+      "tier3_stock_volatility_pct": "18.0",
+      "tier1_early_redemption_haircut_pct": "0.5",
+      "tier2_bond_liquidation_haircut_pct": "2.0",
+      "tier3_stock_liquidation_haircut_pct": "15.0",
+      "emergency_overdraft_penalty_apr_pct": "12.0"
+    }
+  ],
+  "policy": {
+    "base_buffer_cents": 10,
+    "uncertainty_multiplier_bps": 10000,
+    "tolerance_bps": 0,
+    "min_transfer_cents": 100,
+    "max_allocation_bps": 10000,
+    "repo_sweep_window_open": true,
+    "allow_early_repo_redemption": false,
+    "allow_bond_liquidation": false,
+    "allow_emergency_equity_liquidation": false,
+    "tier_limits": [
+      {
+        "tier": 0,
+        "max_allocation_bps": 10000,
+        "min_allocation_bps": 0
+      },
+      {
+        "tier": 1,
+        "max_allocation_bps": 10000,
+        "min_allocation_bps": 0
+      },
+      {
+        "tier": 2,
+        "max_allocation_bps": 10000,
+        "min_allocation_bps": 0
+      },
+      {
+        "tier": 3,
+        "max_allocation_bps": 10000,
+        "min_allocation_bps": 0
+      }
+    ],
+    "minimum_liquid_reserve_cents": 0,
+    "max_estimated_loss_cents": 100,
+    "allow_overdraft": true,
+    "max_overdraft_cents": 10000,
+    "bond_risk_method": "observed_index_with_separate_duration_stress"
+  },
+  "metadata": {
+    "time_basis": "UNSPECIFIED",
+    "model_version": "supplied-contract-example",
+    "generated_at": "2026-01-01T17:00:00",
+    "training_data_through": "2026-01-01T17:00:00",
+    "granularity_hours": 1,
+    "net_flow_target": "source_net_flow_usd",
+    "uncertainty_status": "provisional_uncalibrated",
+    "evaluation_reference": null,
+    "notes": []
+  },
+  "forecast": [
+    {
+      "time_basis": "UNSPECIFIED",
+      "start_at": "2026-01-01T18:00:00",
+      "predicted_deposits_cents": 100,
+      "predicted_withdrawals_cents": 200,
+      "predicted_net_flow_cents": -101,
+      "supplied_uncertainty_buffer_cents": 20
+    },
+    {
+      "time_basis": "UNSPECIFIED",
+      "start_at": "2026-01-01T19:00:00",
+      "predicted_deposits_cents": 200,
+      "predicted_withdrawals_cents": 100,
+      "predicted_net_flow_cents": 100,
+      "supplied_uncertainty_buffer_cents": 20
+    }
+  ],
+  "history_available_at": "2026-01-01T17:00:00"
+}

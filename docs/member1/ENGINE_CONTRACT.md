@@ -1,5 +1,11 @@
 # Quantitative engine contracts: legacy v1 and four-tier v1
 
+**Canonical four-tier module: `treasury_intelligence.portfolio`.** This reconciles
+`87a8217` and `974154e`; it is not two supported schema families. The independent
+`four_tier.py` schemas and payloads are retired without a compatibility adapter.
+See [every field decision](CONTRACT_RECONCILIATION.md) and the exact
+[Member 2 handoff](FOUR_TIER_HANDOFF.md).
+
 RJ-M1-06 adds the authoritative organizer four-tier contracts in
 `treasury_intelligence.portfolio`; see the section at the end and
 [Member 2 field mapping](FOUR_TIER_HANDOFF.md). All earlier sections below describe
@@ -368,10 +374,12 @@ remain Member 2-owned; no ORM, database, HTTP or frontend imports are required.
 `PortfolioState` is the only four-tier context. It contains current unsettled repo
 and open market positions; closed/redeemed records belong to history. Snapshot
 validation checks identity/source isolation, no future observations/acquisitions,
-current valuation completeness, tier totals, liquidity totals and minimum liability
-coverage. A maturity date is not a cash credit. Repo entry and maturity are explicit:
+current valuation completeness, tier totals, liquidity totals and exact liabilities.
+A maturity date is not a cash credit. Repo entry and maturity are explicit:
 17:00 to 08:00 next morning is a 15-hour representation, not a generic 24-hour vault.
-The schema checks ordering, not holiday calendars or automatic schedule execution.
+Historical positions and new entry orders validate that exact session. Synthetic
+UTC schedules require ordering without a guessed banking timezone. There is no
+holiday calendar or automatic execution.
 
 Portfolio gross assets are not available cash. Net value deducts liabilities and
 can be negative. Liquidatable value includes immediately available cash plus
@@ -393,10 +401,11 @@ executor must validate quantity/notional consistency against actual prices.
 
 `recommendation_only` is always boolean true. ALLOCATE requires one or more uniquely
 identified orders. HOLD and LIQUIDITY_WARNING require no orders. Orders and reserves
-must share the decision's time; sources/runs must agree. No execution-status or
-ledger mutation is implied. The caller must revalidate balances, reserve coverage,
-eligibility, settlement, costs and permissions before execution. This task adds no
-four-tier recommendation function or forecasting algorithm.
+must share the decision's time; sources/runs must agree. Fixed
+execution_status=NOT_EXECUTED is not an execution receipt. The caller must
+revalidate balances, reserve coverage, eligibility, settlement, costs and
+permissions before execution. The new declaration below raises NotImplementedError;
+no forecasting/optimization algorithm or legacy-vault adapter is implemented.
 
 ### Compatibility decisions
 
@@ -416,3 +425,87 @@ Pydantic API. Nested collections are tuples (JSON arrays). Read
 contract example**, not an assertion of actual organizer market values or trades.
 JSON schemas are available with `model_json_schema()` and
 `TypeAdapter(TreasuryPosition).json_schema()`; no OpenAPI change is included.
+
+### Reconciled source, risk and recommendation fields
+
+`OrganizerHourlyObservation` has exactly the 16 source columns. Timestamp is
+intrinsically naive and hourly, so there is no seventeenth time-basis field.
+Finite Decimal amounts, rates, indices and independent net_flow_usd survive JSON
+round trips; only flag fields accept CSV True/False strings. Modified duration is
+strictly positive, matching Member 2. There is no resampling or derived-net rewrite.
+
+`MarketRateObservation` holds time_basis, observed_at, repo_apy_pct, bond_yield_pct,
+equity_volatility_pct, overdraft_apr_pct. `MarketPriceObservation` holds time_basis,
+observed_at, bond_price_index, bond_modified_duration_years, equity_index_price.
+Quotes are optional on stored-state views. When supplied, position marks,
+duration, yield and volatility must match them. Historical recommendation input
+requires both quote views matching the latest referenced source row. Repo entry
+APY need not equal a later floating quote: no rate-reset rule is invented.
+
+Repo optional expected_interest_cents is distinct from accrued/realized interest;
+early_redemption_allowed is supplied view permission. Market positions may carry
+acquisition_cost_cents. Bonds may carry contractual_maturity_at and tenor_years=2;
+the 2Y label does not invent an acquisition/maturity calendar. These view fields
+are not new database columns. Quantity, current value and P&L remain supplied;
+there is no quantity × index × 100 or half-up market-value validator. Observed
+bond marks and hypothetical duration stress must not become duplicate losses.
+
+Overdraft financing_cost_cents means cumulative incurred cost. It equals
+paid_financing_cost_cents + outstanding_financing_cost_cents when known. A complete
+portfolio requires the split explicitly, including zeros. Liabilities equal all
+outstanding principal plus unpaid financing cost, exactly. Paid cost is already
+reflected in cash and is not deducted again. No automatic capitalization occurs.
+Borrowing limits are explicit aggregate policy inputs, not invented loan fields.
+
+`CostBreakdown` contains liquidation_fee_cents, repo_break_fee_cents,
+transaction_cost_cents and funding_cost_cents, never market losses. Order
+expected_costs must sum to supplied estimated_cost_cents. Response cost covers its
+modeled horizon, including existing holdings, and need not equal only proposed
+order fees; neither estimate is an actual posting. `InstrumentReturnEstimate`
+separates expected income, signed price change, costs, stress loss, horizon and
+estimate basis, with realized=false. Equity expectations are not guaranteed interest.
+
+Policy retains all legacy buffer/cap fields and explicit repo/liquidation controls.
+It adds minimum_liquid_reserve_cents, optional max_estimated_loss_cents,
+allow_overdraft, max_overdraft_cents and the observed-index/separate-duration-stress
+label. `TierAllocationLimit` covers 0–3 with exact integer min_allocation_bps and
+max_allocation_bps. Bounds must be ordered; all four bounds together must permit
+full allocation. Fractional limits are not silently rounded to bps. Disabled
+overdraft requires zero limit.
+
+`ForecastRiskMetadata` contains time_basis, model_version, generated_at,
+training_data_through, granularity_hours=1, net_flow_target=source_net_flow_usd,
+uncertainty_status, optional evaluation_reference and notes. Evaluated status needs
+a supplied reference; no evaluation is performed here. `HourlyForecastPoint`
+contains time_basis, start_at, separate predicted deposits/withdrawals/net cents,
+and supplied uncertainty. Predicted net remains independent of component sums.
+
+`FourTierRecommendationRequest` has request_id, canonical portfolio/policy,
+history, supplied forecast, metadata and history_available_at. The last field is
+the caller's explicit attestation that the full history was available by decision
+time: source-hour totals are not assumed known at their start. This source-history
+envelope is historical only; synthetic snapshots remain supported without an
+invented synthetic history schema. History/forecasts are contiguous ordered hourly
+inputs with matching clocks, cutoffs and source-backed market quotes.
+
+Orders add paired earliest_execution_at / expected_settlement_at and optional
+expected_maturity_at. Historical INVEST_REPO requires the complete 17:00/08:00
+session. Settlement cannot precede execution or execution precede decision.
+Repayment identifies the existing liability UUID.
+
+`AllocationTargets` fields exactly match Member 2: tier0_target_cents,
+tier1_allocation_cents, tier2_allocation_cents, tier3_allocation_cents. Optional
+decision targets and allocation_budget_cents are supplied together and sum exactly.
+Budget is post-modeled-cost gross asset allocation, not net worth. Debt target is
+separate. Optional feasibility requires explicit policy, targets and debt target;
+true feasibility must satisfy supplied reserve/exposure/debt/risk limits. A warning
+cannot claim feasibility, and ALLOCATE cannot claim infeasibility. Optional
+request_id, expected_costs, estimated_market_risk_loss_cents, instrument_returns,
+policy, metadata and explanations are supplied context, not computed results.
+Schema validation does not reconcile actual fills to targets or authorize execution.
+
+```python
+recommend_portfolio_allocation(
+    request: FourTierRecommendationRequest,
+) -> FourTierDecisionResult  # contract-only; raises NotImplementedError
+```

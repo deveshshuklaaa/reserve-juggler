@@ -29,6 +29,9 @@ from .portfolio import (
     EquityPosition, TreasuryPosition, OverdraftLiability, PortfolioValuation,
     PortfolioState, PortfolioTreasuryContext, TierAllocationLimit,
     FourTierTreasuryPolicy, FourTierReserveResult, RecommendedOrder, FourTierDecisionResult,
+    InstrumentId, OrganizerHourlyObservation, MarketRateObservation, MarketPriceObservation,
+    CostBreakdown, AllocationTargets, InstrumentReturnEstimate, ForecastRiskMetadata,
+    HourlyForecastPoint, FourTierRecommendationRequest, recommend_portfolio_allocation,
 )
 
 __all__ = [
@@ -48,4 +51,7 @@ __all__ = [
     "EquityPosition", "TreasuryPosition", "OverdraftLiability", "PortfolioValuation",
     "PortfolioState", "PortfolioTreasuryContext", "TierAllocationLimit",
     "FourTierTreasuryPolicy", "FourTierReserveResult", "RecommendedOrder", "FourTierDecisionResult",
+    "InstrumentId", "OrganizerHourlyObservation", "MarketRateObservation", "MarketPriceObservation",
+    "CostBreakdown", "AllocationTargets", "InstrumentReturnEstimate", "ForecastRiskMetadata",
+    "HourlyForecastPoint", "FourTierRecommendationRequest", "recommend_portfolio_allocation",
 ]

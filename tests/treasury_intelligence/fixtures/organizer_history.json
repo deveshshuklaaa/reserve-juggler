@@ -1,0 +1,38 @@
+[
+  {
+    "timestamp": "2026-01-01T16:00:00",
+    "deposits_usd": "15575194.12",
+    "withdrawals_usd": "14150610.98",
+    "net_flow_usd": "1424583.14",
+    "repo_sweep_window_open": false,
+    "repo_sweep_mature": false,
+    "tier1_repo_rate_apy": "4.309",
+    "tier2_bond_yield_pct": "4.872",
+    "tier2_bond_price_index": "99.861",
+    "tier2_bond_mod_duration": "1.92",
+    "tier3_stock_index_price": "4948.71",
+    "tier3_stock_volatility_pct": "18.0",
+    "tier1_early_redemption_haircut_pct": "0.5",
+    "tier2_bond_liquidation_haircut_pct": "2.0",
+    "tier3_stock_liquidation_haircut_pct": "15.0",
+    "emergency_overdraft_penalty_apr_pct": "12.0"
+  },
+  {
+    "timestamp": "2026-01-01T17:00:00",
+    "deposits_usd": "13143306.97",
+    "withdrawals_usd": "14653559.74",
+    "net_flow_usd": "-1510252.76",
+    "repo_sweep_window_open": true,
+    "repo_sweep_mature": false,
+    "tier1_repo_rate_apy": "4.308",
+    "tier2_bond_yield_pct": "4.881",
+    "tier2_bond_price_index": "99.845",
+    "tier2_bond_mod_duration": "1.92",
+    "tier3_stock_index_price": "4954.89",
+    "tier3_stock_volatility_pct": "18.0",
+    "tier1_early_redemption_haircut_pct": "0.5",
+    "tier2_bond_liquidation_haircut_pct": "2.0",
+    "tier3_stock_liquidation_haircut_pct": "15.0",
+    "emergency_overdraft_penalty_apr_pct": "12.0"
+  }
+]

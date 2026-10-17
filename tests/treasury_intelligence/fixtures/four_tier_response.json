@@ -1,0 +1,134 @@
+{
+  "time_basis": "UNSPECIFIED",
+  "run_id": "00000000-0000-0000-0000-000000000001",
+  "source_type": "ORGANIZER_HISTORICAL",
+  "dataset_id": "treasury_4tier_dataset:sha256:2e7c1d2e5b678e9975250211e7e0017022049c510e1dd90cd7f29e931837b0c5",
+  "source_observation_timestamp": "2026-01-01T17:00:00",
+  "as_of": "2026-01-01T17:00:00",
+  "recommendation_only": true,
+  "action": "ALLOCATE",
+  "reserve": {
+    "as_of": "2026-01-01T17:00:00",
+    "net_drain_cents": 100,
+    "uncertainty_buffer_cents": 20,
+    "base_buffer_cents": 10,
+    "required_reserve_cents": 130,
+    "time_basis": "UNSPECIFIED"
+  },
+  "orders": [
+    {
+      "time_basis": "UNSPECIFIED",
+      "run_id": "00000000-0000-0000-0000-000000000001",
+      "source_type": "ORGANIZER_HISTORICAL",
+      "dataset_id": "treasury_4tier_dataset:sha256:2e7c1d2e5b678e9975250211e7e0017022049c510e1dd90cd7f29e931837b0c5",
+      "source_observation_timestamp": "2026-01-01T17:00:00",
+      "id": "00000000-0000-0000-0000-000000000014",
+      "as_of": "2026-01-01T17:00:00",
+      "recommendation_only": true,
+      "action": "BUY_BONDS",
+      "tier": 2,
+      "position_id": null,
+      "amount_cents": 100,
+      "quantity": null,
+      "estimated_cost_cents": 0,
+      "expected_proceeds_cents": null,
+      "reason": "Illustrative supplied order, not an optimizer result",
+      "execution_status": "NOT_EXECUTED",
+      "earliest_execution_at": null,
+      "expected_settlement_at": null,
+      "expected_maturity_at": null,
+      "expected_costs": {
+        "liquidation_fee_cents": 0,
+        "repo_break_fee_cents": 0,
+        "transaction_cost_cents": 0,
+        "funding_cost_cents": 0
+      }
+    }
+  ],
+  "reason": "Constructed contract example",
+  "execution_status": "NOT_EXECUTED",
+  "request_id": "contract-example",
+  "feasible": true,
+  "allocation_budget_cents": 830000,
+  "targets": {
+    "tier0_target_cents": 199900,
+    "tier1_allocation_cents": 100010,
+    "tier2_allocation_cents": 20090,
+    "tier3_allocation_cents": 510000
+  },
+  "target_overdraft_principal_cents": 10000,
+  "expected_costs": {
+    "liquidation_fee_cents": 0,
+    "repo_break_fee_cents": 0,
+    "transaction_cost_cents": 0,
+    "funding_cost_cents": 0
+  },
+  "estimated_market_risk_loss_cents": 50,
+  "instrument_returns": [
+    {
+      "instrument": "TIER3_EQUITY",
+      "horizon_hours": 1,
+      "expected_income_cents": 0,
+      "expected_price_change_cents": -5,
+      "expected_costs": {
+        "liquidation_fee_cents": 0,
+        "repo_break_fee_cents": 0,
+        "transaction_cost_cents": 0,
+        "funding_cost_cents": 0
+      },
+      "estimated_stress_loss_cents": 10,
+      "estimate_basis": "supplied illustrative assumption; not evaluated",
+      "realized": false
+    }
+  ],
+  "policy": {
+    "base_buffer_cents": 10,
+    "uncertainty_multiplier_bps": 10000,
+    "tolerance_bps": 0,
+    "min_transfer_cents": 100,
+    "max_allocation_bps": 10000,
+    "repo_sweep_window_open": true,
+    "allow_early_repo_redemption": false,
+    "allow_bond_liquidation": false,
+    "allow_emergency_equity_liquidation": false,
+    "tier_limits": [
+      {
+        "tier": 0,
+        "max_allocation_bps": 10000,
+        "min_allocation_bps": 0
+      },
+      {
+        "tier": 1,
+        "max_allocation_bps": 10000,
+        "min_allocation_bps": 0
+      },
+      {
+        "tier": 2,
+        "max_allocation_bps": 10000,
+        "min_allocation_bps": 0
+      },
+      {
+        "tier": 3,
+        "max_allocation_bps": 10000,
+        "min_allocation_bps": 0
+      }
+    ],
+    "minimum_liquid_reserve_cents": 0,
+    "max_estimated_loss_cents": 100,
+    "allow_overdraft": true,
+    "max_overdraft_cents": 10000,
+    "bond_risk_method": "observed_index_with_separate_duration_stress"
+  },
+  "metadata": {
+    "time_basis": "UNSPECIFIED",
+    "model_version": "supplied-contract-example",
+    "generated_at": "2026-01-01T17:00:00",
+    "training_data_through": "2026-01-01T17:00:00",
+    "granularity_hours": 1,
+    "net_flow_target": "source_net_flow_usd",
+    "uncertainty_status": "provisional_uncalibrated",
+    "evaluation_reference": null,
+    "notes": []
+  },
+  "explanations": []
+}
