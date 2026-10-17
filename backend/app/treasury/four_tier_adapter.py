@@ -382,51 +382,61 @@ def hydrate_portfolio_state(
     return state, cash_acc, db_repos, db_bonds, db_equities, db_overdrafts
 
 
+def get_information_cutoff(as_of: datetime) -> datetime:
+    """Returns the strict causal observation-availability cutoff for decision time as_of.
+
+    Organizer timestamps have unspecified timezone and publication semantics.
+    A row timestamped T records the aggregated flows that occurred during hour T.
+    Those complete hourly flows are finalized and available only after hour T closes (at T + 1 hour).
+    Therefore, at decision timestamp `as_of`, the latest fully observed and published
+    hourly observation is `as_of - timedelta(hours=1)`.
+    """
+    return as_of - timedelta(hours=1)
+
+
 def generate_hourly_forecast_points(
     session: Session,
     dataset_id: str,
     as_of: datetime,
     horizon_hours: int = 24,
 ) -> tuple[HourlyForecastPoint, ...]:
-    """Generates the forward hourly forecast path for liquidity risk evaluation."""
-    future_obs = list(
+    """Generates the forward hourly forecast path for liquidity risk evaluation causally without lookahead."""
+    cutoff = get_information_cutoff(as_of)
+    history = list(
         session.scalars(
             select(DbOrganizerObservation)
             .where(
                 DbOrganizerObservation.dataset_id == dataset_id,
-                DbOrganizerObservation.timestamp >= as_of,
+                DbOrganizerObservation.timestamp <= cutoff,
             )
-            .order_by(DbOrganizerObservation.timestamp)
-            .limit(horizon_hours)
+            .order_by(DbOrganizerObservation.timestamp.asc())
         ).all()
     )
 
+    for obs in history:
+        if obs.timestamp > cutoff:
+            raise ValueError(
+                f"Causal violation: observation at {obs.timestamp} is after cutoff {cutoff}"
+            )
+
+    result = forecast_hourly_cashflows(
+        history,
+        as_of=as_of,
+        horizon_hours=horizon_hours,
+        start_at=as_of,
+    )
     points: list[HourlyForecastPoint] = []
-    for i in range(horizon_hours):
-        start_time = as_of + timedelta(hours=i)
-        if i < len(future_obs):
-            obs = future_obs[i]
-            dep_cents = int(round(obs.deposits_usd * Decimal(100)))
-            wd_cents = int(round(obs.withdrawals_usd * Decimal(100)))
-            net_cents = dep_cents - wd_cents
-        else:
-            dep_cents = 0
-            wd_cents = 0
-            net_cents = 0
-
-        uncert_cents = int(round(abs(Decimal(net_cents)) * Decimal("0.10"))) + 5000000
-
+    for p in result.points:
         points.append(
             HourlyForecastPoint(
                 time_basis="UNSPECIFIED",
-                start_at=start_time,
-                predicted_deposits_cents=dep_cents,
-                predicted_withdrawals_cents=wd_cents,
-                predicted_net_flow_cents=net_cents,
-                supplied_uncertainty_buffer_cents=uncert_cents,
+                start_at=p.start_at,
+                predicted_deposits_cents=p.predicted_deposits_cents,
+                predicted_withdrawals_cents=p.predicted_withdrawals_cents,
+                predicted_net_flow_cents=p.predicted_net_flow_cents,
+                supplied_uncertainty_buffer_cents=p.supplied_uncertainty_buffer_cents,
             )
         )
-
     return tuple(points)
 
 
@@ -434,8 +444,15 @@ def evaluate_liquidity_risk(
     portfolio: PortfolioState,
     policy: FourTierTreasuryPolicy,
     forecast: tuple[HourlyForecastPoint, ...],
+    calibrated_allowance: CalibratedForecastAllowance | None = None,
 ) -> FourTierLiquidityRiskResult:
-    """Invokes Member 1's calculate_four_tier_liquidity_risk engine."""
+    """Invokes Member 1's calculate_four_tier_liquidity_risk engine with causal validation."""
+    cutoff = get_information_cutoff(portfolio.as_of)
+    if calibrated_allowance is not None and calibrated_allowance.calibrated_through > cutoff:
+        raise ValueError(
+            f"Calibration artifact dated {calibrated_allowance.calibrated_through} "
+            f"is after information cutoff {cutoff} (lookahead breach)"
+        )
     repo_settlements = tuple(
         RepoCashSettlement(
             time_basis=portfolio.time_basis,

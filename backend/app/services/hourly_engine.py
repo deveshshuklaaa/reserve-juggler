@@ -38,8 +38,37 @@ from app.services.treasury_adapter import (
     build_four_tier_policy,
     evaluate_liquidity_risk,
     get_hourly_forecasts_from_db,
+    get_information_cutoff,
     hydrate_portfolio_state,
 )
+
+STRATEGY_STATIC = "STATIC"
+STRATEGY_REACTIVE = "REACTIVE"
+STRATEGY_RESERVE_JUGGLER = "RESERVE_JUGGLER"
+
+CANONICAL_STRATEGIES = {
+    "STATIC": STRATEGY_STATIC,
+    "STATIC_RESERVE": STRATEGY_STATIC,
+    "REACTIVE": STRATEGY_REACTIVE,
+    "REACTIVE_RESERVE": STRATEGY_REACTIVE,
+    "RESERVE_JUGGLER": STRATEGY_RESERVE_JUGGLER,
+}
+
+
+def normalize_strategy_id(strategy_name: str | None) -> str:
+    """Normalizes strategy identifier to canonical ID: STATIC, REACTIVE, or RESERVE_JUGGLER.
+    
+    Accepts both canonical frontend IDs and legacy aliases.
+    """
+    if not strategy_name:
+        return STRATEGY_RESERVE_JUGGLER
+    key = str(strategy_name).strip().upper()
+    if key in CANONICAL_STRATEGIES:
+        return CANONICAL_STRATEGIES[key]
+    raise ValueError(
+        f"Unknown strategy '{strategy_name}'. Expected one of: STATIC, REACTIVE, RESERVE_JUGGLER "
+        f"(or legacy aliases STATIC_RESERVE, REACTIVE_RESERVE)"
+    )
 
 
 class StepConflictError(Exception):
@@ -75,6 +104,7 @@ def execute_hourly_step(
     session: Session,
     run_id: UUID,
     expected_step: int | None = None,
+    strategy: str | None = None,
 ) -> dict[str, Any]:
     """Executes exactly one hour of the simulation.
     
@@ -279,9 +309,8 @@ def execute_hourly_step(
         if policy_obj.allow_early_repo_redemption:
             active_repos = [r for r in db_repos if r.status in ("ACTIVE", "LOCKED")]
             for r in active_repos:
-                if cash_shortfall <= 0:
-                    break
-                penalty = int(r.principal_cents * (r.early_break_fee_bps / Decimal("10000")))
+                haircut = r.early_redemption_haircut_pct if r.early_redemption_haircut_pct is not None else Decimal("0.50")
+                penalty = int(r.principal_cents * (haircut / Decimal("100")))
                 recoverable = max(0, r.principal_cents - penalty)
                 use_amount = min(cash_shortfall, recoverable)
                 r.status = "REDEEMED"
@@ -448,7 +477,7 @@ def execute_hourly_step(
                     run_id=run.id,
                     liability_id=od.id,
                     occurred_at=observation.timestamp,
-                    kind="REPAY",
+                    kind="REPAYMENT",
                     principal_cents=repay_cents,
                     financing_cost_cents=0,
                     cash_delta_cents=-repay_cents,
@@ -460,14 +489,49 @@ def execute_hourly_step(
                 )
             )
 
-    # 5. 17:00 Overnight Repo Sweep
-    forecasts = get_hourly_forecasts_from_db(
-        session, run.dataset_id, observation.timestamp, horizon_hours=4
-    )
-    risk_result = evaluate_liquidity_risk(
-        portfolio, policy_obj, observation, forecasts=forecasts, horizon_hours=4
-    )
-    req_reserve = risk_result.reserve.required_reserve_cents
+    # 5. Required Reserve & Sweep Decision by Strategy
+    active_strategy = normalize_strategy_id(strategy or policy_dict.get("strategy"))
+    cutoff = get_information_cutoff(observation.timestamp)
+
+    forecasts = None
+    if active_strategy == STRATEGY_STATIC:
+        req_reserve = policy_obj.base_buffer_cents
+        strategy_rationale = f"STATIC strategy: fixed buffer of {req_reserve} cents."
+    elif active_strategy == STRATEGY_REACTIVE:
+        trailing_start = cutoff - timedelta(hours=24)
+        recent_obs = list(
+            session.scalars(
+                select(DbOrganizerObservation).where(
+                    DbOrganizerObservation.dataset_id == run.dataset_id,
+                    DbOrganizerObservation.timestamp <= cutoff,
+                    DbOrganizerObservation.timestamp >= trailing_start,
+                )
+            ).all()
+        )
+        max_withdrawal = max(
+            [int(round(o.withdrawals_usd * 100)) for o in recent_obs],
+            default=0,
+        )
+        req_reserve = max(
+            policy_obj.base_buffer_cents,
+            max_withdrawal + (policy_obj.base_buffer_cents // 2),
+        )
+        strategy_rationale = (
+            f"REACTIVE strategy: buffer set to {req_reserve} cents based on trailing 24h peak withdrawal of {max_withdrawal} cents."
+        )
+    else:
+        forecasts = get_hourly_forecasts_from_db(
+            session, run.dataset_id, observation.timestamp, horizon_hours=4
+        )
+        risk_result = evaluate_liquidity_risk(
+            portfolio, policy_obj, observation, forecasts=forecasts, horizon_hours=4
+        )
+        req_reserve = risk_result.reserve.required_reserve_cents
+        strategy_rationale = (
+            f"RESERVE_JUGGLER: dynamic required reserve {req_reserve} cents (net drain: "
+            f"{risk_result.reserve.net_drain_cents} cents, uncertainty buffer: "
+            f"{risk_result.reserve.uncertainty_buffer_cents} cents)."
+        )
 
     if observation.timestamp.hour == 17:
         deployable_surplus = max(0, cash_acc.balance_cents - req_reserve)
@@ -534,7 +598,7 @@ def execute_hourly_step(
             action_decision = "SWEEP"
             decision_amount = sweep_cents
             decision_explanations.append(
-                f"17:00 sweep window open. Swept {sweep_cents} cents excess cash into overnight repo."
+                f"17:00 sweep window open. Swept {sweep_cents} cents excess cash into overnight repo. {strategy_rationale}"
             )
             orders_executed.append({
                 "instrument": "OVERNIGHT_REPO",
@@ -640,10 +704,11 @@ def execute_hourly_step(
     # 7. Record Treasury Decision
     if not decision_explanations:
         decision_explanations = [
-            f"Holding cash balance of {cash_acc.balance_cents} cents. Required reserve: {req_reserve} cents."
+            f"Holding cash balance of {cash_acc.balance_cents} cents. Required reserve: {req_reserve} cents. {strategy_rationale}"
         ]
 
     details = {
+        "strategy": active_strategy,
         "pre_checking_cents": pre_out,
         "post_checking_cents": cash_acc.balance_cents,
         "executed": executed_decision,
@@ -775,6 +840,7 @@ def execute_hourly_step(
         "run_id": run.id,
         "step": target_step,
         "timestamp": iso_utc_ts,
+        "strategy": active_strategy,
         "status": "RUNNING" if target_step < run.duration_steps else "COMPLETED",
         "checking_cents": cash_acc.balance_cents,
         "vault_locked_cents": tier1_principal,
@@ -782,6 +848,7 @@ def execute_hourly_step(
         "required_reserve_cents": req_reserve,
         "deployable_surplus_cents": deployable_surplus_cents,
         "policy": {
+            "strategy": active_strategy,
             "risk_percentile": policy_dict.get("risk_percentile", 0.95),
             "operational_buffer_cents": policy_dict.get("operational_buffer_cents", 50000000),
             "minimum_sweep_cents": policy_dict.get("minimum_sweep_cents", 1000000),
@@ -801,9 +868,9 @@ def execute_hourly_step(
         "forecast": {
             "horizon_minutes": 240,
             "peak_shortfall_cents": 0,
-            "uncertainty_buffer_cents": forecasts[0].supplied_uncertainty_buffer_cents if forecasts else 0,
+            "uncertainty_buffer_cents": forecasts[0].supplied_uncertainty_buffer_cents if (forecasts and len(forecasts) > 0) else 0,
             "operational_buffer_cents": policy_obj.base_buffer_cents,
-            "model_version": "evaluated-gb-v1",
+            "model_version": "evaluated-gb-v1" if active_strategy == STRATEGY_RESERVE_JUGGLER else "none",
         },
         "four_tier": four_tier_dict,
     }

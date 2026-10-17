@@ -392,44 +392,69 @@ def hydrate_portfolio_state(
     return state, cash_acc, db_repos, db_bonds, db_equities, db_overdrafts
 
 
+def get_information_cutoff(as_of: datetime) -> datetime:
+    """Returns the strict causal observation-availability cutoff for decision time as_of.
+
+    Organizer timestamps have unspecified timezone and publication semantics.
+    A row timestamped T records the aggregated flows that occurred during hour T.
+    Those complete hourly flows are finalized and available only after hour T closes (at T + 1 hour).
+    Therefore, at decision timestamp `as_of`, the latest fully observed and published
+    hourly observation is `as_of - timedelta(hours=1)`.
+
+    Any observation with timestamp >= as_of belongs to the future relative to the decision cutoff
+    and is strictly rejected / excluded.
+    """
+    return as_of - timedelta(hours=1)
+
+
 def get_hourly_forecasts_from_db(
     session: Session,
     dataset_id: str,
     as_of: datetime,
     horizon_hours: int = 4,
+    model_version: str = "hourly-seasonal-naive-v1",
 ) -> tuple[HourlyForecastPoint, ...]:
-    """Retrieves upcoming hourly observations and builds canonical forecast points."""
-    future_obs = list(
+    """Retrieves strictly causal historical observations up to the information cutoff
+    and evaluates forward forecasts without lookahead leakage.
+    """
+    cutoff = get_information_cutoff(as_of)
+
+    # Causal filter: strictly prior to decision timestamp
+    history = list(
         session.scalars(
-            select(DbOrganizerObservation).where(
+            select(DbOrganizerObservation)
+            .where(
                 DbOrganizerObservation.dataset_id == dataset_id,
-                DbOrganizerObservation.timestamp >= as_of,
-            ).order_by(DbOrganizerObservation.timestamp.asc()).limit(horizon_hours)
-        )
+                DbOrganizerObservation.timestamp <= cutoff,
+            )
+            .order_by(DbOrganizerObservation.timestamp.asc())
+        ).all()
+    )
+
+    # Reject any future observations
+    for obs in history:
+        if obs.timestamp > cutoff:
+            raise ValueError(
+                f"Causal violation: observation at {obs.timestamp} is after cutoff {cutoff}"
+            )
+
+    result = forecast_hourly_cashflows(
+        history,
+        as_of=as_of,
+        horizon_hours=horizon_hours,
+        start_at=as_of,
+        model_version=model_version,
     )
     points: list[HourlyForecastPoint] = []
-    for i in range(horizon_hours):
-        start_time = as_of + timedelta(hours=i)
-        if i < len(future_obs):
-            obs = future_obs[i]
-            dep_cents = int(round(obs.deposits_usd * Decimal(100)))
-            wd_cents = int(round(obs.withdrawals_usd * Decimal(100)))
-            net_cents = dep_cents - wd_cents
-        else:
-            dep_cents = 0
-            wd_cents = 0
-            net_cents = 0
-
-        uncert_cents = int(round(abs(Decimal(net_cents)) * Decimal("0.10"))) + 5000000
-
+    for p in result.points:
         points.append(
             HourlyForecastPoint(
                 time_basis="UNSPECIFIED",
-                start_at=start_time,
-                predicted_deposits_cents=dep_cents,
-                predicted_withdrawals_cents=wd_cents,
-                predicted_net_flow_cents=net_cents,
-                supplied_uncertainty_buffer_cents=uncert_cents,
+                start_at=p.start_at,
+                predicted_deposits_cents=p.predicted_deposits_cents,
+                predicted_withdrawals_cents=p.predicted_withdrawals_cents,
+                predicted_net_flow_cents=p.predicted_net_flow_cents,
+                supplied_uncertainty_buffer_cents=p.supplied_uncertainty_buffer_cents,
             )
         )
     return tuple(points)
@@ -440,22 +465,43 @@ def evaluate_liquidity_risk(
     policy: FourTierTreasuryPolicy,
     observation: DbOrganizerObservation | None = None,
     forecasts: tuple[HourlyForecastPoint, ...] | list[HourlyForecastPoint] | None = None,
+    calibrated_allowance: CalibratedForecastAllowance | None = None,
     horizon_hours: int = 4,
 ) -> FourTierLiquidityRiskResult:
-    """Evaluates canonical Member 1 four-tier liquidity risk."""
+    """Evaluates canonical Member 1 four-tier liquidity risk with causal artifact validation."""
+    cutoff = get_information_cutoff(portfolio.as_of)
+
+    # Validate calibration artifact: reject artifacts fitted/calibrated after cutoff
+    if calibrated_allowance is not None:
+        if calibrated_allowance.calibrated_through > cutoff:
+            raise ValueError(
+                f"Calibration artifact dated {calibrated_allowance.calibrated_through} "
+                f"is after information cutoff {cutoff} (lookahead breach)"
+            )
+    else:
+        calibrated_allowance = CalibratedForecastAllowance(
+            time_basis=portfolio.time_basis,
+            amount_cents=policy.base_buffer_cents,
+            confidence=Decimal("0.95"),
+            calibration_reference="calibrated-baseline",
+            calibrated_through=cutoff,
+        )
+
     if forecasts is None or len(forecasts) == 0:
         forecast_tuple = (
             HourlyForecastPoint(
                 time_basis=portfolio.time_basis,
                 start_at=portfolio.as_of,
-                predicted_deposits_cents=int(round(observation.deposits_usd * Decimal(100))) if observation else 0,
-                predicted_withdrawals_cents=int(round(observation.withdrawals_usd * Decimal(100))) if observation else 0,
-                predicted_net_flow_cents=int(round(observation.net_flow_usd * Decimal(100))) if observation else 0,
-                supplied_uncertainty_buffer_cents=5000000,
+                predicted_deposits_cents=0,
+                predicted_withdrawals_cents=0,
+                predicted_net_flow_cents=0,
+                supplied_uncertainty_buffer_cents=policy.base_buffer_cents,
             ),
         )
     else:
         forecast_tuple = tuple(forecasts)
+        if any(f.start_at < portfolio.as_of for f in forecast_tuple):
+            raise ValueError("Forecast points cannot start in the past relative to portfolio.as_of")
 
     repo_settlements = tuple(
         RepoCashSettlement(
@@ -475,13 +521,7 @@ def evaluate_liquidity_risk(
         forecast=forecast_tuple,
         planning_horizon_hours=len(forecast_tuple),
         uncertainty_mode="calibrated_allowance",
-        calibrated_allowance=CalibratedForecastAllowance(
-            time_basis=portfolio.time_basis,
-            amount_cents=policy.base_buffer_cents,
-            confidence=Decimal("0.95"),
-            calibration_reference="calibrated-baseline",
-            calibrated_through=portfolio.as_of,
-        ),
+        calibrated_allowance=calibrated_allowance,
         repo_settlements=repo_settlements,
     )
     return calculate_four_tier_liquidity_risk(req)
