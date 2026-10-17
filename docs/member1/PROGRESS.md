@@ -8,6 +8,31 @@
 
 ## Task Log
 
+### [Pre-RJ-M1-10] Canonical Contract Compatibility Check
+- **Status**: Check complete; canonical integration NOT aligned and unresolved.
+- **Verified Branches**: Local and remote feature baseline `c3cebcd2ac2f4502e0916405c203240e15dc89ed`;
+  canonical review `1fcff80f05136a1d90faf8b88adacc8d313dc072`, shared base `974154e`.
+  Review changes are not present locally/on the remote feature branch. No merge.
+- **Findings**: Obsolete four_tier imports and payloads; missing canonical UUID/
+  source/time-basis/availability data; incompatible repo/state/liability fields;
+  source-net versus derived-net target/evaluation mismatch; normalized index-unit
+  valuation conflicts with canonical supplied valuation semantics.
+- **Probes**: Current repo/portfolio economics raise AttributeError on reviewed
+  canonical positions/state; old forecast JSON lacks required time_basis. Source
+  net differs from deposits-minus-withdrawals in 35 of 168 real fixture rows.
+- **Safe Changes**: Compatibility report and documentation status only. No
+  algorithms, schemas, fixtures, datasets, or teammate files changed. Behavioral
+  migration was not disguised as an import fix. Completed RJ-M1-00..09 retained.
+- **Tests**: Full feature baseline 328 passed with scikit-learn installed;
+  reviewed canonical snapshot validated through an isolated in-memory Git-blob probe.
+  These passes do not establish canonical interoperability.
+- **Report**: `docs/member1/CANONICAL_ALIGNMENT_CHECK.md` records exact revisions,
+  interface differences, checks, and remaining migration requirements.
+- **Commit/Push**: Documentation-only check commit on feat/treasury-intelligence;
+  exact tested commit and push result are in the completion report.
+- **Stop**: No RJ-M1-10 implementation. Resolve canonical migration before using
+  the later algorithms as canonical portfolio consumers.
+
 ### [RJ-M1-09] Hourly ML Forecasting and Evaluation
 - **Status**: COMPLETED
 - **Scope**: Implemented and evaluated real machine-learning forecasting for hourly cash flows

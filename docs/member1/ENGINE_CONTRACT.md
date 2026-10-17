@@ -1,5 +1,11 @@
 # Quantitative engine contract v1
 
+**Pre-RJ-M1-10 alignment status (2026-10-18): NOT ALIGNED.** The reviewed canonical
+family is `treasury_intelligence.portfolio` on review commit `1fcff80`, but it is
+not integrated into the feature branch. The four_tier interfaces documented below
+describe current RJ-M1-07/08/09 implementation, not canonical interoperability.
+See [verified compatibility findings](CANONICAL_ALIGNMENT_CHECK.md) before integration.
+
 **Four-tier migration:** RJ-M1-06 adds the authoritative four-tier boundary below.
 The original models/functions in this document remain supported as legacy interfaces;
 they do not model the full organizer problem. Their UTC, integer-bps, and optional
