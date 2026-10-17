@@ -6,10 +6,10 @@
     "semantic_hash": "447648a1d1b154f6bb94740cd1b182f4"
   },
   "backend/app/config.py": {
-    "mtime": 1792246901.931686,
-    "seen": 1792249178.3151393,
-    "ast_hash": "b052396849ac5107b8b6eed9d8fb5464",
-    "semantic_hash": "b052396849ac5107b8b6eed9d8fb5464"
+    "mtime": 1792251393.9833167,
+    "seen": 1792251772.9775722,
+    "ast_hash": "3b5515186fbf11ad27fbdb2ff4094954",
+    "semantic_hash": ""
   },
   "backend/app/database.py": {
     "mtime": 1792246924.3623893,
@@ -303,6 +303,36 @@
     "mtime": 1792246804.5390947,
     "seen": 1792249861.3519297,
     "ast_hash": "9084335ffde96f1076a7dea58e9c29ae",
+    "semantic_hash": ""
+  },
+  "backend/app/data/__init__.py": {
+    "mtime": 1792251396.0078976,
+    "seen": 1792251772.9775722,
+    "ast_hash": "6be064f413a14f31ccb9d71cf43d1438",
+    "semantic_hash": ""
+  },
+  "backend/app/data/organizer.py": {
+    "mtime": 1792251396.5228157,
+    "seen": 1792251772.9775722,
+    "ast_hash": "dae0b5be852bf9c4eb0c39057c68c93c",
+    "semantic_hash": ""
+  },
+  "tests/backend/test_organizer_data.py": {
+    "mtime": 1792251684.0164409,
+    "seen": 1792251772.9905717,
+    "ast_hash": "c2b801bdaacf3999a98f6a1ad8ff4628",
+    "semantic_hash": ""
+  },
+  "docs/organizer-data.md": {
+    "mtime": 1792251684.6616497,
+    "seen": 1792251772.997571,
+    "ast_hash": "37de9fcdfd0f8a661a270571713de346",
+    "semantic_hash": ""
+  },
+  "The_Reserve_Juggler_Problem_Statement.pdf": {
+    "mtime": 1792250170.9767287,
+    "seen": 1792251772.9985716,
+    "ast_hash": "46daa8e9d849cd8c78678b24dae44a83",
     "semantic_hash": ""
   }
 }

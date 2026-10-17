@@ -1,17 +1,15 @@
 # Graph Report - reserve-juggler  (2026-10-17)
 
 ## Corpus Check
-- 47 files · ~23,776 words
-- Verdict: corpus is large enough that graph structure adds value.
-- Unclassified: 7 file(s) not represented in the graph (top: (none) 3, .example 1, .conf 1)
+- cluster-only mode — file stats not available
 
 ## Summary
-- 515 nodes · 743 edges · 47 communities (39 shown, 8 thin omitted)
-- Extraction: 94% EXTRACTED · 6% INFERRED · 0% AMBIGUOUS · INFERRED: 43 edges (avg confidence: 0.95)
+- 593 nodes · 894 edges · 53 communities (42 shown, 11 thin omitted)
+- Extraction: 93% EXTRACTED · 7% INFERRED · 0% AMBIGUOUS · INFERRED: 63 edges (avg confidence: 0.95)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `dd328bc9`
+- Built from commit: `52cad6e5`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -21,6 +19,7 @@
 - package.json
 - runs.py
 - README.md
+- test_organizer_data.py
 - 30. BACKEND TESTING REQUIREMENTS
 - MEMBER_2_SPEC.md
 - main.py
@@ -29,7 +28,7 @@
 - 31. FINANCIAL INVARIANTS
 - 35. PARALLEL DEVELOPMENT RULES
 - 40. JUDGE-READY TECHNICAL EXPLANATIONS
-- Reserve Juggler backend and engine integration contract
+- organizer.py
 - GRAPHIFY — MANDATORY PROJECT KNOWLEDGE GRAPH
 - 21. STRESS SCENARIO ENGINE
 - 34. MEMBER 2 DEVELOPMENT TIMELINE
@@ -56,35 +55,39 @@
 - 13. HISTORICAL DATA GENERATION
 - 14. REAL-TIME TRANSACTION AGGREGATOR
 - MEMBER 2 — COMPLETE DEVELOPMENT AGENT PROMPT
+- Decimal
+- HourlyObservation
+- config.py
+- OrganizerDataset
 
 ## God Nodes (most connected - your core abstractions)
 1. `30. BACKEND TESTING REQUIREMENTS` - 26 edges
 2. `ContractModel` - 23 edges
-3. `unavailable()` - 12 edges
-4. `TreasuryDecisionEngine` - 12 edges
-5. `TransactionGenerator` - 12 edges
-6. `24. DATABASE DESIGN` - 12 edges
+3. `HourlyObservation` - 19 edges
+4. `TransactionGenerator` - 12 edges
+5. `TreasuryDecisionEngine` - 12 edges
+6. `unavailable()` - 12 edges
 7. `42. FINAL DELIVERABLES` - 12 edges
-8. `Database/backend mapping` - 11 edges
+8. `24. DATABASE DESIGN` - 12 edges
 9. `31. FINANCIAL INVARIANTS` - 11 edges
 10. `35. PARALLEL DEVELOPMENT RULES` - 11 edges
 
 ## Surprising Connections (you probably didn't know these)
+- `Schema, precision, and immutability` --references--> `HourlyObservation`  [INFERRED]
+  docs/organizer-data.md → backend/app/data/organizer.py
 - `Idempotency` --references--> `advance()`  [INFERRED]
   docs/MEMBER_2_SPEC.md → backend/app/routers/runs.py
-- `Database/backend mapping` --references--> `transactions()`  [INFERRED]
-  ENGINE_CONTRACT.md → backend/app/routers/runs.py
-- `Confirmed incompatibilities in the initial repository` --references--> `Scenario`  [INFERRED]
-  ENGINE_CONTRACT.md → backend/app/v1_contracts.py
-- `Database/backend mapping` --references--> `TreasuryPolicy`  [INFERRED]
-  ENGINE_CONTRACT.md → backend/app/v1_contracts.py
-- `HTTP contract` --references--> `TreasuryPolicy`  [INFERRED]
+- `Organizer treasury CSV (authoritative hourly source)` --configured_source_for--> `OrganizerDatasetSource`  [EXTRACTED]
+  treasury_4tier_dataset.csv → backend/app/data/organizer.py
+- `Provenance and diagnostics` --references--> `DatasetValidationError`  [INFERRED]
+  docs/organizer-data.md → backend/app/data/organizer.py
+- `HTTP contract` --references--> `BacktestResult`  [INFERRED]
   ENGINE_CONTRACT.md → backend/app/v1_contracts.py
 
 ## Import Cycles
 - None detected.
 
-## Communities (47 total, 8 thin omitted)
+## Communities (53 total, 11 thin omitted)
 
 ### Community 0 - "TreasuryDecisionEngine"
 Cohesion: 0.07
@@ -92,19 +95,23 @@ Nodes (14): TreasuryDecisionEngine, CashFlowForecaster, TransactionGenerator, te
 
 ### Community 1 - "treasury.py"
 Cohesion: 0.08
-Nodes (31): Settings, get_db(), DecisionModel, ForecastModel, LiquiditySnapshotModel, SimulationRunModel, TransactionModel, get_health() (+23 more)
+Nodes (30): get_db(), DecisionModel, ForecastModel, LiquiditySnapshotModel, SimulationRunModel, TransactionModel, get_health(), get_simulation_results() (+22 more)
 
 ### Community 2 - "package.json"
 Cohesion: 0.10
 Nodes (25): dependencies, react, react-dom, devDependencies, vite, @vitejs/plugin-react, name, private (+17 more)
 
 ### Community 3 - "runs.py"
-Cohesion: 0.11
-Nodes (36): advance(), backtest(), create_run(), decisions(), forecast(), history(), policy(), report() (+28 more)
+Cohesion: 0.08
+Nodes (44): advance(), backtest(), create_run(), decisions(), forecast(), history(), policy(), report() (+36 more)
 
 ### Community 4 - "README.md"
 Cohesion: 0.06
 Nodes (28): 1. Team Workstreams & Responsibilities, 2. Branching Strategy, 3. Engineering Philosophy & Guidelines, Feature Branch Lifecycle:, 1. Overview & Objective, 2.1. Expected Liquidity Requirement ($L_{req}$), 2.2. Forecast Uncertainty ($\sigma_{forecast}$), 2.3. Operational Safety Buffer ($B_{safety}$) (+20 more)
+
+### Community 5 - "test_organizer_data.py"
+Cohesion: 0.12
+Nodes (15): DatasetValidationError, OrganizerDatasetSource, dataset(), raw_rows(), test_content_hash_changes_when_bytes_change(), test_dataset_validation_rejects_invalid_records(), test_exact_diagnostics_under_low_decimal_context(), test_fractional_bps_and_high_precision_are_preserved() (+7 more)
 
 ### Community 6 - "30. BACKEND TESTING REQUIREMENTS"
 Cohesion: 0.08
@@ -138,9 +145,9 @@ Nodes (11): 35. PARALLEL DEVELOPMENT RULES, Rule 1, Rule 10, Rule 2, Rule 3, Rul
 Cohesion: 0.18
 Nodes (11): 40. JUDGE-READY TECHNICAL EXPLANATIONS, Are these actual bank transactions?, How are transactions generated?, How do you compare against baselines?, How do you measure financial performance?, How do you prevent misleading results?, How does the system simulate real time?, How is a sweep executed? (+3 more)
 
-### Community 19 - "Reserve Juggler backend and engine integration contract"
-Cohesion: 0.18
-Nodes (8): Scenario, Authority and scope, Confirmed incompatibilities in the initial repository, Contract decisions requiring team review, Member 1 integration placeholder — NOT AN AGREED ENGINE CONTRACT, Reserve Juggler backend and engine integration contract, Shared financial and data conventions, Verification limits
+### Community 19 - "organizer.py"
+Cohesion: 0.14
+Nodes (8): _configured_path(), DatasetMetadata, DatasetValidation, _exact_total(), FrozenModel, ReconciliationSummary, ValidationIssue, Organizer treasury CSV (authoritative hourly source)
 
 ### Community 20 - "GRAPHIFY — MANDATORY PROJECT KNOWLEDGE GRAPH"
 Cohesion: 0.22
@@ -242,25 +249,33 @@ Nodes (3): 14. REAL-TIME TRANSACTION AGGREGATOR, Core formula, Important distinc
 Cohesion: 0.67
 Nodes (3): HackForge 2026 | 24-Hour Hackathon | Developer 2 of 3, MEMBER 2 — COMPLETE DEVELOPMENT AGENT PROMPT, Reserve Juggler — Real-Time Simulation, Banking Ledger, Backend API & Performance Evaluation
 
+### Community 49 - "Decimal"
+Cohesion: 0.24
+Nodes (6): _exact_difference(), Current source identity, Organizer historical data foundation, Provenance and diagnostics, Read and validate, Schema, precision, and immutability
+
+### Community 50 - "HourlyObservation"
+Cohesion: 0.27
+Nodes (5): HourlyObservation, test_invalid_boolean_flags(), test_invalid_financial_domains(), test_invalid_or_reinterpreted_timestamps(), test_invalid_source_numbers()
+
 ## Knowledge Gaps
-- **236 isolated node(s):** `name`, `private`, `version`, `type`, `dev` (+231 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 301 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **8 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **239 isolated node(s):** `Historical replay (planned, NOT implemented)`, `A. Implementation summary`, `B. Database schema`, `C. Backend API documentation`, `D. Transaction simulator documentation` (+234 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 325 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **11 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `19. SIMULATION STEP EXECUTION` connect `19. SIMULATION STEP EXECUTION` to `MEMBER_2_SPEC.md`?**
-  _High betweenness centrality (0.337) - this node is a cross-community bridge._
+  _High betweenness centrality (0.349) - this node is a cross-community bridge._
 - **Why does `advance()` connect `runs.py` to `19. SIMULATION STEP EXECUTION`?**
-  _High betweenness centrality (0.332) - this node is a cross-community bridge._
+  _High betweenness centrality (0.347) - this node is a cross-community bridge._
 - **Why does `Idempotency` connect `19. SIMULATION STEP EXECUTION` to `runs.py`?**
-  _High betweenness centrality (0.332) - this node is a cross-community bridge._
-- **Are the 6 inferred relationships involving `TreasuryDecisionEngine` (e.g. with `test_hold_decision_in_corridor()` and `test_liquidity_warning_on_extreme_insolvency()`) actually correct?**
-  _`TreasuryDecisionEngine` has 6 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `name`, `private`, `version` to the rest of the system?**
-  _236 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _High betweenness centrality (0.346) - this node is a cross-community bridge._
+- **Are the 7 inferred relationships involving `HourlyObservation` (e.g. with `Schema, precision, and immutability` and `test_exact_diagnostics_under_low_decimal_context()`) actually correct?**
+  _`HourlyObservation` has 7 INFERRED edges - model-reasoned connections that need verification._
+- **What connects `Historical replay (planned, NOT implemented)`, `A. Implementation summary`, `B. Database schema` to the rest of the system?**
+  _239 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `TreasuryDecisionEngine` be split into smaller, more focused modules?**
-  _Cohesion score 0.07419712070874862 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07207207207207207 - nodes in this community are weakly interconnected._
 - **Should `treasury.py` be split into smaller, more focused modules?**
-  _Cohesion score 0.08007013442431327 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.08192090395480225 - nodes in this community are weakly interconnected._

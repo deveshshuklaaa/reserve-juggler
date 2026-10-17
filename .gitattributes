@@ -1,0 +1,2 @@
+# Content-addressed organizer source: preserve exact bytes across platforms.
+/treasury_4tier_dataset.csv -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
