@@ -10,7 +10,8 @@ DELTA_KEYS = (
     "customer_cash_delta_cents", "investment_cash_delta_cents", "financing_cash_delta_cents",
     "realized_interest_cents", "realized_market_pnl_cents", "contractual_penalties_cents",
     "liquidation_losses_cents", "transaction_costs_cents", "borrowing_costs_cents",
-    "paid_borrowing_costs_cents", "reserve_breaches", "emergency_events", "failed_payouts", "sweeps",
+    "paid_borrowing_costs_cents", "reserve_breaches", "emergency_events", "failed_payouts",
+    "unpaid_payouts_cents", "sweeps",
 )
 
 
@@ -60,7 +61,7 @@ SCRIPT = (
          stock_changes={"tier2_value_cents":-120, "unrealized_market_pnl_cents":-20}),
     dict(borrowing_costs_cents=3),
     dict(paid_borrowing_costs_cents=3),
-    dict(contractual_penalties_cents=2, transaction_costs_cents=1, failed_payouts=1),
+    dict(contractual_penalties_cents=2, transaction_costs_cents=1, failed_payouts=1, unpaid_payouts_cents=25),
     dict(financing_cash_delta_cents=-600),
     dict(investment_cash_delta_cents=-100, stock_changes={"tier3_value_cents":100}),
     dict(stock_changes={"tier3_value_cents":-10, "unrealized_market_pnl_cents":-10}),

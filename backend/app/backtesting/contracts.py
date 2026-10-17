@@ -148,6 +148,7 @@ class HourReceipt(Contract):
     reserve_breaches: Count
     emergency_events: Count
     failed_payouts: Count
+    unpaid_payouts_cents: Cash
     sweeps: Count
     event_ids: tuple[str, ...]
 
@@ -176,7 +177,7 @@ class HourReceipt(Contract):
                   self.financing_cash_delta_cents, self.realized_interest_cents,
                   self.realized_market_pnl_cents, fees, self.borrowing_costs_cents,
                   self.paid_borrowing_costs_cents, self.reserve_breaches,
-                  self.emergency_events, self.failed_payouts, self.sweeps)
+                  self.emergency_events, self.failed_payouts, self.unpaid_payouts_cents, self.sweeps)
         if not self.event_ids and (a != b or any(deltas)):
             raise ValueError("Financial changes and counted events require audit event IDs")
         return self
@@ -187,20 +188,19 @@ class HistoryPoint(Contract):
     checking_cents: Cash
 
 
-class StrategyMetrics(Contract):
-    strategy: Strategy
-    run_id: UUID
+class AccountingTotals(Contract):
     realized_interest_cents: Money
     average_checking_cents: Cash
+    average_invested_cents: Cash
     penalties_cents: Cash
     borrowing_costs_cents: Cash
     borrowing_outstanding_cents: Cash
     reserve_breaches: Count
     emergency_events: Count
     failed_payouts: Count
+    unpaid_payouts_cents: Cash
     sweeps: Count
     net_benefit_cents: Money
-    history: tuple[HistoryPoint, ...]
     # Honest supplementary accounting: no debt draw or market gain disguised as interest.
     contractual_penalties_cents: Cash
     liquidation_losses_cents: Cash
@@ -222,12 +222,25 @@ class StrategyMetrics(Contract):
                     - self.penalties_cents - self.transaction_costs_cents - self.borrowing_costs_cents)
         if self.net_benefit_cents != expected:
             raise ValueError("Net benefit must include P&L and all incurred costs, not borrowing principal")
+        return self
+
+
+class AccountingMetrics(AccountingTotals):
+    history: tuple[HistoryPoint, ...]
+
+    @model_validator(mode="after")
+    def checking_average(self):
         if not self.history:
             raise ValueError("Metrics need hourly checking history")
         quotient, remainder = divmod(sum(p.checking_cents for p in self.history), len(self.history))
         if self.average_checking_cents != quotient + int(2 * remainder >= len(self.history)):
             raise ValueError("Average checking must be the half-up rounded hourly closing mean")
         return self
+
+
+class StrategyMetrics(AccountingMetrics):
+    strategy: Strategy
+    run_id: UUID
 
 
 class ComparisonResult(Contract):

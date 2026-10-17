@@ -1,19 +1,28 @@
 # Historical backtest service contract
 
-Status: orchestration implemented; shared-runtime integration **pending Agent 1**.
+Status: orchestration, persisted receipt/report integration and real PostgreSQL
+probes implemented. **Full historical strategy comparisons remain blocked.**
 This is a Python service boundary, not a new API, simulator, strategy algorithm,
 database model, or replacement for Member 1's canonical portfolio contracts.
 
 ## Verified base and ownership
 
-Implementation base: feat/simulation-backend,
-52e58bcfcad766a1444b37a175b48158fd645409.
-No use of unverified integration b3cc3d7. No finished integration base has been
-merged. Work belongs on the isolated feat/backtesting-engine worktree.
+Original base: feat/simulation-backend,
+52e58bcfcad766a1444b37a175b48158fd645409; initial backtesting implementation:
+35741cea1993fb6ee665a10a572c75b3b44a0abd.
 
-Existing dependencies are app.data.organizer.OrganizerDatasetSource and its
-immutable HourlyObservation, plus Python 3.10+ and the existing Pydantic 2
-dependency. No database, API, frontend, intelligence, or forecasting imports.
+Verified local runtime: 082f0190a015298d63583d65a0b216a465b93ce1, based on 4a85674.
+Both commits were confirmed in the same Git object database before merging the
+runtime into the isolated feat/backtesting-engine branch. No GitHub fetch of a
+local-only SHA, no develop/main checkout changes, and no push. Runtime code and
+shared contracts arrive unchanged through the dependency merge, not owned edits.
+
+Core orchestration uses app.data.organizer.OrganizerDatasetSource and immutable
+HourlyObservation, Python 3.10+ and Pydantic 2. The optional runtime/report modules
+also use existing SQLAlchemy/PostgreSQL models, the shared hourly callable, and
+read-only imports of app.v1_contracts. Those modules transitively depend on
+Member 1 through the unchanged executor. No frontend or route implementation is
+imported or modified. No new dependency installation is required.
 The four-tier amounts in EngineState are an accounting projection of the shared
 engine's actual portfolio, NOT another position/quantity/rate contract.
 
@@ -32,7 +41,9 @@ Modules:
 
 - app.backtesting.contracts: request, immutable receipt/state and result models.
 - app.backtesting.protocol: proposed hourly-backtest-v1 injectable protocol.
-- app.backtesting.service: BacktestService.compare and fail-closed exceptions.
+- app.backtesting.service: BacktestService.compare, summarize_receipts and exceptions.
+- app.backtesting.runtime: execute_persisted_hour, read_hour_receipt and dependency guard.
+- app.backtesting.reports: BacktestReportService, projections and deterministic sampling.
 
 Example (shared_factory must be supplied by Agent 1; no default is installed):
 
@@ -90,7 +101,7 @@ The conditions hash covers source, window, capital, seed, policy, scenario and
 engine/protocol provenance, and is common to all three strategies. Each run has
 its own run_id. Results cannot contain partial/missing strategies.
 
-## Required Agent 1 hourly provider (proposed, not an agreed published interface)
+## Strategy-provider protocol (proposed, not supplied by runtime 082f019)
 
 HourlyEngineFactory has:
 
@@ -262,6 +273,7 @@ Inconsistent or missing accounting fails, rather than estimating missing metrics
 | history | Exactly steps points: timestamp and checking_cents |
 
 Additional explicit fields prevent misleading aggregate results:
+average_invested_cents (mean of all tier investment asset amounts),
 contractual_penalties_cents, liquidation_losses_cents, transaction_costs_cents,
 realized_market_pnl_cents, accrued_interest_cents (change since start),
 unrealized_market_pnl_cents (change since start), unpaid_borrowing_costs_cents
@@ -312,20 +324,22 @@ Existing PostgreSQL regression tests separately require
 PERSISTENCE_TEST_DATABASE_URL pointing at the documented disposable test server;
 an in-memory SQLite URL does not validate PostgreSQL migrations.
 
-tests/backtesting/test_shared_engine_integration.py is explicitly pending/skipped
-unless a real dependency is configured. It never falls back to the unit fake.
-Agent 1 must first publish:
+The original SEVEN cases in tests/backtesting/test_shared_engine_integration.py
+are preserved as pending acceptance criteria. They require a complete causal
+strategy provider and never fall back to the unit fake. The local runtime exists,
+but its callable is not sufficient to satisfy that protocol. Agent 1's follow-up
+must provide:
 
-1. Actual branch and full remotely verifiable 40-character commit SHA.
-2. File/module path and zero-argument provider factory (or publish a shared
-   interface we can reconcile without duplicating its execution logic).
-3. Actual initial-state, one-hour result and audit-receipt schema.
-4. Agreed strategy/scenario semantics, causal data boundaries, posting/rounding
-   policy and ledger mapping for all receipt categories.
-5. Supported run-isolation/reset/idempotency/resource lifecycle.
+1. Actual local object-database commit SHA (or fetchable published branch/SHA).
+2. Explicit STATIC/REACTIVE/RESERVE_JUGGLER dispatch through the shared engine.
+3. Causal forecasting that cannot query current/future realized observations.
+4. Complete hourly initial/closing state, P&L, payout and financing receipts.
+5. Agreed start-window, isolation/reset/idempotency and resource lifecycle.
 
-After verifying that publication, merge/rebase the agreed finished integration
-base, reconcile this proposed protocol if necessary, and set:
+The user is coordinating that follow-up on develop. Do not fetch local-only
+SHAs from GitHub, relabel identical executions as distinct strategies, change
+the strategy capability guard, or substitute an alternate financial executor.
+After verifying and integrating the follow-up, reconcile the protocol and set:
 
 ~~~powershell
 $env:BACKTEST_SHARED_ENGINE_BRANCH='<verified published branch>'
@@ -340,7 +354,8 @@ matching SHA, all strategies, reproducibility, complete hourly windows and
 source integrity across all five scenarios and 7/14/30-day coverage. They exercise
 the service/receipt identities, but Agent 1 must also test actual timing, fill,
 scenario, forecasting and ledger economics in its engine suite.
-No runtime integration SHA or real historical comparison is claimed yet.
+The verified runtime SHA is recorded above and used by the persisted-path tests.
+No complete historical strategy comparison is claimed yet.
 
 ## Graphify handoff and file boundaries
 
@@ -361,7 +376,191 @@ Actual relationships to add then:
 - BacktestService -> injectable HourlyEngineFactory / HourlyRun.
 - HourlyRun -> HourReceipt -> opening/closing EngineState accounting projection.
 - Unit tests -> scripted receipt fixture (test-only).
-- Opt-in integration tests -> proposed shared-provider protocol (pending).
+- runtime.execute_persisted_hour -> services.hourly_engine.execute_hourly_step.
+- runtime.read_hour_receipt -> existing persisted accounting records.
+- reports.BacktestReportService -> shared receipt aggregation / frontend projections.
+- PostgreSQL integration tests -> actual shared executor and migrated test databases.
+- Opt-in SEVEN comparison cases -> proposed shared-provider protocol (pending).
 
-Do not draw an implemented edge to a concrete hourly runtime, strategy economics,
-database, API endpoint, frontend or Member 1 engine until actual code exists.
+Do not draw an implemented full-comparison, strategy-dispatch or API route edge.
+Concrete database/runtime/report relationships above now exist; strategy economics
+and causal forecasting still belong to Agent 1, with no substitute implemented here.
+
+
+## Verified persisted-runtime adapter and report handoff (082f019)
+
+The inspected callable is:
+
+~~~python
+execute_hourly_step(
+    session: sqlalchemy.orm.Session,
+    run_id: UUID,
+    expected_step: int | None = None,
+) -> dict[str, Any]
+~~~
+
+It mutates records and flushes; it does not commit. StepConflictError carries
+expected_step/current_step. Its return is a display snapshot, NOT HourReceipt.
+It contains run_id, step, wall-clock UTC timestamp, status, checking/vault/reserve
+amounts, policy, decision, forecast and four_tier dictionaries. Some displayed
+return totals are placeholders; report accounting never trusts those totals.
+
+Persisted evidence inspected and consumed:
+
+| Existing model | Receipt role |
+| --- | --- |
+| SimulationRun / CashAccount | Run/source/step identity and current Tier 0 balance |
+| OrganizerObservation / DatasetSource | Exact source values/provenance and source clock |
+| LedgerEntry | Posted cash entries, before/after balances, source hour, audit IDs |
+| InvestmentMovement | Investment, repo maturity/redemption, actual interest/haircut postings |
+| PortfolioValuation | Opening/closing tier asset and principal/debt amounts |
+| TreasuryDecision | Hour identity and expected scenario-adjusted flow amounts |
+| LiquidityBreach | Recorded shortfall incidents, not inferred hours below reserve |
+| OverdraftLiability / OverdraftMovement | Outstanding debt, borrow/repay linkage and cost evidence |
+| BondPosition / EquityPosition / PositionValuation | Required future market-P&L attribution; incomplete for this runtime |
+
+runtime.execute_persisted_hour(session, run_id, expected_step) calls the actual
+shared executor inside a savepoint, then builds a strict HourReceipt from records.
+A receipt error rolls back that hour, including new debt/breach rows. It never
+posts compensating entries or changes runtime financial rules. The caller owns
+the outer transaction. StepConflictError propagates unchanged.
+
+runtime.read_hour_receipt(session, run_id, step) is read-only reporting. It
+requires an existing complete hour with exactly one opening/closing valuation,
+one decision, known cash kinds and linked movement evidence. It verifies actual
+settled customer ledger amounts against the decision and reuses all original
+cash/NAV/debt/interest identities.
+
+The currently validated subset is cash/repo with no unsupported market positions
+or unresolved financing cost. Repo accrued income is the persisted difference
+tier1_value minus principal, NOT an independent accrual calculation. Zero market
+P&L, transaction cost, failed payout and financing expense are emitted only for
+that proven restricted path with complete settled flows and no corresponding
+positions/cost evidence. Unknown entries, missing legs, nonzero un-attributed
+market amounts, incomplete financial fields or financing receipts fail closed.
+
+An existing mutable debt-cost accumulator cannot establish historical incurred,
+paid and unpaid cost flows. The adapter rejects it, rather than treating it as
+free cash, assigning it to income, inventing a financing event ID, or revaluing
+the portfolio itself. Audit IDs reference actual model primary keys.
+
+### Additional confirmed runtime blockers for Agent 1
+
+These are diagnoses of unchanged code, not fixes in this workstream:
+
+1. get_hourly_forecasts_from_db queries timestamp >= as_of, then copies current
+   and future observed customer flows into forecast points. A real database probe
+   demonstrates the future row becomes a prediction.
+2. execute_hourly_step has no strategy argument/dispatch and does not consume
+   RunSpec.strategy. SharedRuntimeFactory therefore advertises **zero validated
+   strategies** and refuses comparison. It is not a placeholder financial engine.
+3. First execution uses source_start_timestamp + one hour. source_start_timestamp
+   is constrained to an existing observation, so a comparison beginning at the
+   very first CSV row cannot be aligned by simply moving the start marker back
+   one hour. No fake preceding observation or negative step is inserted.
+4. On a liquidity shock, the runtime persists the shortfall, borrowed principal
+   and financing cost, but the customer withdrawal ledger contains only the
+   cash-funded portion. The financed payout remainder lacks a complete payout
+   leg. The diagnostic shock test verifies records, NOT complete accounting.
+5. Financing cost accumulates on OverdraftLiability without hourly FINANCING_COST
+   movement/payment evidence; PortfolioValuation subtracts principal only.
+   Full borrowing reports therefore cannot reconcile all expenses honestly.
+6. Repayment writes OverdraftMovement.kind="REPAY", while the actual PostgreSQL
+   constraint accepts BORROW, REPAYMENT, FINANCING_COST. A real two-step shock /
+   recovery probe reproduces SQLSTATE 23514.
+7. Early redemption accesses RepoPosition.early_break_fee_bps, but the ORM exposes
+   early_redemption_haircut_pct. A real sweep-then-shock path reproduces
+   AttributeError. No runtime field aliases or monkey patches were added.
+8. Runtime market amounts lack sufficient persisted per-position P&L attribution
+   for historical receipt reconstruction. The report adapter rejects those runs.
+
+The passing diagnostic tests assert these defects are reproducible. They are not
+claims that repayment, early redemption, forecasting or full shock accounting is
+correct. Update these diagnoses to positive acceptance assertions when Agent 1's
+follow-up actually fixes them.
+
+### Report service and frontend projection
+
+reports.BacktestReportService.compare(BacktestRequest, history_limit=100)
+uses the existing injectable orchestration and fails BEFORE any strategy starts
+with current SharedRuntimeFactory. Unit tests may explicitly inject the test
+backtester; TEST_DOUBLE provenance and null integration SHA remain visible.
+
+reports.BacktestReportService.report_run(session, run_id, history_limit=100)
+reads existing persisted execution; it does not advance a run. Missing run raises
+KeyError; incomplete evidence raises RuntimeReceiptUnavailable. No executed steps
+means metrics/accounting are null and history is empty, not fabricated zero
+performance. Untagged runtime runs are not mislabeled as a named strategy.
+
+The richer owned BacktestReport / RunReport extend the existing shared envelope
+fields. Public aliases are STATIC -> STATIC_RESERVE and REACTIVE ->
+REACTIVE_RESERVE; RESERVE_JUGGLER is unchanged. Legacy FinancialMetrics mappings:
+
+- average_vault_cents <- average_invested_cents (Tier 1/2/3 mean marked asset sum).
+  This is a deprecated transport alias, not a generic vault execution model.
+- redemption_penalties_cents <- contractual + liquidation costs.
+- emergency_borrowing_cost_cents <- incurred borrowing cost.
+- unpaid_cents <- actual unpaid customer payouts, NEVER outstanding borrowing.
+  Debt and unpaid financing expense remain separate accounting fields.
+- Other matching shared metrics retain their existing names and meanings.
+
+HourReceipt and AccountingTotals include explicit unpaid_payouts_cents for this
+legacy projection. It is not a cash outflow or an interest expense. Missing paid
+customer legs do not justify estimating it: incomplete evidence still fails.
+Signed net benefit is preserved. Legacy shared interest/accrual fields disallow
+negative values: projection rejects unsupported negative-interest results, never
+clamps them. The core receipt/metrics contract remains signed for negative rates;
+shared-contract alignment for that case belongs to its owner.
+
+Each result additionally exposes accounting totals with the required new metric
+names and separated market/financing/liquidation/debt information,
+model_evaluation=null, and sampled history. Totals do not contain another full
+history. Sampling selects actual hourly points, includes both endpoints, uses
+deterministic integer index spacing, and never interpolates money or timestamps.
+history_limit is a strict integer 2..1000. Aggregates use ALL receipts, never the
+sample. Source history remains naive; report operation timestamps use actual
+timezone-aware metadata, not fabricated UTC for the CSV.
+
+Persisted runs do not record an executor commit. RunReport explicitly says
+execution_provenance=NOT_RECORDED_BY_RUNTIME; its runtime_commit_verified_by_reporter
+identifies the inspected integration, not proof of which code produced an
+arbitrary old database run.
+
+### Endpoint wiring still owned by Agent 1
+
+POST /api/v1/runs/{id}/backtest and GET /api/v1/runs/{id}/report still return 501.
+No route, shared Pydantic contract, OpenAPI file or frontend source was edited.
+
+Agent 1 must wire the service with a database session and agree the requested
+source window, 7/14/30-day duration, baseline capital, seed, immutable policy and
+scenario schedule from the parent run. Never reuse its current mutated ledger.
+The existing public request only supplies strategy names, so window/config
+translation must be explicit. Shared response contracts currently omit history,
+detailed accounting and model_evaluation; exposing those requires the route/
+contract owner's coordinated schema update. Using the old response model would
+discard the richer fields. Do not advertise the endpoints as implemented.
+
+### Real PostgreSQL test commands
+
+Use the existing repository Python executable. Set BACKTEST_TEST_DATABASE_URL
+to the dedicated reserve_juggler_m2_test server database, then:
+
+~~~powershell
+$env:PYTHONDONTWRITEBYTECODE='1'
+# Configure BACKTEST_TEST_DATABASE_URL with your local test credentials.
+python -m pytest tests/backtesting -q -p no:cacheprovider --tb=short
+python tests/backtesting/run_postgres_suite.py -q -p no:cacheprovider --tb=line
+~~~
+
+The first command exercises owned probes in separate migrated, CSV-loaded
+disposable databases. The second also supplies a fresh PostgreSQL application
+database to the merged API regression suite and enables existing persistence/
+runtime integration tests. Only generated test databases are removed afterward;
+no existing shared database is reset. An empty SQLite application DATABASE_URL
+cannot run the now-implemented API tests (its versioned schema is absent).
+
+The ten real runtime/receipt probes cover a complete hour, stale-step rejection,
+repo entry/maturity/interest, recorded shock consequences, read-only reporting,
+sampling, isolation, missing-evidence rejection, atomic rollback, and the
+repayment/early-break/future-query diagnoses above. The original seven full
+comparison cases remain pending, not converted into fake passes.

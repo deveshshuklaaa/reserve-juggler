@@ -5,7 +5,7 @@ from uuid import uuid5
 
 from app.data.organizer import NATIVE_INTERVAL, OrganizerDatasetSource
 from .contracts import (
-    BacktestRequest, ComparisonResult, EngineState, HistoryPoint, HourReceipt,
+    AccountingMetrics, BacktestRequest, ComparisonResult, EngineState, HistoryPoint, HourReceipt,
     STRATEGIES, StrategyMetrics,
 )
 from .protocol import DecisionFrame, EngineCapabilities, ExecutionFrame, HourlyEngineFactory, RunSpec
@@ -97,40 +97,60 @@ class BacktestService:
 
     @staticmethod
     def _evaluate(run, spec, dataset, start_index, initial):
-        sums = {key: 0 for key in (
-            "realized_interest_cents", "realized_market_pnl_cents", "contractual_penalties_cents",
-            "liquidation_losses_cents", "transaction_costs_cents", "borrowing_costs_cents",
-            "customer_cash_delta_cents", "reserve_breaches", "emergency_events", "failed_payouts", "sweeps")}
-        history, seen = [], set()
-        previous = initial
-        for step in range(spec.steps):
-            index = start_index + step
-            source = dataset.observations[index]
-            # A decision cannot see this hour's realized flows or any later source row.
-            decision = run.decide(DecisionFrame(step, source.timestamp, dataset.observations[:index]))
-            digest = observation_digest(source)
-            receipt = HourReceipt.model_validate(run.execute(ExecutionFrame(step, source, digest), decision))
-            if receipt.timestamp != source.timestamp or receipt.source_digest != digest:
-                raise EngineContractError("Receipt refers to a different source hour/observation")
-            if receipt.opening != previous:
-                raise EngineContractError("Hourly accounting state is discontinuous")
-            if seen.intersection(receipt.event_ids):
-                raise EngineContractError("Duplicate audit events cannot be counted twice")
-            seen.update(receipt.event_ids)
-            for key in sums:
-                sums[key] += getattr(receipt, key)
-            history.append(HistoryPoint(timestamp=source.timestamp, checking_cents=receipt.closing.checking_cents))
-            previous = receipt.closing
-        total_cash = sum(point.checking_cents for point in history)
-        quotient, remainder = divmod(total_cash, spec.steps)
-        average = quotient + int(2 * remainder >= spec.steps)  # metric-only half-up; no financial fill rounding
-        penalties = sums["contractual_penalties_cents"] + sums["liquidation_losses_cents"]
-        benefit = previous.net_asset_value_cents - initial.net_asset_value_cents - sums["customer_cash_delta_cents"]
-        return StrategyMetrics(strategy=spec.strategy, run_id=spec.run_id, **sums,
-            average_checking_cents=average, penalties_cents=penalties,
-            borrowing_outstanding_cents=previous.borrowing_outstanding_cents,
-            unpaid_borrowing_costs_cents=previous.unpaid_borrowing_costs_cents,
-            accrued_interest_cents=previous.accrued_interest_cents - initial.accrued_interest_cents,
-            unrealized_market_pnl_cents=previous.unrealized_market_pnl_cents - initial.unrealized_market_pnl_cents,
-            ending_net_asset_value_cents=previous.net_asset_value_cents, net_benefit_cents=benefit,
-            history=tuple(history))
+        def receipts():
+            for step in range(spec.steps):
+                index = start_index + step
+                source = dataset.observations[index]
+                decision = run.decide(DecisionFrame(step, source.timestamp, dataset.observations[:index]))
+                digest = observation_digest(source)
+                receipt = HourReceipt.model_validate(run.execute(ExecutionFrame(step, source, digest), decision))
+                if receipt.timestamp != source.timestamp or receipt.source_digest != digest:
+                    raise EngineContractError("Receipt refers to a different source hour/observation")
+                yield receipt
+        summary = summarize_receipts(initial, receipts())
+        return StrategyMetrics(strategy=spec.strategy, run_id=spec.run_id, **summary.model_dump())
+
+
+def rounded_mean(total: int, count: int) -> int:
+    quotient, remainder = divmod(total, count)
+    return quotient + int(2 * remainder >= count)
+
+
+def summarize_receipts(initial: EngineState, receipts) -> AccountingMetrics:
+    """One accounting aggregator for injected executions AND persisted reports."""
+    initial = EngineState.model_validate(initial)
+    sums = {key:0 for key in (
+        "realized_interest_cents", "realized_market_pnl_cents", "contractual_penalties_cents",
+        "liquidation_losses_cents", "transaction_costs_cents", "borrowing_costs_cents",
+        "customer_cash_delta_cents", "reserve_breaches", "emergency_events", "failed_payouts",
+        "unpaid_payouts_cents", "sweeps")}
+    history, seen = [], set()
+    invested_total = 0
+    previous = initial
+    for raw in receipts:
+        receipt = HourReceipt.model_validate(raw)
+        if receipt.opening != previous:
+            raise EngineContractError("Hourly accounting state is discontinuous")
+        if history and receipt.timestamp-history[-1].timestamp != NATIVE_INTERVAL:
+            raise EngineContractError("Accounting history must be contiguous and hourly")
+        if seen.intersection(receipt.event_ids):
+            raise EngineContractError("Duplicate audit events cannot be counted twice")
+        seen.update(receipt.event_ids)
+        for key in sums:
+            sums[key] += getattr(receipt, key)
+        history.append(HistoryPoint(timestamp=receipt.timestamp, checking_cents=receipt.closing.checking_cents))
+        previous = receipt.closing
+        invested_total += previous.tier1_value_cents + previous.tier2_value_cents + previous.tier3_value_cents
+    if not history:
+        raise EngineContractError("No executed receipts; metrics are unavailable")
+    return AccountingMetrics(**sums,
+        average_checking_cents=rounded_mean(sum(p.checking_cents for p in history), len(history)),
+        average_invested_cents=rounded_mean(invested_total, len(history)),
+        penalties_cents=sums["contractual_penalties_cents"]+sums["liquidation_losses_cents"],
+        borrowing_outstanding_cents=previous.borrowing_outstanding_cents,
+        unpaid_borrowing_costs_cents=previous.unpaid_borrowing_costs_cents,
+        accrued_interest_cents=previous.accrued_interest_cents-initial.accrued_interest_cents,
+        unrealized_market_pnl_cents=previous.unrealized_market_pnl_cents-initial.unrealized_market_pnl_cents,
+        ending_net_asset_value_cents=previous.net_asset_value_cents,
+        net_benefit_cents=previous.net_asset_value_cents-initial.net_asset_value_cents-sums["customer_cash_delta_cents"],
+        history=tuple(history))
