@@ -1,7 +1,9 @@
 # Quantitative engine contract v1
 
-**RJ-M1-10 boundary (2026-10-18):** The reviewed `portfolio.py` from `1fcff80` is
-now present unchanged and is the input family for the new liquidity-risk API.
+**Canonical boundary (2026-10-18):** The reviewed portfolio model definitions from
+`1fcff80` are inputs for liquidity risk and the RJ-M1-11 optimizer. The portfolio
+recommendation function now dispatches additive optimizer requests with explicit
+assumptions; older envelopes alone still cannot select an investment safely.
 Prior RJ-M1-07/08/09 implementations and root four_tier schema exports remain
 legacy-compatible; they have not been silently converted. Import canonical inputs
 explicitly from `treasury_intelligence.portfolio`. See the RJ-M1-10 section and
@@ -907,6 +909,182 @@ Every response is recommendation_only=true and NOT_EXECUTED. Forecasts, quotes,
 calibrations, scenarios, portfolios, source CSV, databases and ledgers are not mutated.
 No risky-asset expected return, paid fee, floating repo estimate, or matured cash
 credit is counted as a second asset or realized income.
+
+## RJ-M1-11 Deterministic constrained allocation optimizer
+
+### Public interface and output
+
+```python
+from treasury_intelligence.optimizer import (
+    AssetRewardAssumption, AllocationRewardModel,
+    AllocationOptimizerRequest, AllocationOptimizerResult,
+    recommend_four_tier_allocation,
+)
+
+request = AllocationOptimizerRequest.model_validate(payload)
+result = recommend_four_tier_allocation(request)
+canonical_plan = result.decision  # portfolio.FourTierDecisionResult
+assert canonical_plan.execution_status == "NOT_EXECUTED"
+```
+
+New types/function are also package exports; `api.py` exports the function.
+`portfolio.recommend_portfolio_allocation(request)` (also root/API export) now
+recognizes AllocationOptimizerRequest and returns its canonical decision. The
+older FourTierRecommendationRequest/legacy envelope does not contain reward or
+quantity conventions and retains an explicit NotImplementedError rather than
+receiving invented financial assumptions. Prior generic-vault APIs are unchanged.
+Portfolio model fields are unchanged; only its recommendation dispatcher changed
+since the byte-identical RJ-M1-10 import. Import canonical input models from
+`treasury_intelligence.portfolio`, not the old root four_tier schema family.
+
+AllocationOptimizerRequest contains request_id, the complete RJ-M1-10 `liquidity`
+request, `rewards`, optional `supplied_reserve`, allocation_grid_bps (default
+0/5000/10000), max_candidates (default 2048, maximum 10000), and
+new_repo_settlement_delay_hours (default 0). Supplied reserve can only strengthen
+the newly calculated minimum. Risk forecast must cover the reward horizon; USD
+and explicit source/time-basis rules are retained.
+
+AllocationOptimizerResult contains:
+
+- summary_action: HOLD, INVEST, REBALANCE, LIQUIDATE, or WARNING;
+- canonical decision: all four exact target fields, reserve, policy constraints,
+  gross asset budget, separate debt target, identified typed orders, expected
+  costs, instrument return estimates, stress loss and mathematical explanations;
+- baseline `risk` response plus selected-plan projected_nominal_funding_gap_cents
+  and projected_scenario_failure_weight (null without scenarios);
+- full reward_assumptions, model_version, policy_version, assumption_reference,
+  objective_cents, estimated income/price change, conditional forced-exit cost,
+  modeled financing cost/savings, and immediate wealth loss;
+- cash_available_at_decision_after_orders_cents (excludes later sale receipts),
+  evaluated/feasible unique-plan counts, search_truncated and candidate assessments;
+- recommendation_only=true and execution_status=NOT_EXECUTED.
+
+Canonical action is ALLOCATE for any INVEST/REBALANCE/LIQUIDATE plan. WARNING has
+LIQUIDITY_WARNING and no orders; HOLD has no orders. legacy_action_hint gives HOLD,
+LIQUIDITY_WARNING, or SWEEP/WITHDRAW only for a single pure repo buy/redemption.
+Multi-instrument plans have no generic-vault hint. No implicit UTC conversion,
+execution adapter, DB mutation, trade fill, or realized P&L booking occurs.
+
+### Explicit reward assumptions
+
+AllocationRewardModel requires model/policy versions, assumption_reference,
+assumptions_available_at <= as_of, holding_hours, and exactly one
+AssetRewardAssumption for each investment tier. assumption_status defaults to
+user_supplied; calibrated requires an actual supplied calibration_reference.
+The engine does not create a calibration or fabricate evaluation metrics.
+risk_aversion defaults to 1; equity_volatility_multiplier defaults to 2. Values
+are finite precision-preserving Decimal, not binary floats.
+
+Each asset assumption supplies horizon expected_income_pct and
+expected_price_return_pct (default 0), stress_loss_pct, forced_liquidation_probability,
+liquidation_haircut_pct, optional trade_fee_pct/fixed_trade_fee_cents, and the
+quantity convention for market purchases. Income/price percentages are **over the
+declared holding horizon**, not silently annualized or realized returns. Bonds
+receive no coupon from quoted YTM. Equities receive no automatic 10% yield.
+
+Repo expected income uses only current observed APY held constant as an explicit
+modeling assumption: annual simple percentage points * actual remaining holding
+hours / 8760, stopping at 08:00. New repo uses 15 hours, not 24. Future floating
+fixings are not looked up or treated as known. Repo price-gain and manual income
+assumptions must be zero. Past accrued/realized interest is not earned again.
+
+Market purchases require positive `usd_per_index_point_per_unit`: USD per source
+index point for one declared quantity unit. The organizer index alone does not
+define an exchange lot; **Member 2 must supply/confirm this convention**.
+New quantity = floor-to-declared-quantity-precision(gross budget USD / observed
+index / convention). Purchase notional then rounds upward to cents within its
+budget. Existing holdings use supplied current valuations, with partial-sale
+quantities proportional to supplied quantity/value, not an imposed mark formula.
+The executor must validate actual price/quantity/lot rules before fills.
+
+### Objective and feasible candidates
+
+For a common holding horizon, compare:
+
+`expected income + expected price change - conditional forced-exit cost
+ - expected financing cost - immediate wealth loss - risk_aversion * stress loss`.
+
+Financing cost includes existing outstanding principal plus any new draw, less
+explicit principal-repayment savings, using current quoted APR held constant and
+ACT/365 fixed. Unpaid past interest is not compounded or deducted twice. Debt
+repayment is a financing alternative, not investment yield. New borrowing is only
+a cash-reserve/funding repair; a borrowing seed cannot buy investments.
+
+Immediate wealth loss reconciles original gross assets + new borrowing - principal
+repaid - target gross assets. It captures entry/sale costs and early-repo interest
+forfeiture once. Transaction fees, source liquidation haircuts, repo break fees,
+and modeled funding cost remain separately labeled. Positive early repo accrual
+is conservatively forfeited; negative accrual remains payable. After maturity,
+known accrued interest can enter redemption proceeds. Early break requires explicit
+policy and position permission; a source-known future receipt cannot also be
+redeemed again at/after its scheduled arrival.
+
+Conditional exit cost = target asset value * supplied forced-liquidation
+probability * applicable haircut. Existing source haircuts are conservative floors
+for that estimate; they are never silently replaced by smaller assumptions.
+This expected contingent cost is separate from fees on the proposed actual orders.
+Stress utility is a separate risk penalty, not another booked market loss.
+Stress loss uses the greater of declared asset stress, current/supplied-scenario
+RJ-M1-10 stress, and an equity volatility floor. The floor is multiplier * current
+annual volatility * sqrt(holding_hours / 8760); it is a sensitivity convention,
+not a claimed calibrated Gaussian probability. New assets are stress-tested even
+when there are no current positions in their tier. Observed bond marks are not
+adjusted again by duration; duration is hypothetical forward stress only.
+
+Mandatory cash is max(calculated reserve, supplied stronger reserve, policy cash
+floor). New investment can spend only decision-time cash above that amount after
+entry fees. Future maturities/late sales do not provide current buying power.
+Repo entry requires open window, exactly 17:00 on the explicit portfolio clock,
+current quote, and enough covered/reward horizon for next-day 08:00 maturity plus
+declared settlement delay. Only principal is projected back into cash, not
+uncertain future interest. Breaking an existing repo removes the corresponding
+share of its known maturity receipt from the projected cash path.
+
+New bond/equity purchases require **explicit tier exposure caps**, not just the
+generic vault maximum. Caps/bounds apply to target assets divided by post-trade,
+post-fee gross assets, with debt separate. Missing other tier caps use the legacy
+max_allocation_bps ceiling (Tier 0 defaults to 100%); the returned effective policy
+discloses these bounds. Fees shrinking the denominator are included in purchase-cap
+calculations. Market liquidation requires its policy permission and LIQUIDATABLE
+classification; source haircuts apply once. Selling can repair a reserve shortfall
+or current concentration breach, but cannot create positive current cash before
+its explicit settlement. Orders settling beyond forecast coverage are rejected.
+
+Every candidate is checked for target reserve, nonnegative amounts, post-fee
+exposures, debt limit, stress-loss limit, nominal intrahorizon payout funding,
+and weighted scenario funding-failure mass <= 1-confidence. Scenario checks use
+provided forecasts/weights, not future historical prices. Delayed liquidation may
+repair a buffer later only if interim payouts remain fundable; the response
+separates current cash from the pro-forma target. Borrowing may repair the gap only
+with explicit capacity/permission and known financing quote. Available credit is
+not an existing asset and never finances new investment in this search.
+
+### Deterministic P0 search and limitations
+
+Candidate seeds include HOLD, individual/full permitted sales, a minimal-sale
+cash-reserve repair, a minimal-sale concentration repair, debt repayment, and
+permitted emergency funding. Each seed is compared with a bounded allocation grid,
+per-tier cap endpoints, and minimum allocations. Exact-cent binary searches account
+for grossing up fees and quantity steps. Orders are returned in settlement-aware
+plan order (sales/financing before immediate purchases); execution still requires
+confirmed fills and Member 2 revalidation. UUID5 order IDs derive deterministically
+from run/time/request/plan facts. Input objects and record identities are not mutated.
+
+Highest objective wins; ties prefer fewer orders, then a deterministic conservative
+allocation ordering. Necessary safety repairs can have negative expected economic
+benefit while HOLD is infeasible. If no generated plan is feasible, return WARNING
+without executable orders, not an invented allocation. Search truncation and
+candidate failure reasons are disclosed. This is a real constrained finite search,
+not a global-optimality certificate or an exhaustive optimizer over all positions.
+
+Targets are trade-only pro-forma assets, before exogenous banking cash flows and
+automatic maturity accounting; they are not predicted end-of-horizon portfolio
+wealth. Baseline risk remains separately identified; selected-plan funding checks
+and target stress are reported alongside it. Expected monetary benefits are
+conservatively displayed with downward cent rounding; costs/stress round upward.
+The Decimal objective retains precision for ranking. All forecasts, rate/price
+quotes, return assumptions, source data, current holdings and accounting remain
+unchanged. No execution, realized outcome, or ML model training occurs here.
 
 ## RJ-M1-09 Hourly ML forecasting and chronological evaluation
 

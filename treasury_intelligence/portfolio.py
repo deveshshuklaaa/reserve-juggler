@@ -725,5 +725,12 @@ class FourTierDecisionResult(PortfolioSource):
 
 
 def recommend_portfolio_allocation(request: FourTierRecommendationRequest) -> FourTierDecisionResult:
-    """Shared declaration only; no optimizer, legacy-vault adapter or execution."""
-    raise NotImplementedError("RJ-M1-06 defines four-tier contracts only")
+    """RJ-M1-11: accepts additive AllocationOptimizerRequest with explicit rewards.
+
+    The old source-history envelope has no reward/quantity assumptions and cannot
+    safely select an allocation by itself. Legacy wire declarations remain explicit.
+    """
+    from .optimizer import AllocationOptimizerRequest, recommend_four_tier_allocation
+    if isinstance(request, AllocationOptimizerRequest):
+        return recommend_four_tier_allocation(request).decision
+    raise NotImplementedError("Legacy envelope defines contracts only; supply AllocationOptimizerRequest with explicit reward assumptions")

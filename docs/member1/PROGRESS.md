@@ -8,6 +8,52 @@
 
 ## Task Log
 
+### [RJ-M1-11] Four-Tier Treasury Optimizer
+- **Status**: COMPLETED
+- **Scope**: Implemented deterministic rule-assisted constrained candidate search
+  over HOLD, new investments, permitted sales/rebalancing, debt repayment and
+  emergency borrowing. Returns all four targets, canonical RecommendedOrders and
+  FourTierDecisionResult, summary action, expected economics, risk/constraints,
+  full assumptions, diagnostics, and model/policy versions. No trade execution.
+- **Inputs**: Canonical RJ-M1-10 liquidity request (portfolio, forecasts, source
+  quotes, permissions, known settlements, obligations, credit/risk policy), explicit
+  reward/quantity assumptions, optional stronger supplied reserve, and bounded
+  candidate-grid settings. Future assumptions are rejected. New market purchases
+  require explicit exposure caps and supplied quantity/index conversion.
+- **Objective**: Expected income + expected price change - conditional exit cost
+  - modeled carrying/borrowing cost - immediate trading wealth loss - configurable
+  stress-risk penalty. Rewards are disclosed expected assumptions, not realized
+  prices, guaranteed equity yield, fabricated calibration, or automatic YTM coupons.
+- **Constraints**: Reserve cannot fund new investments; only immediate cash above
+  reserve pays purchases/fees. Repo needs an open 17:00 window and 08:00 maturity
+  coverage. Locked funds require explicit redemption permission/source costs.
+  Post-fee exposures, risk/debt limits, nominal cash-path funding and supplied
+  scenario confidence budget are checked. Early repo sale removes the same future
+  maturity credit. Newly borrowed capital cannot be invested.
+- **Search**: HOLD/sale/minimal liquidity and concentration repair/financing seeds,
+  allocation grid and cap/minimum endpoints. Exact-cent fee/quantity calculations,
+  deterministic UUID5 order IDs, fewer-order/cash/lower-risk tie breaks, candidate
+  failures and truncation disclosed. No claim of exhaustive global optimality.
+- **Compatibility**: New `recommend_four_tier_allocation` returns the rich typed
+  result; canonical/root/API `recommend_portfolio_allocation` dispatches new requests
+  to the canonical decision. Older envelopes without assumptions retain explicit
+  refusal. Generic-vault algorithms remain unchanged. Legacy single-repo hints are
+  available without flattening multi-asset plans or inventing timezone adapters.
+- **Tests**: Full suite 396 passed (361 previous tests preserved; 35 new optimizer
+  tests), covering reserve protection, repo windows/lock/costs/maturity, all-tier
+  allocation, explicit/post-fee caps, market losses, risk-adjusted high-yield rejection,
+  units, negative quotes, liquidation, repayment/borrowing, delayed settlement,
+  no duplicate maturity, deterministic serialization, versions and NOT_EXECUTED.
+- **Command**: `$env:PYTHONPATH=".;backend"; uv run --with pytest --with fastapi --with pydantic --with httpx --with sqlalchemy --with pydantic-settings --with scikit-learn pytest tests/ -q`
+- **Files**: New `optimizer.py` and `test_optimizer.py`, additive exports/canonical
+  dispatcher, Member 1 contract/integration/progress documentation only.
+- **Dataset**: Organizer CSV unchanged; no loader, persistence, Member 2 API/backend,
+  frontend, replay, ML implementation or realized-accounting changes.
+- **Commit**: `feat(optimizer): recommend constrained four-tier allocations`
+  (hash and push confirmation in completion report).
+- **Push Target**: `origin/feat/treasury-intelligence`.
+- **Next Task**: Await explicit assignment; stop after RJ-M1-11.
+
 ### [RJ-M1-10] Four-Tier Liquidity Reserve and Risk
 - **Status**: COMPLETED
 - **Scope**: Pure canonical hourly pathwise peak funding requirement, explicit

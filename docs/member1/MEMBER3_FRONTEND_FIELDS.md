@@ -39,3 +39,14 @@ expected shortfall are supplied-model estimates, not realized payout statistics;
 without scenarios those fields are null. Modeled overdraft draw/cost is new
 financing, not an existing asset. Render uncertainty_mode and explanations so
 scenario quantiles are not displayed as a second added uncertainty buffer.
+
+RJ-M1-11 returns summary_action (HOLD/INVEST/REBALANCE/LIQUIDATE/WARNING), a canonical
+decision with four targets/orders, model_version/policy_version, reward_assumptions,
+objective_cents, expected income/price/exit/funding costs, target stress loss,
+candidate counts/rejections, and search_truncated. Show current post-order buying
+cash separately from pro-forma target cash that may include later sale proceeds.
+Baseline risk is not the selected plan's risk: display projected nominal funding
+gap, scenario failure weight, and decision.estimated_market_risk_loss_cents for the
+plan. All rewards are expected/user-supplied unless a calibration reference is
+explicitly supplied. Never label the best generated candidate globally optimal,
+executed, or guaranteed profitable. NOT_EXECUTED remains fixed.
