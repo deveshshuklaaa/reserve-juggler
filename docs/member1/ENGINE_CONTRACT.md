@@ -1224,3 +1224,83 @@ result = simulate_multi_asset_monte_carlo_risk(
 6. **Pathwise Revaluation & Forced Costs**: Revalues ending portfolio cash, held positions, debt liabilities, forced liquidation haircuts, and overdraft financing costs along each path.
 7. **Percentiles & Outputs**: Produces P90, P95, and P99 percentiles for peak cash requirements, shortfalls, market losses, portfolio value, and downside losses. All scenario probabilities sum exactly to `Decimal("1")`.
 8. **Disclosed Confidence**: Notes explicitly state that scenario probabilities are empirical relative frequencies, avoiding claims of guaranteed real-world confidence intervals.
+
+## RJ-M1-13 Official Four-Tier Engine Demo Pipeline
+
+Executable standalone demonstration module: `treasury_intelligence.four_tier_demo`
+(CLI: `python -m treasury_intelligence.four_tier_demo`).
+
+```python
+from treasury_intelligence import (
+    run_four_tier_demo,
+    run_scenario_repo_sweep,
+    run_scenario_repo_unavailable,
+    run_scenario_liquidity_shortage,
+    run_scenario_market_decline,
+    FourTierDemoSuiteResult,
+    FourTierDemoScenarioResult,
+    build_demo_portfolio_state,
+    load_demo_observations,
+    resolve_organizer_dataset_path,
+)
+
+suite_result: FourTierDemoSuiteResult = run_four_tier_demo(
+    source_path=None,   # Autoresolves CSV or test fixture
+    limit=200,          # Observations evaluated
+    seed=42,            # Deterministic PRNG seed
+)
+```
+
+### Core Pipeline Architecture
+
+```
+Organizer Hourly CSV (16 columns)
+       │
+       ▼
+load_demo_observations() ──────────► Causal History Filter (t <= as_of)
+                                              │
+       ┌──────────────────────────────────────┴──────────────────────────────────────┐
+       ▼                                                                             ▼
+forecast_hourly_cashflows()                                              build_demo_portfolio_state()
+(15h horizon, deposits & withdrawals)                                    (Cash, Repos, Bonds, Equities, Overdraft)
+       │                                                                             │
+       └──────────────────────────────────────┬──────────────────────────────────────┘
+                                              ▼
+                             simulate_multi_asset_monte_carlo_risk()
+                             (Block bootstrap joint stress: cash flow, bond, equity)
+                                              │
+                                              ▼
+                             recommend_four_tier_allocation()
+                             (Deterministic candidate search under reserve, exposure, and loss limits)
+                                              │
+                                              ▼
+                             FourTierDemoScenarioResult & FourTierDemoSuiteResult
+                             (Typed recommendations, orders, economics, JSON serializable)
+```
+
+### Demonstrated Engine States
+
+1. **Scenario 1 — Allowed Overnight Repo Sweep (17:00 Entry)**:
+   - Evaluated at 17:00 when `repo_sweep_window_open == True` and quoted floating APY is 4.272%.
+   - Required reserve of $142,563,501.06 is strictly protected in Tier 0 Cash.
+   - Surplus cash of $257,436,498.94 is allocated to `INVEST_REPO`.
+   - Order schedule: settles at 17:00, matures next day at 08:00 (15 hours).
+   - Accrues positive overnight income ($18,831.65). Status is `NOT_EXECUTED` (`recommendation_only=True`).
+
+2. **Scenario 2 — Repo Unavailable (Outside 17:00 Window)**:
+   - Evaluated at 10:00 business hours when `repo_sweep_window_open == False`.
+   - Engine enforces policy constraint: Repo candidates are strictly rejected outside the 17:00 window.
+   - Output: `summary_action="HOLD"`, 0 repo orders. Capital is safely held in operational cash.
+
+3. **Scenario 3 — Stressed Liquidity Shortage**:
+   - Evaluated under low cash ($5M) and heavy projected net drain ($141.56M).
+   - Mandatory required reserve exceeds available immediate cash by $137.56M.
+   - Engine rejects all investment candidates; issues `LIQUIDITY_WARNING` (`feasible=False`).
+   - Zero speculative investments proposed; full calculation audit trail generated.
+
+4. **Scenario 4 — Market Decline Revaluation**:
+   - Portfolio holding bonds and equities undergoes adverse market shock (-2% bond index, -10% equity index).
+   - Net portfolio value drops dollar-for-dollar by -$1,197,712.00.
+   - Stressed liquidation proceeds under haircuts (2% bond, 15% equity) drop to $67,193,946.82.
+   - Confirms mark-to-market accuracy and strict prohibition of guaranteed equity return.
+

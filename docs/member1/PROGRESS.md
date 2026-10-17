@@ -8,6 +8,59 @@
 
 ## Task Log
 
+### [RJ-M1-13] Official Four-Tier Engine Demo
+- **Status**: COMPLETED
+- **Scope**: Implemented standalone official four-tier demonstration pipeline
+  (`treasury_intelligence/four_tier_demo.py`) that processes organizer-style hourly
+  historical data, calculates causal forecasts and multi-asset Monte Carlo risk, and
+  produces deterministic four-tier allocation recommendations.
+- **Demonstrations Executed**:
+  1. **Allowed Overnight Repo Sweep (17:00 Window)**:
+     - Decision hour: 2026-01-02 17:00:00 (`repo_sweep_window_open=True`, quote APY = 4.272%).
+     - Portfolio: $400,000,000.00 starting cash.
+     - Monte Carlo Risk: Evaluates 15-hour overnight cash flow path; determines $142,563,501.06
+       mandatory liquid reserve ($141.56M net cash drain + $1.0M operational buffer).
+     - Optimizer: Recommends `INVEST` with 1 order: `INVEST_REPO` of surplus cash
+       $257,436,498.94 settling at 17:00 and maturing at next-day 08:00 (15 hours).
+     - Validates: Target cash retains $142.56M reserve; expected interest is positive ($18,831.65);
+       order status is `NOT_EXECUTED` (`recommendation_only=True`).
+  2. **Repo Entry Unavailable Outside 17:00**:
+     - Decision hour: 2026-01-03 10:00:00 (10:00 business hours, `repo_sweep_window_open=False`).
+     - Portfolio: $250,000,000.00 cash.
+     - Optimizer: Evaluates constraints; repo candidates are strictly ineligible outside 17:00.
+     - Output: `summary_action="HOLD"`, 0 repo orders placed. Capital safely retained in cash.
+  3. **Stressed Liquidity Shortage**:
+     - Decision hour: 2026-01-02 17:00:00 with severe cash deficit.
+     - Portfolio: $5,000,000.00 cash vs $142,563,501.06 required reserve.
+     - Output: `summary_action="WARNING"`, `canonical_action="LIQUIDITY_WARNING"`, `feasible=False`.
+     - Zero speculative investments proposed; flags $137,563,501.06 funding deficit.
+  4. **Portfolio Market Decline Revaluation**:
+     - Portfolio holding: $50M cash, 100k bond units ($9.95M), 2k equity units ($9.99M); NAV $69.93M.
+     - Market shock: -2% bond index decline ($99.473 -> $97.48354), -10% equity decline ($4993.83 -> $4494.447).
+     - Revaluation: Bond drops -$198,946.00; equity drops -$998,766.00; total wealth loss -$1,197,712.00.
+     - Stressed NAV drops dollar-for-dollar to $68,737,248.00; haircut-adjusted liquidation value
+       drops to $67,193,946.82. Verifies zero guaranteed equity return.
+- **Data Integrity & Causality**:
+  - Zero synthetic 15-minute observations fabricated; strictly operates on native hourly data.
+  - Zero future lookahead; models only use history available at decision point ($t \le \text{as\_of}$).
+  - Source organizer CSV is unmodified.
+- **Handoff Documentation**:
+  - `docs/member1/MEMBER2_INTEGRATION.md` updated with public imports, context construction,
+    policy fields, order execution protocol, and execution feedback loop.
+  - `docs/member1/MEMBER3_FRONTEND_FIELDS.md` updated with forecast series, uncertainty/risk
+    fields, allocation details, tier valuations/fees, and decision explanations.
+- **Tests**: Full suite 416 passed (407 previous tests preserved; 9 new demo tests).
+  Command: `$env:PYTHONPATH=".;backend"; uv run --with pytest --with fastapi --with pydantic --with httpx --with sqlalchemy --with pydantic-settings --with scikit-learn pytest -q`
+- **Files**:
+  - `treasury_intelligence/four_tier_demo.py` (new executable demo module)
+  - `treasury_intelligence/api.py` and `treasury_intelligence/__init__.py` (re-exports)
+  - `tests/treasury_intelligence/test_four_tier_demo.py` (9 new tests)
+  - `docs/member1/MEMBER2_INTEGRATION.md`, `docs/member1/MEMBER3_FRONTEND_FIELDS.md`,
+    `docs/member1/PROGRESS.md`, `docs/member1/ENGINE_CONTRACT.md` (documentation)
+- **Commit**: `feat(engine): demonstrate official four-tier decision pipeline`
+- **Push Target**: `origin/feat/treasury-intelligence`
+- **Next Task**: Await explicit assignment; stop after RJ-M1-13.
+
 ### [RJ-M1-12] Multi-Asset Monte Carlo Risk
 - **Status**: COMPLETED
 - **Scope**: Implemented pure, reproducible multi-asset Monte Carlo risk simulation
