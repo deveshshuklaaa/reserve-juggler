@@ -8,6 +8,34 @@
 
 ## Task Log
 
+### [RJ-M1-03] Feature Engineering and Baseline Forecasts
+- **Status**: COMPLETED
+- **Scope**: Implemented causal feature engineering (calendar time-of-day/day-of-week,
+  historical lags, rolling means and stds for inflows, outflows, and net flows) and
+  baseline forecasting models (rolling-mean and seasonal-naive).
+- **Causality & Timing**: Strictly causal; no future observations accessed. Time features
+  computed from interval start timestamp; lags strictly prior; rolling windows causal.
+- **Models**:
+  - `rolling_mean_forecast`: rolling mean of historical inflows and outflows over window,
+    with empirical net-flow sample standard deviation for uncertainty.
+  - `seasonal_naive_forecast`: 24-hour daily seasonal pattern (96 15-min intervals) with
+    seasonal error variance for uncertainty.
+  - `forecast_cashflows`: public dispatcher supporting `rolling-mean`, `seasonal-naive`,
+    and `baseline-v1`.
+- **Fallbacks**: Short-history fallback automatically reverts seasonal-naive to rolling-mean;
+  empty history falls back to zero-flow baseline; zero cash-flow history returns zero predictions.
+- **Horizons**: Validated for paths of 1, 2, 4, and 96 future 15-minute intervals (and arbitrary
+  exact multiples of bucket_minutes).
+- **Tests**: 137 passed (15 new forecasting tests, all existing 122 preserved).
+- **Command**: `$env:PYTHONPATH=".;backend"; uv run --with pytest --with fastapi --with pydantic --with httpx --with sqlalchemy --with pydantic-settings pytest tests/ -q`
+- **Files**: `treasury_intelligence/features.py`, `treasury_intelligence/forecasting.py`,
+  `treasury_intelligence/api.py`, `treasury_intelligence/__init__.py`,
+  `tests/treasury_intelligence/test_forecasting.py`, `tests/treasury_intelligence/test_contracts.py`,
+  `docs/member1/ENGINE_CONTRACT.md`, and this progress log.
+- **Commit**: `feat(engine): implement causal features and baseline forecasting`
+- **Push Target**: `origin/feat/treasury-intelligence`
+- **Next Task**: Await explicit assignment; stop after RJ-M1-03.
+
 ### [RJ-M1-02] Financial Mathematics
 - **Status**: COMPLETED
 - **Scope**: Pure pathwise peak shortfall, explicit contractual vault settlement

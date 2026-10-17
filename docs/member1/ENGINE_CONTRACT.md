@@ -164,3 +164,36 @@ rounded yield. Unlike financial inputs, that returned integer may be negative.
 These values are expected economics, never realized earnings. Inputs are validated
 as nonnegative strict integers; floats/bools are rejected, and rates cannot exceed
 10,000 bps. There is no Monte Carlo or allocation optimization in this task.
+
+## RJ-M1-03 Causal feature engineering and baseline forecasting
+
+Implements `forecast_cashflows`, feature engineering utilities, and baseline forecasting models:
+
+```python
+forecast_cashflows(history: Sequence[CashFlowBucket], *, as_of: datetime,
+                   horizon_minutes: int, bucket_minutes: int,
+                   model_version: str = "baseline-v1") -> ForecastResult
+extract_calendar_features(dt: datetime, bucket_minutes: int = 15) -> dict[str, float | int]
+compute_lag_features(buckets: Sequence[CashFlowBucket], lags: Sequence[int] = (1, 2, 4, 96),
+                     fill_value: int | None = None) -> list[dict[str, int | None]]
+compute_rolling_features(buckets: Sequence[CashFlowBucket], windows: Sequence[int] = (4, 16, 96),
+                         strictly_prior: bool = False) -> list[dict[str, float | None]]
+build_feature_matrix(buckets: Sequence[CashFlowBucket], bucket_minutes: int = 15,
+                     lags: Sequence[int] = (1, 2, 4, 96),
+                     windows: Sequence[int] = (4, 16, 96)) -> list[dict[str, Any]]
+rolling_mean_forecast(history: Sequence[CashFlowBucket], *, as_of: datetime,
+                      horizon_minutes: int, bucket_minutes: int, window: int = 16,
+                      model_version: str = "rolling-mean-v1") -> ForecastResult
+seasonal_naive_forecast(history: Sequence[CashFlowBucket], *, as_of: datetime,
+                        horizon_minutes: int, bucket_minutes: int,
+                        season_intervals: int | None = None,
+                        model_version: str = "seasonal-naive-v1") -> ForecastResult
+```
+
+### Key Principles & Behavior
+- **Causality**: Strictly causal. No future information is ever accessed or leaked into prior steps.
+- **Separate Inflow/Outflow**: Separate non-negative predictions for inflow and outflow at each interval.
+- **Uncertainty**: Empirical net-flow sample variance / seasonal error variance, rounded to non-negative integer cents.
+- **Automatic Fallback**: If history is shorter than the seasonal cycle (e.g. < 96 intervals for 15-min daily cycle), seasonal-naive automatically falls back to rolling-mean. If history is empty, falls back to zero-flow baseline.
+- **Horizons**: Validated for arbitrary horizons exactly divisible by bucket_minutes, including 1, 2, 4, and 96 future 15-minute intervals.
+- **JSON Serialization**: Strict Pydantic 2 schema compatibility with integer cents and UTC timestamps.

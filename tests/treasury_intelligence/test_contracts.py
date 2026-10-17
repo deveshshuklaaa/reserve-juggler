@@ -95,7 +95,7 @@ def test_fixture_financial_consistency():
 
 
 @pytest.mark.parametrize("name", [
-    "forecast_cashflows", "recommend_treasury_action", "evaluate_forecasting_models",
+    "recommend_treasury_action", "evaluate_forecasting_models",
     "generate_risk_scenarios", "evaluate_allocation_candidates",
 ])
 def test_public_functions_are_contract_only(name):

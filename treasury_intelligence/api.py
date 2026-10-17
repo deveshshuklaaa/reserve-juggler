@@ -11,10 +11,22 @@ from .types import (
 )
 
 
+from .forecasting import rolling_mean_forecast, seasonal_naive_forecast
+
 def forecast_cashflows(history: Sequence[CashFlowBucket], *, as_of: datetime,
                        horizon_minutes: int, bucket_minutes: int,
                        model_version: str = "baseline-v1") -> ForecastResult:
-    raise NotImplementedError("RJ-M1-01 defines contracts only")
+    if model_version in ("rolling-mean", "rolling-mean-v1"):
+        return rolling_mean_forecast(
+            history, as_of=as_of, horizon_minutes=horizon_minutes,
+            bucket_minutes=bucket_minutes, model_version=model_version
+        )
+    elif model_version in ("seasonal-naive", "seasonal-naive-v1", "baseline-v1"):
+        return seasonal_naive_forecast(
+            history, as_of=as_of, horizon_minutes=horizon_minutes,
+            bucket_minutes=bucket_minutes, model_version=model_version
+        )
+    raise ValueError(f"unsupported model_version: {model_version}")
 
 
 def recommend_treasury_action(context: TreasuryContext, forecast: ForecastResult,

@@ -15,6 +15,12 @@ from .reserve import (
 from .economics import (
     simple_annualized_vault_yield, early_redemption_penalty, expected_net_economic_benefit,
 )
+from .features import (
+    extract_calendar_features, compute_lag_features, compute_rolling_features, build_feature_matrix,
+)
+from .forecasting import (
+    rolling_mean_forecast, seasonal_naive_forecast,
+)
 
 __all__ = [
     "CashFlowBucket", "ForecastPoint", "ForecastResult", "TreasuryContext",
@@ -25,4 +31,6 @@ __all__ = [
     "VaultMaturity", "known_vault_maturities", "maximum_cumulative_shortfall",
     "reserve_for_path", "candidate_deployable_surplus", "simple_annualized_vault_yield",
     "early_redemption_penalty", "expected_net_economic_benefit",
+    "extract_calendar_features", "compute_lag_features", "compute_rolling_features",
+    "build_feature_matrix", "rolling_mean_forecast", "seasonal_naive_forecast",
 ]
