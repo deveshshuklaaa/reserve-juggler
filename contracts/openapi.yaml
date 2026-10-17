@@ -1,0 +1,431 @@
+﻿openapi: 3.0.3
+info:
+  title: Reserve Juggler API Specification
+  description: >
+    Quantitative Treasury Decision Engine API contract for HackForge 2026.
+    Provides interfaces for transaction streaming, liquidity forecasting,
+    reserve optimization, and automated sweep/withdraw decisions.
+    
+    Real-time streaming channel:
+    WS /ws/treasury (Reserved for real-time live telemetry events)
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Local Backend Service
+
+paths:
+  /health:
+    get:
+      summary: Service health check
+      description: Returns health status of API, database connectivity, and decision engine status.
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+
+  /api/treasury/state:
+    get:
+      summary: Get full current treasury state
+      description: Returns consolidated state of accounts, latest reserve requirements, active forecast, and current recommendation.
+      responses:
+        '200':
+          description: Current treasury state snapshot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TreasuryState'
+
+  /api/transactions/recent:
+    get:
+      summary: Get recent transactions
+      description: Fetches recent simulated transactions with optional limit.
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: List of transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Transaction'
+
+  /api/forecast/current:
+    get:
+      summary: Get current cash flow forecast
+      description: Returns near-term cash flow forecast, expected inflows/outflows, and uncertainty bounds.
+      responses:
+        '200':
+          description: Current forecast
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Forecast'
+
+  /api/liquidity/current:
+    get:
+      summary: Get current liquidity balances
+      description: Returns current checking balance, yield vault balance, required reserve, and deployable cash.
+      responses:
+        '200':
+          description: Liquidity balance breakdown
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LiquiditySnapshot'
+
+  /api/decisions/latest:
+    get:
+      summary: Get latest treasury decision
+      description: Returns most recent recommendation (HOLD, SWEEP, WITHDRAW, LIQUIDITY_WARNING) with rationale.
+      responses:
+        '200':
+          description: Latest decision
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Decision'
+
+  /api/decisions/history:
+    get:
+      summary: Get treasury decision history
+      description: Returns historical audit trail of treasury actions and calculations.
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of past decisions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Decision'
+
+  /api/simulation/start:
+    post:
+      summary: Start a new simulation run
+      description: Initiates a synthetic transaction stream under a selected stress scenario.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimulationStartRequest'
+      responses:
+        '202':
+          description: Simulation initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimulationRun'
+
+  /api/simulation/scenario:
+    post:
+      summary: Switch or configure scenario parameters
+      description: Injects volatility, pay-day surges, or deposit run stress scenarios.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScenarioConfigRequest'
+      responses:
+        '200':
+          description: Scenario updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  active_scenario:
+                    type: string
+
+  /api/simulation/{id}/results:
+    get:
+      summary: Get simulation run results
+      description: Returns metrics, total yield earned, reserve breach events, and emergency interventions for a run.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Simulation results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimulationRun'
+        '404':
+          description: Simulation not found
+
+  /api/metrics:
+    get:
+      summary: Get financial performance metrics
+      description: Returns cumulative yield earned, opportunity cost avoided, reserve buffer adequacy, and breach statistics.
+      responses:
+        '200':
+          description: Performance metrics summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TreasuryMetrics'
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      required:
+        - status
+        - timestamp
+      properties:
+        status:
+          type: string
+          example: healthy
+        database:
+          type: string
+          example: connected
+        timestamp:
+          type: string
+          format: date-time
+
+    Transaction:
+      type: object
+      required:
+        - id
+        - timestamp
+        - type
+        - amount
+        - source
+      properties:
+        id:
+          type: integer
+          example: 1
+        timestamp:
+          type: string
+          format: date-time
+        type:
+          type: string
+          enum: [DEPOSIT, WITHDRAWAL, MERCHANT_SETTLEMENT]
+          example: DEPOSIT
+        amount:
+          type: number
+          format: double
+          example: 50000.00
+        source:
+          type: string
+          example: payroll_ach
+        scenario:
+          type: string
+          example: baseline
+
+    Forecast:
+      type: object
+      required:
+        - id
+        - timestamp
+        - horizon_minutes
+        - predicted_inflow
+        - predicted_outflow
+        - predicted_net_flow
+        - uncertainty
+        - model_version
+      properties:
+        id:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+        horizon_minutes:
+          type: integer
+          example: 60
+        predicted_inflow:
+          type: number
+          example: 120000.00
+        predicted_outflow:
+          type: number
+          example: 85000.00
+        predicted_net_flow:
+          type: number
+          example: 35000.00
+        uncertainty:
+          type: number
+          example: 15000.00
+        model_version:
+          type: string
+          example: v0.1-quantile-baseline
+
+    LiquiditySnapshot:
+      type: object
+      required:
+        - timestamp
+        - checking_balance
+        - vault_balance
+        - required_reserve
+        - deployable_cash
+      properties:
+        id:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+        checking_balance:
+          type: number
+          example: 750000.00
+        vault_balance:
+          type: number
+          example: 3250000.00
+        required_reserve:
+          type: number
+          example: 520000.00
+        deployable_cash:
+          type: number
+          example: 230000.00
+
+    Decision:
+      type: object
+      required:
+        - timestamp
+        - decision_type
+        - amount
+        - required_reserve
+        - forecast_value
+        - forecast_uncertainty
+        - safety_buffer
+        - reason
+      properties:
+        id:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+        decision_type:
+          type: string
+          enum: [HOLD, SWEEP, WITHDRAW, LIQUIDITY_WARNING]
+          example: SWEEP
+        amount:
+          type: number
+          example: 200000.00
+        required_reserve:
+          type: number
+          example: 520000.00
+        forecast_value:
+          type: number
+          example: 35000.00
+        forecast_uncertainty:
+          type: number
+          example: 15000.00
+        safety_buffer:
+          type: number
+          example: 50000.00
+        reason:
+          type: string
+          example: Checking balance exceeds reserve target; sweeping deployable funds to yield vault.
+
+    TreasuryState:
+      type: object
+      required:
+        - liquidity
+        - latest_decision
+        - active_forecast
+      properties:
+        liquidity:
+          $ref: '#/components/schemas/LiquiditySnapshot'
+        latest_decision:
+          $ref: '#/components/schemas/Decision'
+        active_forecast:
+          $ref: '#/components/schemas/Forecast'
+        system_status:
+          type: string
+          example: operational
+
+    SimulationStartRequest:
+      type: object
+      required:
+        - scenario
+      properties:
+        scenario:
+          type: string
+          enum: [baseline, payroll_spike, deposit_run, high_volatility]
+          example: baseline
+        duration_minutes:
+          type: integer
+          default: 60
+
+    ScenarioConfigRequest:
+      type: object
+      required:
+        - scenario
+      properties:
+        scenario:
+          type: string
+          example: deposit_run
+        intensity:
+          type: number
+          example: 1.5
+
+    SimulationRun:
+      type: object
+      required:
+        - id
+        - scenario
+        - started_at
+      properties:
+        id:
+          type: integer
+        scenario:
+          type: string
+        started_at:
+          type: string
+          format: date-time
+        ended_at:
+          type: string
+          format: date-time
+        total_yield:
+          type: number
+          example: 412.50
+        reserve_breaches:
+          type: integer
+          example: 0
+        emergency_events:
+          type: integer
+          example: 0
+
+    TreasuryMetrics:
+      type: object
+      required:
+        - total_yield_earned
+        - idle_cash_ratio
+        - reserve_breach_count
+        - current_apy
+      properties:
+        total_yield_earned:
+          type: number
+          example: 1250.75
+        idle_cash_ratio:
+          type: number
+          example: 0.18
+        reserve_breach_count:
+          type: integer
+          example: 0
+        current_apy:
+          type: number
+          example: 0.0485

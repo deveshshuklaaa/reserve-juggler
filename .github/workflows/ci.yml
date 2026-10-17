@@ -1,0 +1,64 @@
+﻿name: Reserve Juggler CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  validate-contract:
+    name: Validate OpenAPI Specification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Contract Exists
+        run: |
+          if [ -f contracts/openapi.yaml ]; then
+            echo "OpenAPI contract exists: contracts/openapi.yaml"
+          else
+            echo "Missing contracts/openapi.yaml" && exit 1
+          fi
+
+  test-python-services:
+    name: Backend & Quant Engine Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Dependencies
+        run: |
+          cd backend
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run Test Suites
+        run: |
+          export PYTHONPATH=$PWD/backend:$PWD
+          pytest tests/ -v
+
+  build-frontend:
+    name: Frontend Build & Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install & Build
+        run: |
+          cd frontend
+          npm ci || npm install
+          npm run build
+
+  docker-compose-check:
+    name: Docker Compose Config Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Compose File
+        run: |
+          cp .env.example .env
+          docker compose config --quiet
+          echo "Docker compose configuration is valid."
