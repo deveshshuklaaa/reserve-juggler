@@ -350,7 +350,7 @@ def calculate_four_tier_liquidity_risk(request: FourTierLiquidityRiskRequest) ->
             for child in value: collect(child)
     collect(request.model_dump())
     with localcontext() as ctx:
-        ctx.prec = 80 + sum(len(d.as_tuple().digits) + abs(d.as_tuple().exponent) for d in decimals)
+        ctx.prec = min(200, 80 + sum(len(d.as_tuple().digits) + abs(d.as_tuple().exponent) for d in decimals))
         return _calculate(request)
 
 

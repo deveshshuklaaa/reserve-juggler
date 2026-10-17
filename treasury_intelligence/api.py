@@ -4,7 +4,8 @@ from datetime import datetime
 
 from .reserve import calculate_required_reserve
 from .policy import recommend_treasury_action
-from .four_tier import recommend_portfolio_allocation
+from .portfolio import recommend_portfolio_allocation
+from .optimizer import recommend_four_tier_allocation
 from .liquidity_risk import calculate_four_tier_liquidity_risk
 
 from .types import (
@@ -31,6 +32,16 @@ from .ml_forecasting import (
     HourlyModelEvaluationReport,
     evaluate_hourly_forecast_models,
     hourly_ml_forecast,
+)
+from .monte_carlo_risk import (
+    MONTE_CARLO_RISK_MODEL_VERSION,
+    MarketRiskSummary,
+    MultiAssetMonteCarloRiskResult,
+    PercentileSummary,
+    PortfolioDownsideRiskSummary,
+    ShortfallDistributionSummary,
+    generate_multi_asset_scenarios,
+    simulate_multi_asset_monte_carlo_risk,
 )
 
 

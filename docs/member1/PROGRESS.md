@@ -8,6 +8,102 @@
 
 ## Task Log
 
+### [RJ-M1-12] Multi-Asset Monte Carlo Risk
+- **Status**: COMPLETED
+- **Scope**: Implemented pure, reproducible multi-asset Monte Carlo risk simulation
+  (`monte_carlo_risk.py`) modeling the joint uncertainty of cash flows, bond prices,
+  and equity returns using historical block bootstrap sampling. Fully integrated
+  with canonical `FourTierLiquidityRiskRequest` and `calculate_four_tier_liquidity_risk`.
+- **Causality & Data Integrity**:
+  - Strictly causal: only historical observations $t \le \text{portfolio.as\_of}$ are
+    eligible for sampling; no future lookahead.
+  - Cash-flow forecast residuals: historical 24h seasonal forecast errors for deposits
+    and withdrawals are sampled contiguously, preserving intraday correlation.
+  - Market innovations: block sampling captures simultaneous bond price index and
+    equity index drawdowns without imposing unrealistic Gaussian copula assumptions.
+  - Non-negativity: simulated deposits, withdrawals, and prices are strictly $\ge 0$.
+  - Observed market volatility: uses observed `tier3_stock_volatility_pct` rather than
+    fabricating artificial volatility dynamics.
+- **Pathwise Evaluation & Revaluation**:
+  - Respects scenario-specific repo maturities: 15-hour overnight repo entered at 17:00
+    matures at 08:00; cash is not available earlier unless broken early.
+  - Revalues all 4 tiers along each simulated path: cash net balance, repo claims,
+    marked bond positions, marked equity positions, and overdraft liabilities.
+  - Computes maximum cash funding shortfall before and after permitted liquidations.
+  - Models forced liquidation costs (repo break fees, bond 2% haircuts, equity 15%
+    slippage) and overdraft financing costs for remaining funding gaps.
+- **Percentiles & Outputs**:
+  - Generates 500 reproducible scenario paths (default seed=42) where probabilities
+    sum exactly to `Decimal("1")` (`Decimal("0.002")` each).
+  - Evaluates P90, P95, and P99 percentiles for peak funding requirements, funding
+    shortfalls, market stress losses, portfolio value, and downside loss.
+  - Produces typed `MultiAssetMonteCarloRiskResult`, `MarketRiskSummary`,
+    `ShortfallDistributionSummary`, `PortfolioDownsideRiskSummary`, and `PercentileSummary`.
+  - Discloses model version (`multi-asset-block-mc-v1`) and clear notes avoiding
+    claims of guaranteed real-world confidence intervals.
+  - Generates canonical `LiquidityScenario` objects directly consumable by
+    `FourTierLiquidityRiskRequest` and `FourTierOptimizerRequest`.
+- **Tests**: Full suite 407 passed (396 previous tests preserved; 11 new Monte Carlo tests).
+  Tests cover reproducibility, non-negativity, stress quantile ordering ($P_{90} \le P_{95} \le P_{99}$),
+  no lookahead, no uncertainty double-counting, correct repo cash availability, higher market losses
+  reducing portfolio value, default 500 scenario execution, and consistent JSON round-trip serialization.
+  Command: `$env:PYTHONPATH=".;backend"; uv run --with pytest --with fastapi --with pydantic --with httpx --with sqlalchemy --with pydantic-settings pytest -q`
+- **Files**:
+  - `treasury_intelligence/monte_carlo_risk.py` (new module)
+  - `treasury_intelligence/liquidity_risk.py` (capped Decimal precision to keep 500 scenarios fast)
+  - `treasury_intelligence/api.py` and `treasury_intelligence/__init__.py` (re-exports)
+  - `tests/treasury_intelligence/test_monte_carlo_risk.py` (11 new tests)
+  - `docs/member1/PROGRESS.md` and `docs/member1/ENGINE_CONTRACT.md` (documentation)
+- **Commit**: `feat(risk): add multi-asset Monte Carlo scenarios`
+- **Push Target**: `origin/feat/treasury-intelligence`
+- **Next Task**: Await explicit assignment; stop after RJ-M1-12.
+
+### [RJ-M1-11] Four-Tier Treasury Optimizer
+- **Status**: COMPLETED
+- **Scope**: Implemented deterministic rule-assisted constrained candidate search
+  over HOLD, new investments, permitted sales/rebalancing, debt repayment and
+  emergency borrowing. Returns all four targets, canonical RecommendedOrders and
+  FourTierDecisionResult, summary action, expected economics, risk/constraints,
+  full assumptions, diagnostics, and model/policy versions. No trade execution.
+- **Inputs**: Canonical RJ-M1-10 liquidity request (portfolio, forecasts, source
+  quotes, permissions, known settlements, obligations, credit/risk policy), explicit
+  reward/quantity assumptions, optional stronger supplied reserve, and bounded
+  candidate-grid settings. Future assumptions are rejected. New market purchases
+  require explicit exposure caps and supplied quantity/index conversion.
+- **Objective**: Expected income + expected price change - conditional exit cost
+  - modeled carrying/borrowing cost - immediate trading wealth loss - configurable
+  stress-risk penalty. Rewards are disclosed expected assumptions, not realized
+  prices, guaranteed equity yield, fabricated calibration, or automatic YTM coupons.
+- **Constraints**: Reserve cannot fund new investments; only immediate cash above
+  reserve pays purchases/fees. Repo needs an open 17:00 window and 08:00 maturity
+  coverage. Locked funds require explicit redemption permission/source costs.
+  Post-fee exposures, risk/debt limits, nominal cash-path funding and supplied
+  scenario confidence budget are checked. Early repo sale removes the same future
+  maturity credit. Newly borrowed capital cannot be invested.
+- **Search**: HOLD/sale/minimal liquidity and concentration repair/financing seeds,
+  allocation grid and cap/minimum endpoints. Exact-cent fee/quantity calculations,
+  deterministic UUID5 order IDs, fewer-order/cash/lower-risk tie breaks, candidate
+  failures and truncation disclosed. No claim of exhaustive global optimality.
+- **Compatibility**: New `recommend_four_tier_allocation` returns the rich typed
+  result; canonical/root/API `recommend_portfolio_allocation` dispatches new requests
+  to the canonical decision. Older envelopes without assumptions retain explicit
+  refusal. Generic-vault algorithms remain unchanged. Legacy single-repo hints are
+  available without flattening multi-asset plans or inventing timezone adapters.
+- **Tests**: Full suite 396 passed (361 previous tests preserved; 35 new optimizer
+  tests), covering reserve protection, repo windows/lock/costs/maturity, all-tier
+  allocation, explicit/post-fee caps, market losses, risk-adjusted high-yield rejection,
+  units, negative quotes, liquidation, repayment/borrowing, delayed settlement,
+  no duplicate maturity, deterministic serialization, versions and NOT_EXECUTED.
+- **Command**: `$env:PYTHONPATH=".;backend"; uv run --with pytest --with fastapi --with pydantic --with httpx --with sqlalchemy --with pydantic-settings --with scikit-learn pytest tests/ -q`
+- **Files**: New `optimizer.py` and `test_optimizer.py`, additive exports/canonical
+  dispatcher, Member 1 contract/integration/progress documentation only.
+- **Dataset**: Organizer CSV unchanged; no loader, persistence, Member 2 API/backend,
+  frontend, replay, ML implementation or realized-accounting changes.
+- **Commit**: `feat(optimizer): recommend constrained four-tier allocations`
+  (hash and push confirmation in completion report).
+- **Push Target**: `origin/feat/treasury-intelligence`.
+- **Next Task**: Await explicit assignment; stop after RJ-M1-11.
+
 ### [RJ-M1-10] Four-Tier Liquidity Reserve and Risk
 - **Status**: COMPLETED
 - **Scope**: Pure canonical hourly pathwise peak funding requirement, explicit

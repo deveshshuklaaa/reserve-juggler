@@ -55,3 +55,19 @@ and repo_settlements. Result.reserve is canonical FourTierReserveResult; project
 shortages and hypothetical liquidation are not executions. actual_payout_failure
 is null. Read the RJ-M1-10 contract section for the two uncertainty modes, expected
 shortfall definitions, buffer floors, and funding-cost assumptions.
+
+RJ-M1-11's executable **recommendation** boundary is
+`recommend_four_tier_allocation(AllocationOptimizerRequest) -> AllocationOptimizerResult`
+in `optimizer.py` (also root/API). Pass the canonical RJ-M1-10 liquidity request
+and explicit AllocationRewardModel; market purchases additionally require declared
+USD/index/quantity conversion and explicit exposure caps. Current quotes/cutoffs
+are validated without loading future data. Result.decision is canonical
+FourTierDecisionResult with targets and ordered RecommendedOrders. The canonical
+`portfolio.recommend_portfolio_allocation` dispatcher returns that decision for
+the new request; old envelopes without assumptions retain their explicit refusal.
+Read summary_action, disclosed reward_assumptions, baseline risk, selected-plan
+funding checks, and search_truncated. Targets exclude exogenous future cash flows;
+late sale proceeds are not immediate buying cash. Revalidate balances, contractual
+settlement, fees, unit/lot conventions, source versions and all constraints before
+execution. Stable IDs are recommendations, never fill confirmations. Legacy
+single-repo hints do not flatten multi-asset orders into one vault.

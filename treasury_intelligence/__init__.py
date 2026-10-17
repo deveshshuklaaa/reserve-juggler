@@ -30,8 +30,9 @@ from .four_tier import (
     OverdraftLiability, CostBreakdown, FourTierPortfolioState, ExposureConstraint,
     FourTierRiskPolicy, ForecastRiskMetadata, HourlyForecastPoint,
     FourTierRecommendationRequest, AllocationTarget, TradeRecommendation,
-    InstrumentReturnEstimate, PortfolioRecommendation, recommend_portfolio_allocation,
+    InstrumentReturnEstimate, PortfolioRecommendation,
 )
+from .portfolio import recommend_portfolio_allocation
 from .hourly_forecasting import (
     ForecastResolution,
     HourlyCashFlowBucket,
@@ -72,6 +73,21 @@ from .liquidity_risk import (
     calculate_four_tier_liquidity_risk,
 )
 
+from .optimizer import (
+    AssetRewardAssumption, AllocationRewardModel, AllocationOptimizerRequest,
+    CandidateAssessment, AllocationOptimizerResult, recommend_four_tier_allocation,
+)
+from .monte_carlo_risk import (
+    MONTE_CARLO_RISK_MODEL_VERSION,
+    MarketRiskSummary,
+    MultiAssetMonteCarloRiskResult,
+    PercentileSummary,
+    PortfolioDownsideRiskSummary,
+    ShortfallDistributionSummary,
+    generate_multi_asset_scenarios,
+    simulate_multi_asset_monte_carlo_risk,
+)
+
 __all__ = [
     "CashFlowBucket", "ForecastPoint", "ForecastResult", "TreasuryContext",
     "VaultPosition", "TreasuryPolicy", "ReserveResult", "DecisionResult",
@@ -108,4 +124,9 @@ __all__ = [
     "MarketStress", "LiquidityScenario", "FourTierLiquidityRiskRequest", "LiquidityPathPoint",
     "StressLiquidationResult", "ScenarioLiquidityResult", "FourTierLiquidityRiskResult",
     "calculate_four_tier_liquidity_risk",
+    "AssetRewardAssumption", "AllocationRewardModel", "AllocationOptimizerRequest",
+    "CandidateAssessment", "AllocationOptimizerResult", "recommend_four_tier_allocation",
+    "MONTE_CARLO_RISK_MODEL_VERSION", "MarketRiskSummary", "MultiAssetMonteCarloRiskResult",
+    "PercentileSummary", "PortfolioDownsideRiskSummary", "ShortfallDistributionSummary",
+    "generate_multi_asset_scenarios", "simulate_multi_asset_monte_carlo_risk",
 ]
