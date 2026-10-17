@@ -36,7 +36,7 @@ export default function LandingExperience() {
           }
         });
       },
-      { threshold: 0.25 }
+      { threshold: 0.1 }
     );
 
     document.querySelectorAll('.apple-fullscreen-window').forEach((w) => observer.observe(w));

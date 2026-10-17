@@ -52,7 +52,7 @@ export default function AppleBentoGrid() {
   const [hovered, setHovered] = useState(null);
 
   return (
-    <div className="apple-window apple-bento-section" id="window-bento">
+    <div className="apple-bento-section" id="window-bento">
       <div className="bento-header">
         <span className="apple-kicker">ARCHITECTURAL EXCELLENCE</span>
         <h2 className="bento-headline">

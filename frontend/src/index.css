@@ -1563,39 +1563,32 @@ main:has(.landing-page) {
   transform: translateX(0);
 }
 
-/* Apple Full-Screen Window Sections & Theatrical Keynote Transitions */
-.apple-fullscreen-window,
-.apple-window {
+/* Apple Full-Screen Window Sections & Smooth Theatrical Transitions */
+.apple-fullscreen-window {
   min-height: calc(100vh - 64px);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: clamp(48px, 8vh, 84px) max(24px, calc((100vw - 1280px) / 2));
+  padding: clamp(48px, 6vh, 80px) max(24px, calc((100vw - 1280px) / 2));
   position: relative;
   scroll-margin-top: 56px;
   box-sizing: border-box;
-  opacity: 0.15;
-  transform: translateY(48px) scale(0.975);
-  filter: blur(5px);
-  transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.85s cubic-bezier(0.16, 1, 0.3, 1),
-              filter 0.85s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform, opacity, filter;
+  opacity: 0.92;
+  transform: translateY(16px);
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
 }
 
-.apple-fullscreen-window.window-in-view,
-.apple-window.window-in-view {
+.apple-fullscreen-window.window-in-view {
   opacity: 1;
-  transform: translateY(0) scale(1);
-  filter: blur(0px);
+  transform: translateY(0);
 }
 
-.apple-fullscreen-window.window-scrolled-past,
-.apple-window.window-scrolled-past {
-  opacity: 0.22;
-  transform: translateY(-32px) scale(0.97);
-  filter: blur(3px);
+.apple-fullscreen-window.window-scrolled-past {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .window-sandbox-section {
@@ -2334,9 +2327,10 @@ main:has(.landing-page) {
    ========================================================================== */
 
 .sandbox-showcase {
+  width: 100%;
   max-width: 1240px;
-  margin: 64px auto;
-  padding: 0 28px;
+  margin: 0 auto;
+  padding: 12px 28px;
 }
 
 .sandbox-header {

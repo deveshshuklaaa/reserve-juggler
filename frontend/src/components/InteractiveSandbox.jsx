@@ -60,7 +60,7 @@ export default function InteractiveSandbox() {
   };
 
   return (
-    <div className="apple-window sandbox-showcase" id="interactive-lab">
+    <div className="sandbox-showcase">
       <div className="sandbox-header">
         <span className="apple-kicker">HANDS-ON SIMULATOR</span>
         <h2 className="sandbox-title">
