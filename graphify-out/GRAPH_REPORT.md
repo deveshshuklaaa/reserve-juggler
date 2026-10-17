@@ -1,98 +1,266 @@
 # Graph Report - reserve-juggler  (2026-10-17)
 
 ## Corpus Check
-- Corpus is ~8,882 words - fits in a single context window. You may not need a graph.
+- 47 files · ~23,776 words
+- Verdict: corpus is large enough that graph structure adds value.
+- Unclassified: 7 file(s) not represented in the graph (top: (none) 3, .example 1, .conf 1)
 
 ## Summary
-- 151 nodes · 279 edges · 15 communities (7 shown, 8 thin omitted)
-- Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 15 edges (avg confidence: 0.95)
+- 515 nodes · 743 edges · 47 communities (39 shown, 8 thin omitted)
+- Extraction: 94% EXTRACTED · 6% INFERRED · 0% AMBIGUOUS · INFERRED: 43 edges (avg confidence: 0.95)
 - Token cost: 0 input · 0 output
 
+## Graph Freshness
+- Built from commit: `dd328bc9`
+- Run `git rev-parse HEAD` and compare to check if the graph is stale.
+- Run `graphify update .` after code changes (no API cost).
+
 ## Community Hubs (Navigation)
-- engine.py / datetime
-- database.py / get_db()
-- package.json / dependencies
-- models.py / DecisionModel
-- schemas.py / Decision
-- Any / Expected Liquidity Requirement + Forecast Uncertainty + Operational Safety…
-- client.js / fetchHealth()
-- config.py / Settings
-- get_recent_transactions() / get
+- TreasuryDecisionEngine
+- treasury.py
+- package.json
+- runs.py
+- README.md
+- 30. BACKEND TESTING REQUIREMENTS
+- MEMBER_2_SPEC.md
+- main.py
+- 24. DATABASE DESIGN
+- 42. FINAL DELIVERABLES
+- 31. FINANCIAL INVARIANTS
+- 35. PARALLEL DEVELOPMENT RULES
+- 40. JUDGE-READY TECHNICAL EXPLANATIONS
+- Reserve Juggler backend and engine integration contract
+- GRAPHIFY — MANDATORY PROJECT KNOWLEDGE GRAPH
+- 21. STRESS SCENARIO ENGINE
+- 34. MEMBER 2 DEVELOPMENT TIMELINE
+- 41. DEFINITION OF DONE
+- 12. TRANSACTION DISTRIBUTION MODEL
+- 23. FINANCIAL PERFORMANCE METRICS
+- GRAPHIFY — MANDATORY PROJECT KNOWLEDGE GRAPH
+- 11. SYNTHETIC TRANSACTION GENERATOR
+- 16. YIELD VAULT LEDGER
+- 18. EMERGENCY LIQUIDITY AND PAYOUT FAILURES
+- 22. STRATEGY BACKTESTING
+- 26. API REQUEST AND RESPONSE EXAMPLES
+- 19. SIMULATION STEP EXECUTION
+- 37. EARLY HANDOFF TO MEMBER 1
+- 15. CHECKING ACCOUNT LEDGER
+- 17. EARLY VAULT REDEMPTION
+- 20. INTEGRATION WITH MEMBER 1
+- 28. BACKTEST IMPLEMENTATION DETAILS
+- 29. FRONTEND INTEGRATION SUPPORT
+- 2. PROJECT PROBLEM STATEMENT
+- 6. YOUR EXACT RESPONSIBILITIES
+- PULL_REQUEST_TEMPLATE.md
+- GIT MILESTONE RULE — MANDATORY
+- 13. HISTORICAL DATA GENERATION
+- 14. REAL-TIME TRANSACTION AGGREGATOR
+- MEMBER 2 — COMPLETE DEVELOPMENT AGENT PROMPT
 
 ## God Nodes (most connected - your core abstractions)
-1. `TreasuryDecisionEngine` - 12 edges
-2. `TransactionGenerator` - 12 edges
-3. `CashFlowForecaster` - 10 edges
-4. `App()` - 8 edges
-5. `get_treasury_state()` - 6 edges
-6. `get_db()` - 5 edges
-7. `DecisionModel` - 5 edges
-8. `SimulationRunModel` - 5 edges
-9. `start_simulation()` - 5 edges
-10. `get_current_liquidity()` - 5 edges
+1. `30. BACKEND TESTING REQUIREMENTS` - 26 edges
+2. `ContractModel` - 23 edges
+3. `unavailable()` - 12 edges
+4. `TreasuryDecisionEngine` - 12 edges
+5. `TransactionGenerator` - 12 edges
+6. `24. DATABASE DESIGN` - 12 edges
+7. `42. FINAL DELIVERABLES` - 12 edges
+8. `Database/backend mapping` - 11 edges
+9. `31. FINANCIAL INVARIANTS` - 11 edges
+10. `35. PARALLEL DEVELOPMENT RULES` - 11 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `test_hold_decision_in_corridor()` --uses--> `TreasuryDecisionEngine`  [INFERRED]
-  tests/backend/test_decision_engine.py → backend/app/treasury/engine.py
-- `test_liquidity_warning_on_extreme_insolvency()` --uses--> `TreasuryDecisionEngine`  [INFERRED]
-  tests/backend/test_decision_engine.py → backend/app/treasury/engine.py
-- `test_required_reserve_calculation()` --uses--> `TreasuryDecisionEngine`  [INFERRED]
-  tests/backend/test_decision_engine.py → backend/app/treasury/engine.py
-- `test_sweep_decision_on_excess_cash()` --uses--> `TreasuryDecisionEngine`  [INFERRED]
-  tests/backend/test_decision_engine.py → backend/app/treasury/engine.py
-- `test_withdraw_decision_on_liquidity_deficit()` --uses--> `TreasuryDecisionEngine`  [INFERRED]
-  tests/backend/test_decision_engine.py → backend/app/treasury/engine.py
+- `Idempotency` --references--> `advance()`  [INFERRED]
+  docs/MEMBER_2_SPEC.md → backend/app/routers/runs.py
+- `Database/backend mapping` --references--> `transactions()`  [INFERRED]
+  ENGINE_CONTRACT.md → backend/app/routers/runs.py
+- `Confirmed incompatibilities in the initial repository` --references--> `Scenario`  [INFERRED]
+  ENGINE_CONTRACT.md → backend/app/v1_contracts.py
+- `Database/backend mapping` --references--> `TreasuryPolicy`  [INFERRED]
+  ENGINE_CONTRACT.md → backend/app/v1_contracts.py
+- `HTTP contract` --references--> `TreasuryPolicy`  [INFERRED]
+  ENGINE_CONTRACT.md → backend/app/v1_contracts.py
 
 ## Import Cycles
 - None detected.
 
-## Communities (15 total, 8 thin omitted)
+## Communities (47 total, 8 thin omitted)
 
-### Community 0 - "engine.py / datetime"
+### Community 0 - "TreasuryDecisionEngine"
+Cohesion: 0.07
+Nodes (14): TreasuryDecisionEngine, CashFlowForecaster, TransactionGenerator, test_hold_decision_in_corridor(), test_liquidity_warning_on_extreme_insolvency(), test_required_reserve_calculation(), test_sweep_decision_on_excess_cash(), test_withdraw_decision_on_liquidity_deficit() (+6 more)
+
+### Community 1 - "treasury.py"
+Cohesion: 0.08
+Nodes (31): Settings, get_db(), DecisionModel, ForecastModel, LiquiditySnapshotModel, SimulationRunModel, TransactionModel, get_health() (+23 more)
+
+### Community 2 - "package.json"
+Cohesion: 0.10
+Nodes (25): dependencies, react, react-dom, devDependencies, vite, @vitejs/plugin-react, name, private (+17 more)
+
+### Community 3 - "runs.py"
 Cohesion: 0.11
-Nodes (8): CashFlowForecaster, TransactionGenerator, test_forecaster_baseline(), test_forecaster_with_transactions(), test_end_to_end_pipeline(), test_generator_baseline_event(), test_generator_deposit_run(), test_generator_payroll_spike()
+Nodes (36): advance(), backtest(), create_run(), decisions(), forecast(), history(), policy(), report() (+28 more)
 
-### Community 1 - "database.py / get_db()"
-Cohesion: 0.14
-Nodes (6): get_db(), root(), get_health(), get_simulation_results(), start_simulation(), update_scenario()
+### Community 4 - "README.md"
+Cohesion: 0.06
+Nodes (28): 1. Team Workstreams & Responsibilities, 2. Branching Strategy, 3. Engineering Philosophy & Guidelines, Feature Branch Lifecycle:, 1. Overview & Objective, 2.1. Expected Liquidity Requirement ($L_{req}$), 2.2. Forecast Uncertainty ($\sigma_{forecast}$), 2.3. Operational Safety Buffer ($B_{safety}$) (+20 more)
 
-### Community 2 - "package.json / dependencies"
-Cohesion: 0.12
-Nodes (16): dependencies, react, react-dom, devDependencies, vite, @vitejs/plugin-react, name, private (+8 more)
+### Community 6 - "30. BACKEND TESTING REQUIREMENTS"
+Cohesion: 0.08
+Nodes (26): 30. BACKEND TESTING REQUIREMENTS, Test 10 — Emergency borrowing, Test 11 — Payout failure, Test 12 — Normal scenario, Test 13 — High withdrawal scenario, Test 14 — Low deposit scenario, Test 15 — Settlement delay, Test 16 — Liquidity shock (+18 more)
 
-### Community 3 - "models.py / DecisionModel"
+### Community 7 - "MEMBER_2_SPEC.md"
+Cohesion: 0.10
+Nodes (19): 10. SIMULATION INITIALIZATION, 1. YOUR ROLE AND MISSION, 25. FASTAPI CONTRACT, 27. API ERROR HANDLING, 32. DOCKER AND ENVIRONMENT MANAGEMENT, 33. PERFORMANCE REQUIREMENTS, 36. EARLY HANDOFF TO MEMBER 3, 38. BACKEND DEMONSTRATION REQUIREMENT (+11 more)
+
+### Community 8 - "main.py"
+Cohesion: 0.07
+Nodes (8): http_error(), root(), unexpected_error(), validation_error(), test_contract_routes_return_honest_unimplemented_error(), test_create_request_rejects_incompatible_units_or_values(), test_internal_errors_use_safe_envelope(), test_spec_defaults_and_utc_normalization()
+
+### Community 9 - "24. DATABASE DESIGN"
+Cohesion: 0.17
+Nodes (12): 24. DATABASE DESIGN, Database requirements, Table 10 — backtest_results, Table 1 — simulation_runs, Table 2 — transactions, Table 3 — ledger_entries, Table 4 — vault_positions, Table 5 — vault_movements (+4 more)
+
+### Community 15 - "42. FINAL DELIVERABLES"
+Cohesion: 0.17
+Nodes (12): 42. FINAL DELIVERABLES, A. Implementation summary, B. Database schema, C. Backend API documentation, D. Transaction simulator documentation, E. Ledger documentation, F. Backtesting documentation, G. Integration instructions for Member 1 (+4 more)
+
+### Community 16 - "31. FINANCIAL INVARIANTS"
+Cohesion: 0.18
+Nodes (11): 31. FINANCIAL INVARIANTS, Invariant 10 — Strategy isolation, Invariant 1 — Principal conservation, Invariant 2 — Interest accounting, Invariant 3 — No double execution, Invariant 4 — No free liquidity, Invariant 5 — Honest payout status, Invariant 6 — Accurate borrowing costs (+3 more)
+
+### Community 17 - "35. PARALLEL DEVELOPMENT RULES"
+Cohesion: 0.18
+Nodes (11): 35. PARALLEL DEVELOPMENT RULES, Rule 1, Rule 10, Rule 2, Rule 3, Rule 4, Rule 5, Rule 6 (+3 more)
+
+### Community 18 - "40. JUDGE-READY TECHNICAL EXPLANATIONS"
+Cohesion: 0.18
+Nodes (11): 40. JUDGE-READY TECHNICAL EXPLANATIONS, Are these actual bank transactions?, How are transactions generated?, How do you compare against baselines?, How do you measure financial performance?, How do you prevent misleading results?, How does the system simulate real time?, How is a sweep executed? (+3 more)
+
+### Community 19 - "Reserve Juggler backend and engine integration contract"
+Cohesion: 0.18
+Nodes (8): Scenario, Authority and scope, Confirmed incompatibilities in the initial repository, Contract decisions requiring team review, Member 1 integration placeholder — NOT AN AGREED ENGINE CONTRACT, Reserve Juggler backend and engine integration contract, Shared financial and data conventions, Verification limits
+
+### Community 20 - "GRAPHIFY — MANDATORY PROJECT KNOWLEDGE GRAPH"
+Cohesion: 0.22
+Nodes (8): GIT MILESTONE RULE — MANDATORY, Graphify accuracy rule, GRAPHIFY — MANDATORY PROJECT KNOWLEDGE GRAPH, Important, Initial setup, Milestone examples, Project Rules and Guidelines, Regular updates
+
+### Community 21 - "21. STRESS SCENARIO ENGINE"
+Cohesion: 0.22
+Nodes (9): 21. STRESS SCENARIO ENGINE, HIGH_WITHDRAWAL, LIQUIDITY_SHOCK, LOW_DEPOSIT, Mid-run scenario application, NORMAL, Scenario implementation rule, SETTLEMENT_DELAY (+1 more)
+
+### Community 22 - "34. MEMBER 2 DEVELOPMENT TIMELINE"
+Cohesion: 0.22
+Nodes (9): 34. MEMBER 2 DEVELOPMENT TIMELINE, Hours 0–1 — Contract and Repository Setup, Hours 10–14 — Backtesting and Member 1 Integration, Hours 14–18 — Advanced Metrics and Reliability, Hours 18–21 — Final Integration, Hours 1–4 — Transaction and Ledger Foundation, Hours 21–24 — Feature Freeze, Hours 4–7 — Simulation and API (+1 more)
+
+### Community 23 - "41. DEFINITION OF DONE"
+Cohesion: 0.22
+Nodes (9): 41. DEFINITION OF DONE, API, Database, Evaluation, Integration, Simulation engine, Stress testing, Transaction engine (+1 more)
+
+### Community 24 - "12. TRANSACTION DISTRIBUTION MODEL"
+Cohesion: 0.29
+Nodes (7): 12. TRANSACTION DISTRIBUTION MODEL, Deposit distribution, Merchant settlements, Randomness, Time-of-day behavior, Transaction volume, Withdrawal distribution
+
+### Community 25 - "23. FINANCIAL PERFORMANCE METRICS"
+Cohesion: 0.29
+Nodes (7): 23. FINANCIAL PERFORMANCE METRICS, Baseline comparison, Core financial metric, Liquidity metrics, Transaction metrics, Treasury activity metrics, Yield metrics
+
+### Community 26 - "GRAPHIFY — MANDATORY PROJECT KNOWLEDGE GRAPH"
 Cohesion: 0.33
-Nodes (11): DecisionModel, ForecastModel, LiquiditySnapshotModel, SimulationRunModel, TransactionModel, get_current_forecast(), get_current_liquidity(), get_decisions_history() (+3 more)
+Nodes (5): Graphify accuracy rule, GRAPHIFY — MANDATORY PROJECT KNOWLEDGE GRAPH, Important, Initial setup, Regular updates
 
-### Community 4 - "schemas.py / Decision"
-Cohesion: 0.23
-Nodes (13): Decision, Forecast, ForecastBase, HealthStatus, LiquiditySnapshot, ScenarioConfigRequest, SimulationRun, SimulationStartRequest (+5 more)
+### Community 27 - "11. SYNTHETIC TRANSACTION GENERATOR"
+Cohesion: 0.33
+Nodes (6): 11. SYNTHETIC TRANSACTION GENERATOR, A. DEPOSIT, B. WITHDRAWAL, C. MERCHANT_SETTLEMENT, Required behavior, Required transaction fields
 
-### Community 5 - "Any / Expected Liquidity Requirement + Forecast Uncertainty + Operational Safety…"
-Cohesion: 0.20
-Nodes (6): TreasuryDecisionEngine, test_hold_decision_in_corridor(), test_liquidity_warning_on_extreme_insolvency(), test_required_reserve_calculation(), test_sweep_decision_on_excess_cash(), test_withdraw_decision_on_liquidity_deficit()
+### Community 28 - "16. YIELD VAULT LEDGER"
+Cohesion: 0.33
+Nodes (6): 16. YIELD VAULT LEDGER, Creating a vault position, Interest accounting, Interest calculation, Maturity processing, Required position fields
 
-### Community 6 - "client.js / fetchHealth()"
-Cohesion: 0.36
-Nodes (9): fetchHealth(), fetchMetrics(), fetchRecentTransactions(), fetchTreasuryState(), setSimulationScenario(), App(), loadData(), react (+1 more)
+### Community 29 - "18. EMERGENCY LIQUIDITY AND PAYOUT FAILURES"
+Cohesion: 0.33
+Nodes (6): 18. EMERGENCY LIQUIDITY AND PAYOUT FAILURES, Emergency borrowing configuration, Important metrics, Scenario A — Sufficient checking, Scenario B — Checking insufficient, emergency borrowing allowed, Scenario C — Funding unavailable
+
+### Community 30 - "22. STRATEGY BACKTESTING"
+Cohesion: 0.33
+Nodes (6): 22. STRATEGY BACKTESTING, Critical fairness rule, Recommended implementation, Strategy A — STATIC RESERVE, Strategy B — REACTIVE RESERVE, Strategy C — RESERVE JUGGLER
+
+### Community 31 - "26. API REQUEST AND RESPONSE EXAMPLES"
+Cohesion: 0.33
+Nodes (6): 26. API REQUEST AND RESPONSE EXAMPLES, A. Create Simulation, B. Advance Simulation, C. Apply Scenario, D. Treasury Snapshot, E. Backtest Result
+
+### Community 32 - "19. SIMULATION STEP EXECUTION"
+Cohesion: 0.40
+Nodes (5): 19. SIMULATION STEP EXECUTION, Idempotency, Important financial detail, Important policy detail, Required execution sequence
+
+### Community 33 - "37. EARLY HANDOFF TO MEMBER 1"
+Cohesion: 0.40
+Nodes (5): 37. EARLY HANDOFF TO MEMBER 1, Configurable policy, Execution feedback, Historical data, Treasury context
+
+### Community 34 - "15. CHECKING ACCOUNT LEDGER"
+Cohesion: 0.50
+Nodes (4): 15. CHECKING ACCOUNT LEDGER, Concurrency safety, Financial correctness, Required ledger entry information
+
+### Community 35 - "17. EARLY VAULT REDEMPTION"
+Cohesion: 0.50
+Nodes (4): 17. EARLY VAULT REDEMPTION, Configurable parameters, Early redemption sequence, Important rule
+
+### Community 36 - "20. INTEGRATION WITH MEMBER 1"
+Cohesion: 0.50
+Nodes (4): 20. INTEGRATION WITH MEMBER 1, Create a treasury adapter, Fallback implementation, Final integration
+
+### Community 37 - "28. BACKTEST IMPLEMENTATION DETAILS"
+Cohesion: 0.50
+Nodes (4): 28. BACKTEST IMPLEMENTATION DETAILS, Backtesting outputs, Fair comparison, No lookahead
+
+### Community 38 - "29. FRONTEND INTEGRATION SUPPORT"
+Cohesion: 0.50
+Nodes (4): 29. FRONTEND INTEGRATION SUPPORT, Early deliverable, Integration strategy, Live dashboard updates
+
+### Community 39 - "2. PROJECT PROBLEM STATEMENT"
+Cohesion: 0.50
+Nodes (4): 2. PROJECT PROBLEM STATEMENT, Checking Account, Financial Problem, Yield Vault
+
+### Community 40 - "6. YOUR EXACT RESPONSIBILITIES"
+Cohesion: 0.50
+Nodes (4): 6. YOUR EXACT RESPONSIBILITIES, P0 — Mandatory Features, P1 — Competitive Enhancements, P2 — Only After P0 and P1 Are Stable
+
+### Community 41 - "PULL_REQUEST_TEMPLATE.md"
+Cohesion: 0.50
+Nodes (3): 1. Workstream Area, 2. Changes Summary, 3. Verification Checklist
+
+### Community 43 - "13. HISTORICAL DATA GENERATION"
+Cohesion: 0.67
+Nodes (3): 13. HISTORICAL DATA GENERATION, Critical requirement, Historical cash-flow bucket
+
+### Community 44 - "14. REAL-TIME TRANSACTION AGGREGATOR"
+Cohesion: 0.67
+Nodes (3): 14. REAL-TIME TRANSACTION AGGREGATOR, Core formula, Important distinction
+
+### Community 45 - "MEMBER 2 — COMPLETE DEVELOPMENT AGENT PROMPT"
+Cohesion: 0.67
+Nodes (3): HackForge 2026 | 24-Hour Hackathon | Developer 2 of 3, MEMBER 2 — COMPLETE DEVELOPMENT AGENT PROMPT, Reserve Juggler — Real-Time Simulation, Banking Ledger, Backend API & Performance Evaluation
 
 ## Knowledge Gaps
-- **11 isolated node(s):** `name`, `private`, `version`, `type`, `dev` (+6 more)
-  These have ≤1 connection - possible missing edges. (Counts symbols only; 50 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **236 isolated node(s):** `name`, `private`, `version`, `type`, `dev` (+231 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 301 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **8 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `TreasuryDecisionEngine` connect `Any / Expected Liquidity Requirement + Forecast Uncertainty + Operational Safety…` to `engine.py / datetime`, `models.py / DecisionModel`?**
-  _High betweenness centrality (0.119) - this node is a cross-community bridge._
+- **Why does `19. SIMULATION STEP EXECUTION` connect `19. SIMULATION STEP EXECUTION` to `MEMBER_2_SPEC.md`?**
+  _High betweenness centrality (0.337) - this node is a cross-community bridge._
+- **Why does `advance()` connect `runs.py` to `19. SIMULATION STEP EXECUTION`?**
+  _High betweenness centrality (0.332) - this node is a cross-community bridge._
+- **Why does `Idempotency` connect `19. SIMULATION STEP EXECUTION` to `runs.py`?**
+  _High betweenness centrality (0.332) - this node is a cross-community bridge._
 - **Are the 6 inferred relationships involving `TreasuryDecisionEngine` (e.g. with `test_hold_decision_in_corridor()` and `test_liquidity_warning_on_extreme_insolvency()`) actually correct?**
   _`TreasuryDecisionEngine` has 6 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `name`, `private`, `version` to the rest of the system?**
-  _11 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `engine.py / datetime` be split into smaller, more focused modules?**
-  _Cohesion score 0.1103448275862069 - nodes in this community are weakly interconnected._
-- **Should `database.py / get_db()` be split into smaller, more focused modules?**
-  _Cohesion score 0.13768115942028986 - nodes in this community are weakly interconnected._
-- **Should `package.json / dependencies` be split into smaller, more focused modules?**
-  _Cohesion score 0.11764705882352941 - nodes in this community are weakly interconnected._
+  _236 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `TreasuryDecisionEngine` be split into smaller, more focused modules?**
+  _Cohesion score 0.07419712070874862 - nodes in this community are weakly interconnected._
+- **Should `treasury.py` be split into smaller, more focused modules?**
+  _Cohesion score 0.08007013442431327 - nodes in this community are weakly interconnected._
