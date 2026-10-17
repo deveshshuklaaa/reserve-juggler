@@ -57,6 +57,13 @@ from treasury_intelligence.portfolio import (
     PositionLiquidity,
     RepoPosition as M1RepoPosition,
 )
+from treasury_intelligence.optimizer import (
+    AllocationOptimizerRequest,
+    AllocationOptimizerResult,
+    AllocationRewardModel,
+    AssetRewardAssumption,
+    recommend_four_tier_allocation,
+)
 
 
 def build_four_tier_policy(
@@ -215,6 +222,11 @@ def hydrate_portfolio_state(
         cur_market_val = int(round(b.quantity * cur_price * Decimal(100)))
         haircut = b.liquidation_haircut_pct
         liq_val = int(round(cur_market_val * (Decimal(100) - haircut) / Decimal(100)))
+        b.market_observation_timestamp = observation.timestamp
+        b.current_market_price_index = cur_price
+        b.current_market_value_cents = cur_market_val
+        b.supplied_yield_pct = observation.tier2_bond_yield_pct
+        b.modified_duration = observation.tier2_bond_mod_duration
         m1_bonds.append(
             M1BondPosition(
                 id=b.id,
@@ -222,16 +234,17 @@ def hydrate_portfolio_state(
                 source_type=run.source_type,
                 dataset_id=run.dataset_id,
                 time_basis=time_basis,
-                source_observation_timestamp=src_obs_time,
+                source_observation_timestamp=observation.timestamp,
                 quantity=b.quantity,
                 acquisition_price_index=b.acquisition_price_index,
                 acquired_at=b.acquired_at,
                 current_market_price_index=cur_price,
                 current_market_value_cents=cur_market_val,
-                supplied_yield_pct=b.supplied_yield_pct,
-                modified_duration=b.modified_duration,
+                supplied_yield_pct=observation.tier2_bond_yield_pct,
+                modified_duration=observation.tier2_bond_mod_duration,
                 liquidation_haircut_pct=haircut,
                 status=b.status,
+                market_observation_timestamp=observation.timestamp,
                 liquidity=PositionLiquidity(
                     classification="LIQUIDATABLE",
                     available_cents=0,
@@ -256,6 +269,10 @@ def hydrate_portfolio_state(
         cur_market_val = int(round(eq.quantity * cur_price * Decimal(100)))
         haircut = eq.liquidation_haircut_pct
         liq_val = int(round(cur_market_val * (Decimal(100) - haircut) / Decimal(100)))
+        eq.market_observation_timestamp = observation.timestamp
+        eq.current_market_price_index = cur_price
+        eq.current_market_value_cents = cur_market_val
+        eq.supplied_volatility_pct = observation.tier3_stock_volatility_pct
         m1_equities.append(
             M1EquityPosition(
                 id=eq.id,
@@ -263,15 +280,16 @@ def hydrate_portfolio_state(
                 source_type=run.source_type,
                 dataset_id=run.dataset_id,
                 time_basis=time_basis,
-                source_observation_timestamp=src_obs_time,
+                source_observation_timestamp=observation.timestamp,
                 quantity=eq.quantity,
                 acquisition_price_index=eq.acquisition_price_index,
                 acquired_at=eq.acquired_at,
                 current_market_price_index=cur_price,
                 current_market_value_cents=cur_market_val,
-                supplied_volatility_pct=eq.supplied_volatility_pct,
+                supplied_volatility_pct=observation.tier3_stock_volatility_pct,
                 liquidation_haircut_pct=haircut,
                 status=eq.status,
+                market_observation_timestamp=observation.timestamp,
                 liquidity=PositionLiquidity(
                     classification="LIQUIDATABLE",
                     available_cents=0,
@@ -525,4 +543,116 @@ def evaluate_liquidity_risk(
         repo_settlements=repo_settlements,
     )
     return calculate_four_tier_liquidity_risk(req)
+
+
+def recommend_four_tier_allocation_decision(
+    portfolio: PortfolioState,
+    policy: FourTierTreasuryPolicy,
+    observation: DbOrganizerObservation,
+    forecasts: tuple[HourlyForecastPoint, ...] | list[HourlyForecastPoint] | None = None,
+    calibrated_allowance: CalibratedForecastAllowance | None = None,
+    horizon_hours: int = 15,
+    risk_aversion: Decimal | str = "1",
+) -> AllocationOptimizerResult:
+    """Invokes canonical Member 1 recommend_four_tier_allocation with validated inputs."""
+    cutoff = get_information_cutoff(portfolio.as_of)
+    if calibrated_allowance is not None and calibrated_allowance.calibrated_through > cutoff:
+        raise ValueError(
+            f"Calibration artifact dated {calibrated_allowance.calibrated_through} "
+            f"is after information cutoff {cutoff} (lookahead breach)"
+        )
+    if calibrated_allowance is None:
+        calibrated_allowance = CalibratedForecastAllowance(
+            time_basis=portfolio.time_basis,
+            amount_cents=policy.base_buffer_cents,
+            confidence=Decimal("0.95"),
+            calibration_reference="calibrated-baseline",
+            calibrated_through=cutoff,
+        )
+
+    if forecasts is None or len(forecasts) == 0:
+        forecast_tuple = (
+            HourlyForecastPoint(
+                time_basis=portfolio.time_basis,
+                start_at=portfolio.as_of,
+                predicted_deposits_cents=0,
+                predicted_withdrawals_cents=0,
+                predicted_net_flow_cents=0,
+                supplied_uncertainty_buffer_cents=policy.base_buffer_cents,
+            ),
+        )
+    else:
+        forecast_tuple = tuple(forecasts)
+        if any(f.start_at < portfolio.as_of for f in forecast_tuple):
+            raise ValueError("Forecast points cannot start in the past relative to portfolio.as_of")
+
+    repo_settlements = tuple(
+        RepoCashSettlement(
+            time_basis=portfolio.time_basis,
+            position_id=p.id,
+            available_at=p.scheduled_maturity_at,
+            amount_cents=p.principal_cents + (p.accrued_interest_cents or 0),
+            already_in_cash=False,
+        )
+        for p in portfolio.repo_positions
+        if p.status == "LOCKED" and p.scheduled_maturity_at <= portfolio.as_of + timedelta(hours=len(forecast_tuple))
+    )
+
+    liquidity_req = FourTierLiquidityRiskRequest(
+        portfolio=portfolio,
+        policy=policy,
+        forecast=forecast_tuple,
+        planning_horizon_hours=horizon_hours,
+        uncertainty_mode="calibrated_allowance",
+        calibrated_allowance=calibrated_allowance,
+        repo_settlements=repo_settlements,
+    )
+
+    t1_haircut = observation.tier1_early_redemption_haircut_pct if observation.tier1_early_redemption_haircut_pct is not None else Decimal("0.5")
+    t2_haircut = observation.tier2_bond_liquidation_haircut_pct if observation.tier2_bond_liquidation_haircut_pct is not None else Decimal("2.0")
+    t3_haircut = observation.tier3_stock_liquidation_haircut_pct if observation.tier3_stock_liquidation_haircut_pct is not None else Decimal("15.0")
+
+    assets = (
+        AssetRewardAssumption(
+            tier=1,
+            stress_loss_pct=Decimal("0"),
+            forced_liquidation_probability=Decimal("0"),
+            liquidation_haircut_pct=t1_haircut,
+            usd_per_index_point_per_unit=None,
+        ),
+        AssetRewardAssumption(
+            tier=2,
+            stress_loss_pct=Decimal("0"),
+            forced_liquidation_probability=Decimal("0"),
+            liquidation_haircut_pct=t2_haircut,
+            usd_per_index_point_per_unit=Decimal("1"),
+        ),
+        AssetRewardAssumption(
+            tier=3,
+            stress_loss_pct=Decimal("0"),
+            forced_liquidation_probability=Decimal("0"),
+            liquidation_haircut_pct=t3_haircut,
+            usd_per_index_point_per_unit=Decimal("1"),
+        ),
+    )
+
+    rewards = AllocationRewardModel(
+        time_basis="UNSPECIFIED",
+        model_version="hourly-runtime-v1",
+        policy_version="v1",
+        assumption_reference="organizer-historical-calibrated",
+        assumptions_available_at=observation.timestamp,
+        holding_hours=15,
+        risk_aversion=Decimal(str(risk_aversion)),
+        assets=assets,
+    )
+
+    opt_req = AllocationOptimizerRequest(
+        request_id=f"opt-{portfolio.run_id}-{observation.timestamp.strftime('%Y%m%d%H%M%S')}",
+        liquidity=liquidity_req,
+        rewards=rewards,
+    )
+
+    return recommend_four_tier_allocation(opt_req)
+
 
