@@ -1,5 +1,6 @@
 import { advanceEngine, backtest, createEngine, forecastSeries, MockError, report, scheduleScenario, setPolicy, snapshot } from '../mocks/mockEngine';
-import { validateForecast, validateItems, validateSnapshot } from './validation';
+import { validateForecast, validateItems, validateSnapshot, validateFourTierPortfolio } from './validation';
+import { getMockFourTierSnapshot, getMockHourlyHistory, MOCK_MULTI_ASSET_DECISIONS, getMockFourTierBacktestResults } from '../mocks/fourTierFixtures';
 import { ApiError } from './http';
 
 function delay(ms, signal) {
@@ -50,5 +51,9 @@ export function createMockApi({ latency = 100 } = {}) {
       run.backtest = result; return result;
     }, options, 5),
     getReport: (id, options) => respond(() => get(id).backtest ?? report(get(id)), options),
+    getFourTierSnapshot: (id, options) => respond(() => validateFourTierPortfolio(snapshot(get(id)).four_tier ?? getMockFourTierSnapshot()), options),
+    getHourlyHistory: (id, count = 24, options) => respond(() => getMockHourlyHistory(count), options),
+    getMultiAssetDecisions: (id, options) => respond(() => ({ items: MOCK_MULTI_ASSET_DECISIONS }), options),
+    getFourTierBacktest: (id, options) => respond(() => getMockFourTierBacktestResults(), options),
   };
 }

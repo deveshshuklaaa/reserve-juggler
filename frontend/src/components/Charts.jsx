@@ -2,14 +2,14 @@ import { Area, AreaChart, Bar, BarChart, CartesianGrid, ComposedChart, Legend, L
 import { money, utc } from '../utils/format';
 import { Empty } from './ui';
 
-const axis = { fontSize: 13, fill: '#86868b', fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif' };
+const axis = { fontSize: 13, fill: '#6e6e73', fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif' };
 const tooltip = {
-  background: 'rgba(18, 20, 26, 0.95)',
-  border: '1px solid rgba(255, 255, 255, 0.16)',
+  background: 'rgba(255, 255, 255, 0.95)',
+  border: '1px solid #e5e5ea',
   borderRadius: 16,
   fontSize: 13,
-  color: '#ffffff',
-  boxShadow: '0 16px 40px rgba(0, 0, 0, 0.7)',
+  color: '#1d1d1f',
+  boxShadow: '0 12px 32px rgba(0, 0, 0, 0.08)',
   padding: '12px 18px',
   backdropFilter: 'blur(16px)',
 };
@@ -22,7 +22,7 @@ export function TimeChart({ data, series, height = 260, summary, forecast = fals
   return <figure className="chart-figure"><div style={{ height }} role="img" aria-label={summary}>
     <ResponsiveContainer width="100%" height="100%" minWidth={0}>
       <ComposedChart data={data} margin={commonMargin}>
-        <CartesianGrid vertical={false} stroke="rgba(255, 255, 255, 0.08)" />
+        <CartesianGrid vertical={false} stroke="#e5e5ea" />
         <XAxis dataKey="timestamp" tickFormatter={(v) => utc(v)} tick={axis} axisLine={false} tickLine={false} minTickGap={42} dy={8} />
         <YAxis tickFormatter={amountTick} tick={axis} axisLine={false} tickLine={false} width={76} tickCount={5} />
         <Tooltip contentStyle={tooltip} labelFormatter={(v) => `${utc(v, true)} UTC`} formatter={amountTooltip} />
@@ -38,7 +38,7 @@ export function ComparisonBars({ data, fields, count = false, summary }) {
   if (!data?.length) return null;
   return <figure className="chart-figure"><div style={{ height: 260 }} role="img" aria-label={summary}>
     <ResponsiveContainer width="100%" height="100%" minWidth={0}><BarChart data={data} margin={{ top: 12, right: 16, left: 8, bottom: 0 }} barSize={36}>
-      <CartesianGrid vertical={false} stroke="rgba(255, 255, 255, 0.08)" />
+      <CartesianGrid vertical={false} stroke="#e5e5ea" />
       <XAxis dataKey="name" tick={{ ...axis, fontSize: 12 }} axisLine={false} tickLine={false} interval={0} />
       <YAxis tick={axis} width={68} tickFormatter={count ? undefined : amountTick} axisLine={false} tickLine={false} allowDecimals={!count} />
       <Tooltip contentStyle={tooltip} formatter={count ? undefined : amountTooltip} />

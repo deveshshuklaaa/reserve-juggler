@@ -26,3 +26,40 @@ export function validateForecast(data) {
   }
   return data;
 }
+
+export function validateFourTierPortfolio(portfolio) {
+  if (!portfolio || typeof portfolio !== 'object') invalid('Expected a four-tier portfolio object.');
+  const { tier0, tier1, tier2, tier3, overdraft, aggregates } = portfolio;
+  if (!tier0 || !tier1 || !tier2 || !tier3 || !overdraft || !aggregates) {
+    invalid('Portfolio must contain tier0, tier1, tier2, tier3, overdraft, and aggregates.');
+  }
+
+  if (!Number.isSafeInteger(tier0.checking_cents) || tier0.checking_cents < 0) {
+    invalid('Tier 0 checking_cents must be nonnegative integer cents.');
+  }
+  if (!Number.isSafeInteger(tier1.principal_cents) || tier1.principal_cents < 0) {
+    invalid('Tier 1 principal_cents must be nonnegative integer cents.');
+  }
+  if (!Number.isSafeInteger(tier2.market_value_cents) || tier2.market_value_cents < 0) {
+    invalid('Tier 2 market_value_cents must be nonnegative integer cents.');
+  }
+  if (!Number.isSafeInteger(tier3.market_value_cents) || tier3.market_value_cents < 0) {
+    invalid('Tier 3 market_value_cents must be nonnegative integer cents.');
+  }
+  if (!Number.isSafeInteger(overdraft.borrowing_outstanding_cents) || overdraft.borrowing_outstanding_cents < 0) {
+    invalid('Overdraft borrowing_outstanding_cents must be nonnegative integer cents.');
+  }
+
+  // Unrealized and realized P&L can be negative or positive integers
+  for (const pnlKey of ['unrealized_pnl_cents', 'realized_pnl_cents']) {
+    if (tier2[pnlKey] != null && !Number.isSafeInteger(tier2[pnlKey])) {
+      invalid(`Tier 2 ${pnlKey} must be integer cents.`);
+    }
+    if (tier3[pnlKey] != null && !Number.isSafeInteger(tier3[pnlKey])) {
+      invalid(`Tier 3 ${pnlKey} must be integer cents.`);
+    }
+  }
+
+  return portfolio;
+}
+

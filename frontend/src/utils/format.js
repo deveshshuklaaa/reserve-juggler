@@ -13,6 +13,7 @@ export function money(value, compact = false) {
 }
 
 export const rate = (bps, digits = 2) => bps == null ? '—' : `${(bps / 100).toFixed(digits)}%`;
+export { formatDecimal, parseDecimalString, formatRateDecimal, formatSourceTimestamp } from './precision';
 export function utc(value, date = false) {
   if (!value) return '—';
   return new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', hour: '2-digit', minute: '2-digit',

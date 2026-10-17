@@ -1,5 +1,6 @@
 import { cents } from '../utils/format';
 import { DEFAULT_POLICY, DEFAULT_RUN, SCENARIOS, STRATEGIES } from './constants';
+import { createFourTierPortfolio, createTier0Cash, createTier1Repo, createTier2Bonds, createTier3Equities, createOverdraft } from '../models/fourTier';
 
 // An isolated frontend development ledger, never an authority in real API mode.
 // Mock forecasts use only observed history, never future generated transactions.
@@ -247,6 +248,37 @@ export function snapshot(run) {
     positions: run.positions.filter((p) => p.principal_cents > 0).map(({ remainder, ...p }) => ({ ...p,
       maturity_at: timestamp(run, p.maturity_step), status: p.maturity_step > run.step ? 'LOCKED' : 'REDEEMABLE' })),
     scenarios: clone(run.events),
+    four_tier: createFourTierPortfolio({
+      tier0: createTier0Cash({
+        checking_cents: run.checking,
+        required_reserve_cents: reserve,
+        operational_buffer_cents: run.policy.operational_buffer_cents,
+      }),
+      tier1: createTier1Repo({
+        id: 'REPO-PORTFOLIO-1',
+        principal_cents: totals.locked + totals.redeemable,
+        repo_apy_bps: run.policy.vault_rate_bps,
+        accrued_interest_cents: totals.accrued,
+        realized_interest_cents: run.yield,
+        status: totals.locked > 0 ? 'LOCKED' : 'MATURED',
+        early_redemption_allowed: run.policy.allow_early_redemption,
+        early_break_fee_bps: run.policy.early_redemption_penalty_bps,
+        maturity_timestamp: timestamp(run, run.step + (totals.locked > 0 ? 32 : 0)),
+      }),
+      tier2: createTier2Bonds({
+        notional_cents: 0,
+        market_value_cents: 0,
+      }),
+      tier3: createTier3Equities({
+        market_value_cents: 0,
+      }),
+      overdraft: createOverdraft({
+        borrowing_outstanding_cents: run.borrowed,
+        financing_cost_cents: run.borrowing_costs,
+        liability_status: run.borrowed > 0 ? 'ACTIVE' : 'CLEARED',
+      }),
+      timestamp: timestamp(run),
+    }),
   };
 }
 

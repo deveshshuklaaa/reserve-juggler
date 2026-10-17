@@ -24,5 +24,17 @@ export function createRealApi(baseUrl = '') {
     getTransactions: async (id, options) => validateItems(await get(path(id, 'transactions'), options)),
     runBacktest: (id, body, options) => post(path(id, 'backtest'), body, { timeout_ms: 60000, ...options }),
     getReport: (id, options) => get(path(id, 'report'), options),
+    getFourTierSnapshot: async (_id, _options) => {
+      throw new ApiError('Four-tier live endpoint pending Member 2 backend mapping confirmation (see PENDING_BACKEND_MAPPINGS.md).', { code: 'NOT_IMPLEMENTED', status: 501 });
+    },
+    getHourlyHistory: async (_id, _options) => {
+      throw new ApiError('Hourly history live endpoint pending Member 2 backend mapping confirmation (see PENDING_BACKEND_MAPPINGS.md).', { code: 'NOT_IMPLEMENTED', status: 501 });
+    },
+    getMultiAssetDecisions: async (_id, _options) => {
+      throw new ApiError('Multi-asset decisions live endpoint pending Member 2 backend mapping confirmation (see PENDING_BACKEND_MAPPINGS.md).', { code: 'NOT_IMPLEMENTED', status: 501 });
+    },
+    getFourTierBacktest: async (_id, _options) => {
+      throw new ApiError('Four-tier backtest live endpoint pending Member 2 backend mapping confirmation (see PENDING_BACKEND_MAPPINGS.md).', { code: 'NOT_IMPLEMENTED', status: 501 });
+    },
   };
 }

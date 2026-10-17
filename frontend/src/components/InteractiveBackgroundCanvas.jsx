@@ -32,12 +32,12 @@ export default function InteractiveBackgroundCanvas() {
       mouse.targetY = e.clientY;
     };
 
-    // Ambient orbs
+    // Ambient orbs tuned for light mode
     const orbs = [
-      { x: width * 0.25, y: height * 0.3, radius: 340, color: 'rgba(0, 113, 227, 0.16)', vx: 0.3, vy: 0.2 },
-      { x: width * 0.75, y: height * 0.45, radius: 400, color: 'rgba(120, 60, 230, 0.13)', vx: -0.25, vy: 0.2 },
-      { x: width * 0.5, y: height * 0.7, radius: 360, color: 'rgba(21, 150, 240, 0.12)', vx: 0.2, vy: -0.3 },
-      { x: width * 0.8, y: height * 0.15, radius: 280, color: 'rgba(56, 189, 248, 0.10)', vx: -0.15, vy: 0.25 },
+      { x: width * 0.25, y: height * 0.3, radius: 360, color: 'rgba(0, 113, 227, 0.10)', vx: 0.3, vy: 0.2 },
+      { x: width * 0.75, y: height * 0.45, radius: 420, color: 'rgba(147, 51, 234, 0.08)', vx: -0.25, vy: 0.2 },
+      { x: width * 0.5, y: height * 0.7, radius: 380, color: 'rgba(52, 199, 89, 0.07)', vx: 0.2, vy: -0.3 },
+      { x: width * 0.85, y: height * 0.15, radius: 300, color: 'rgba(56, 189, 248, 0.09)', vx: -0.15, vy: 0.25 },
     ];
 
     // Interactive particles
@@ -48,7 +48,7 @@ export default function InteractiveBackgroundCanvas() {
       vx: (Math.random() - 0.5) * 0.5,
       vy: (Math.random() - 0.5) * 0.5,
       radius: Math.random() * 2 + 1,
-      alpha: Math.random() * 0.5 + 0.2,
+      alpha: Math.random() * 0.4 + 0.25,
     }));
 
     window.addEventListener('resize', handleResize);
@@ -66,10 +66,10 @@ export default function InteractiveBackgroundCanvas() {
       ctx.clearRect(0, 0, width, height);
 
       // Render interactive mouse spotlight
-      const mouseGrad = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, 500);
-      mouseGrad.addColorStop(0, 'rgba(41, 151, 255, 0.18)');
-      mouseGrad.addColorStop(0.5, 'rgba(147, 51, 234, 0.06)');
-      mouseGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      const mouseGrad = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, 450);
+      mouseGrad.addColorStop(0, 'rgba(0, 113, 227, 0.12)');
+      mouseGrad.addColorStop(0.5, 'rgba(147, 51, 234, 0.05)');
+      mouseGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
       ctx.fillStyle = mouseGrad;
       ctx.fillRect(0, 0, width, height);
 
@@ -79,7 +79,6 @@ export default function InteractiveBackgroundCanvas() {
           orb.x += orb.vx + Math.sin(time + i) * 0.3;
           orb.y += orb.vy + Math.cos(time + i * 1.5) * 0.3;
 
-          // Gentle bounds bounce
           if (orb.x < -100) orb.x = width + 100;
           if (orb.x > width + 100) orb.x = -100;
           if (orb.y < -100) orb.y = height + 100;
@@ -88,7 +87,7 @@ export default function InteractiveBackgroundCanvas() {
 
         const grad = ctx.createRadialGradient(orb.x, orb.y, 0, orb.x, orb.y, orb.radius);
         grad.addColorStop(0, orb.color);
-        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
         ctx.fillStyle = grad;
         ctx.beginPath();
         ctx.arc(orb.x, orb.y, orb.radius, 0, Math.PI * 2);
@@ -97,7 +96,6 @@ export default function InteractiveBackgroundCanvas() {
 
       // Render interactive particles
       if (!reduceMotion) {
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
         particles.forEach((p) => {
           p.x += p.vx;
           p.y += p.vy;
@@ -119,11 +117,11 @@ export default function InteractiveBackgroundCanvas() {
 
           ctx.beginPath();
           ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(210, 230, 255, ${p.alpha})`;
+          ctx.fillStyle = `rgba(0, 113, 227, ${p.alpha})`;
           ctx.fill();
         });
 
-        // Connect nearby particles with subtle laser lines
+        // Connect nearby particles with subtle lines
         ctx.lineWidth = 0.6;
         for (let i = 0; i < particles.length; i++) {
           for (let j = i + 1; j < particles.length; j++) {
@@ -131,8 +129,8 @@ export default function InteractiveBackgroundCanvas() {
             const dy = particles[i].y - particles[j].y;
             const dist = Math.sqrt(dx * dx + dy * dy);
             if (dist < 100) {
-              const alpha = (1 - dist / 100) * 0.15;
-              ctx.strokeStyle = `rgba(120, 190, 255, ${alpha})`;
+              const alpha = (1 - dist / 100) * 0.18;
+              ctx.strokeStyle = `rgba(0, 113, 227, ${alpha})`;
               ctx.beginPath();
               ctx.moveTo(particles[i].x, particles[i].y);
               ctx.lineTo(particles[j].x, particles[j].y);
