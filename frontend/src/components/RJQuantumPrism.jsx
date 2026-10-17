@@ -116,9 +116,9 @@ export default function RJQuantumPrism() {
             <Activity size={15} />
           </div>
           <div className="pod-body">
-            <span className="pod-label">Deployable Checking</span>
+            <span className="pod-label">Instant Cash</span>
             <strong className="pod-val">$20.0M</strong>
-            <small className="pod-meta">Instant Settlement · 0s Lag</small>
+            <small className="pod-meta">Ready to use anytime</small>
           </div>
         </div>
 
@@ -127,9 +127,9 @@ export default function RJQuantumPrism() {
             <Shield size={15} />
           </div>
           <div className="pod-body">
-            <span className="pod-label">Risk Perimeter</span>
+            <span className="pod-label">Safety Buffer</span>
             <strong className="pod-val">99.4%</strong>
-            <small className="pod-meta">Quantile Guard · Zero Shock Default</small>
+            <small className="pod-meta">Emergency money protected</small>
           </div>
         </div>
 
@@ -138,9 +138,9 @@ export default function RJQuantumPrism() {
             <TrendingUp size={15} />
           </div>
           <div className="pod-body">
-            <span className="pod-label">Autonomous Yield</span>
+            <span className="pod-label">Annual Return</span>
             <strong className="pod-val">5.20%</strong>
-            <small className="pod-meta">+482 bps Alpha · Zero Drag</small>
+            <small className="pod-meta">Earned automatically</small>
           </div>
         </div>
       </div>
