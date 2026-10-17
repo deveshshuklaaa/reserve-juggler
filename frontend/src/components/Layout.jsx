@@ -4,6 +4,7 @@ import { ArrowUpRight, Menu, Pause, Play, Plus, RotateCcw, SkipForward, X } from
 import { useSimulation } from '../context/SimulationContext';
 import { utc } from '../utils/format';
 import { Alert, Button } from './ui';
+import InteractiveBackgroundCanvas from './InteractiveBackgroundCanvas';
 
 const navigation = [
   { to: '/', label: 'Command Center' },
@@ -41,6 +42,7 @@ export function Layout() {
   }, [menu]);
 
   return <div className="app-shell">
+    <InteractiveBackgroundCanvas />
     <a className="skip-link" href="#main">Skip to content</a>
     <header className="global-header">
       <div className="global-header-inner">
