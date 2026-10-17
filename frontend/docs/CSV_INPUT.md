@@ -1,7 +1,7 @@
 # CSV input
 
-Choose **Import cash flows** on the landing page, the Shock Lab / Arena start
-card, or the active simulation toolbar. Files are read locally; nothing is uploaded
+Choose **Upload CSV** in the workflow bar at the top of any screen.
+Files are read locally; nothing is uploaded
 to FastAPI. Download a working cash-flow template from the import dialog.
 
 Both formats accept UTF-8 (including BOM), quoted CSV, and CRLF/LF line endings.

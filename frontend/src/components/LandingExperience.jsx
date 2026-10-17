@@ -16,7 +16,7 @@ const windows = [
 ];
 
 export default function LandingExperience() {
-  const { createRun, busy, openImport } = useSimulation();
+  const { createRun, busy } = useSimulation();
   const root = useRef(null);
   const [activeWindow, setActiveWindow] = useState('window-hero');
   const [motionPaused, setMotionPaused] = useState(false);
@@ -49,7 +49,7 @@ export default function LandingExperience() {
       sections.forEach((section, index) => {
         const { rect, surfaceHeight } = measurements[index];
         const nextTop = measurements[index + 1]?.rect.top ?? Infinity;
-        const entering = clamp((rect.top - header) / available);
+        const entering = index === 0 ? 0 : clamp((rect.top - header) / available);
         const leaving = clamp((height - nextTop) / available);
         const still = preference.matches || motionPaused;
         const sceneHeight = `${surfaceHeight}px`;
@@ -161,7 +161,6 @@ export default function LandingExperience() {
             <Button variant="primary" busy={busy} onClick={() => createRun()} className="apple-hero-btn">
               Open Command Center <ArrowRight size={18} />
             </Button>
-            <Button variant="secondary" onClick={openImport} disabled={busy}>Import cash flows</Button>
             <a href="#landing-story" className="landing-text-link">
               Explore the experience <ArrowDown size={17} />
             </a>

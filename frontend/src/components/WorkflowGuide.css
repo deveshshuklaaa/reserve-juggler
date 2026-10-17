@@ -1,0 +1,12 @@
+.workflow-guide { width: min(1350px, calc(100% - 48px)); margin: 22px auto 24px; padding: 16px 20px 12px; border: 1px solid #dde7f1; border-radius: 18px; background: #ffffffef; }
+.workflow-guide ol { display: grid; grid-template-columns: 1.12fr repeat(3, 1fr); align-items: stretch; gap: 16px; list-style: none; margin: 0; padding: 0; }
+.workflow-guide li { min-width: 0; }
+.workflow-guide .workflow-upload, .workflow-guide .workflow-step { display: flex; align-items: center; gap: 12px; min-height: 54px; width: 100%; padding: 10px 16px; border-radius: 12px; text-decoration: none; }
+.workflow-guide .workflow-upload { background: #0071e3; color: #fff; border: 1px solid #0071e3; text-align: left; box-shadow: 0 4px 14px #0071e31a; transition: background .2s; }
+.workflow-guide .workflow-upload:hover:not(:disabled) { background: #0064cd; }.workflow-guide .workflow-upload:disabled { opacity: .55; cursor: wait; }
+.workflow-guide .workflow-upload strong { color: #fff; }
+.workflow-guide strong { display: block; font-size: 13px; font-weight: 650; line-height: 1.4; }.workflow-guide small { display: block; font-size: 11px; line-height: 1.5; margin-top: 2px; color: #6a7a8c; }.workflow-guide .workflow-upload small { color: #e0efff; }
+.workflow-guide .workflow-step { border: 1px solid transparent; color: #405368; transition: background .2s, border-color .2s; }.workflow-guide .workflow-step:hover { background: #f4f8fc; }.workflow-guide .workflow-step.is-current { background: #f1f7ff; border-color: #c7dff9; color: #0069cf; }
+.workflow-number { display: grid; place-items: center; width: 28px; height: 28px; flex-shrink: 0; border: 1px solid #dce5ee; border-radius: 50%; font-size: 11px; color: #7b8a9c; }.workflow-step.is-current .workflow-number { border-color: #87b9ed; color: #0071e3; }
+.workflow-guide > p { margin: 9px 0 0; color: #718092; font-size: 11px; line-height: 1.5; }
+@media (max-width: 760px) { .workflow-guide { width: calc(100% - 36px); margin-top: 16px; padding: 12px; border-radius: 16px; }.workflow-guide ol { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }.workflow-guide .workflow-upload,.workflow-guide .workflow-step { min-height: 53px; padding: 8px 10px; gap: 9px; }.workflow-guide strong { font-size: 12px; }.workflow-guide small { font-size: 10px; }.workflow-number { width: 24px; height: 24px; }.workflow-guide > p { font-size: 10px; } }

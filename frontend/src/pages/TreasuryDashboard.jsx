@@ -12,8 +12,7 @@ import SimulationStart from '../components/SimulationStart';
 import { exportCsv, money, rate, utc } from '../utils/format';
 
 export function StartState() {
-  const { openImport } = useSimulation();
-  return <SimulationStart onImport={openImport} />;
+  return <SimulationStart />;
 }
 
 export default function TreasuryDashboard() {

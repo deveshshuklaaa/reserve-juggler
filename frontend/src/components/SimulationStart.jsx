@@ -38,7 +38,7 @@ export default function SimulationStart({ children, onImport }) {
         <h2 id={headingId}>Put your cash<br /><span>in perspective.</span></h2>
         <p>{isMock ? 'Start with a repeatable sample, or bring your cash-flow history. Explore liquidity and compare strategies in one place.' : 'Create a backend simulation to explore liquidity and compare treasury strategies.'}</p>
         <div className="simulation-start-actions">
-          <Button variant="primary" busy={busy} onClick={() => createRun()}>Create simulation <ArrowRight size={16} aria-hidden="true" /></Button>
+          <Button variant="primary" aria-label="Create simulation" busy={busy} onClick={() => createRun()}>{isMock ? 'Use demo data' : 'Create simulation'} <ArrowRight size={16} aria-hidden="true" /></Button>
           {onImport && <button type="button" className="simulation-start-import" onClick={onImport} disabled={busy}><FileUp size={16} aria-hidden="true" />Import cash flows</button>}
         </div>
         <div className="simulation-start-meta"><span><Clock3 size={14} aria-hidden="true" />15-minute steps</span><span><Layers3 size={14} aria-hidden="true" />{isMock ? 'Deterministic sample' : 'Backend simulation'}</span><span>USD</span></div>

@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
-import { ArrowUpRight, Menu, Pause, Play, Plus, RotateCcw, SkipForward, X } from 'lucide-react';
+import { ArrowUpRight, Menu, Pause, Play, RotateCcw, SkipForward, X } from 'lucide-react';
 import { useSimulation } from '../context/SimulationContext';
 import { utc } from '../utils/format';
 import { Alert, Button } from './ui';
 import InteractiveBackgroundCanvas from './InteractiveBackgroundCanvas';
 import './motion.css';
 import CashflowImport from './CashflowImport';
+import WorkflowGuide from './WorkflowGuide';
 
 const navigation = [
   { to: '/', label: 'Command Center' },
@@ -69,7 +70,6 @@ export function Layout() {
             <Button variant={sim.playing ? 'primary' : 'secondary'} onClick={sim.playing ? sim.pause : sim.play} disabled={(!sim.playing && sim.busy) || sim.status === 'COMPLETED'} aria-label={sim.playing ? 'Pause simulation' : 'Play simulation'}>{sim.playing ? <Pause size={14} /> : <Play size={14} />}{sim.playing ? 'Pause' : 'Play'}</Button>
             <Button onClick={sim.advance} disabled={sim.busy || sim.playing || sim.status === 'COMPLETED'} aria-label="Advance one step"><SkipForward size={14} />Step</Button>
             <Button variant="quiet" onClick={sim.resetRun} disabled={sim.busy} aria-label="Reset simulation"><RotateCcw size={14} /><span className="hide-small">Reset</span></Button>
-            <Button variant="quiet" onClick={sim.openImport} disabled={sim.busy} aria-label="Import cash flows"><Plus size={14} /><span className="hide-small">CSV</span></Button>
           </div>
         </div></div>
       )}
@@ -77,6 +77,7 @@ export function Layout() {
         {sim.snapshot?.input_source?.type === 'CSV' && <div className="input-source-strip"><span className="status-dot dot-green" /><strong>CSV replay</strong><span>{sim.snapshot.input_source.row_count} observations · {sim.snapshot.input_source.interval_minutes}-minute source · USD · UTC</span><span>Local mock engine</span></div>}
         {sim.error && <Alert tone="danger" action={<Button onClick={sim.initializationFailed ? sim.retryInitialization : sim.snapshot ? sim.refresh : () => sim.createRun()} disabled={sim.busy}>{sim.initializationFailed ? 'Retry initialization' : 'Retry / refresh'}</Button>}>{sim.error} {sim.snapshot && 'Displayed figures are the last confirmed snapshot.'}</Alert>}
         {sim.notice && <Alert>{sim.notice}</Alert>}
+        <WorkflowGuide />
         <Outlet />
       </main>
       <footer className="page-footer"><div><span className="footer-brand">Reserve Juggler</span><span>Intelligent Treasury Autopilot.</span></div><div><span>HackForge 2026</span><span>Simulated data. No real funds.</span><span>USD · UTC</span></div></footer>
