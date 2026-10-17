@@ -698,3 +698,83 @@ The summary does not accrue overdraft again; pass current liability observations
 Recorded realized costs and market losses are already reflected in the snapshot
 and are not subtracted again. Member 2 must remove a repo from holdings when its
 proceeds are booked to cash, and must preserve exclusive cash/position accounting.
+
+## RJ-M1-09 Hourly ML forecasting and chronological evaluation
+
+`treasury_intelligence.ml_forecasting` provides native machine learning cash flow forecasting
+and rigorous chronological evaluation against the organizer's hourly historical data, fully integrated
+with the `HourlyForecastResult` contract.
+
+### ML Forecasting Contracts and Public API
+
+```python
+HourlyCashFlowMLModel(
+    algorithm: Literal["hist_gradient_boosting", "random_forest"] = "hist_gradient_boosting",
+    random_state: int = 42,
+    uncertainty_multiplier: Decimal = Decimal("1.0"),
+    **estimator_kwargs: Any,
+)
+```
+
+- **Algorithms**: Lightweight Scikit-Learn `HistGradientBoostingRegressor` (default) and `RandomForestRegressor`.
+- **Zero Eager Overhead**: Scikit-Learn regressors and metrics are imported lazily inside model execution; importing `treasury_intelligence` does not trigger ML dependencies.
+- **Model Methods**:
+  - `fit(observations: Sequence[Any]) -> HourlyCashFlowMLModel`: Trains independent deposit and withdrawal estimators.
+  - `predict_path(history: Sequence[Any], *, as_of: datetime, horizon_hours: int, model_version: str = "hourly-hist-gb-v1") -> HourlyForecastResult`: Generates causal multi-step forecasts with non-negative clipping.
+  - `to_bytes() -> bytes` / `from_bytes(data: bytes) -> HourlyCashFlowMLModel`: Binary serialization.
+  - `save(path: str | Path) -> Path` / `load(path: str | Path) -> HourlyCashFlowMLModel`: Disk persistence.
+
+### Unified Hourly Dispatch
+
+```python
+hourly_ml_forecast(
+    history: Sequence[Any],
+    *,
+    as_of: datetime,
+    horizon_hours: int = 24,
+    ml_model: HourlyCashFlowMLModel | None = None,
+    model_version: str | None = None,
+    fallback_to_baseline: bool = True,
+) -> HourlyForecastResult
+
+forecast_hourly_cashflows(
+    history: Sequence[Any],
+    *,
+    as_of: datetime,
+    horizon_hours: int = 24,
+    config: HourlyForecastConfig | None = None,
+    ml_model: Any = None,
+) -> HourlyForecastResult
+```
+
+- When `ml_model` is supplied, `forecast_hourly_cashflows` delegates to `hourly_ml_forecast`.
+- If `ml_model` is None or untrained, it safely falls back to `hourly_seasonal_naive_forecast` or `hourly_rolling_mean_forecast`.
+- Multi-step horizons: 1h, 3h, 6h, 15h (overnight repo 17:00-08:00), and 24h (daily cycle). Intermediate lag steps are generated causally without peeking into future observations.
+
+### Chronological Evaluation and Metrics Report
+
+```python
+evaluate_hourly_forecast_models(
+    history: Sequence[Any],
+    *,
+    horizons: Sequence[int] = (1, 3, 6, 15, 24),
+    train_ratio: float = 0.60,
+    val_ratio: float = 0.20,
+    eval_stride: int = 12,
+    algorithms: Sequence[str] = ("hist_gradient_boosting",),
+    random_state: int = 42,
+) -> tuple[HourlyModelEvaluationReport, ...]
+```
+
+`HourlyModelEvaluationReport` fields (all financial metrics in exact Decimal USD):
+- `algorithm`: Machine learning algorithm evaluated (`"hist_gradient_boosting"` or `"random_forest"`).
+- `horizon_hours`: Multi-hour forecast path length ($H \in \{1, 3, 6, 15, 24\}$).
+- `train_cutoff`, `test_start`, `test_end`: Strict chronological evaluation window boundaries.
+- `train_sample_count`, `test_sample_count`: Non-overlapping sample sizes.
+- `mae_deposits_usd`, `rmse_deposits_usd`: Pointwise deposit error.
+- `mae_withdrawals_usd`, `rmse_withdrawals_usd`: Pointwise withdrawal error.
+- `mae_net_usd`, `rmse_net_usd`: Pointwise net cash flow error ($\text{net} = \text{deposits} - \text{withdrawals}$).
+- `cumulative_net_mae_usd`: Cumulative net flow forecast error over the entire $H$-hour path.
+- `peak_shortfall_mae_usd`: Maximum cumulative liquidity shortfall prediction error.
+- `baseline_mae_net_usd`, `baseline_rmse_net_usd`: Comparative seasonal-naive baseline errors.
+- `net_mae_improvement_pct`, `net_rmse_improvement_pct`: Measured improvement percentages without manual inflation.

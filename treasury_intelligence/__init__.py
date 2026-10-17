@@ -56,6 +56,14 @@ from .instrument_economics import (
     calculate_equity_economics, calculate_duration_sensitivity, calculate_equity_risk,
     calculate_overdraft_economics, calculate_portfolio_values,
 )
+from .ml_forecasting import (
+    HourlyCashFlowMLModel,
+    HourlyModelEvaluationReport,
+    SUPPORTED_ML_ALGORITHMS,
+    evaluate_hourly_forecast_models,
+    hourly_ml_forecast,
+)
+
 
 __all__ = [
     "CashFlowBucket", "ForecastPoint", "ForecastResult", "TreasuryContext",
@@ -87,4 +95,6 @@ __all__ = [
     "calculate_repo_economics", "calculate_index_acquisition", "calculate_bond_economics",
     "calculate_equity_economics", "calculate_duration_sensitivity", "calculate_equity_risk",
     "calculate_overdraft_economics", "calculate_portfolio_values",
+    "HourlyCashFlowMLModel", "HourlyModelEvaluationReport", "SUPPORTED_ML_ALGORITHMS",
+    "evaluate_hourly_forecast_models", "hourly_ml_forecast",
 ]

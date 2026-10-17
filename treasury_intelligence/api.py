@@ -25,6 +25,12 @@ from .hourly_forecasting import (
     hourly_seasonal_naive_forecast,
     load_organizer_dataset,
 )
+from .ml_forecasting import (
+    HourlyCashFlowMLModel,
+    HourlyModelEvaluationReport,
+    evaluate_hourly_forecast_models,
+    hourly_ml_forecast,
+)
 
 
 def forecast_cashflows(history: Sequence[CashFlowBucket], *, as_of: datetime,

@@ -105,6 +105,7 @@ class HourlyForecastConfig(FourTierContract):
     season_hours: PositiveInt = 24
     uncertainty_multiplier: PositiveDecimal | NonnegativeDecimal = Decimal("1.0")
     uncertainty_status: Literal["not_evaluated", "provisional_uncalibrated", "evaluated"] = "provisional_uncalibrated"
+    ml_model: Any = None
 
 
 class HourlyForecastResult(FourTierContract):
@@ -655,12 +656,13 @@ def forecast_hourly_cashflows(
     model_version: str = "hourly-seasonal-naive-v1",
     config: HourlyForecastConfig | None = None,
     start_at: datetime | None = None,
+    ml_model: Any | None = None,
 ) -> HourlyForecastResult:
     """Unified entry point for native hourly cash-flow forecasting.
     
     Supports horizons: 1, 3, 6, 15, and 24 hours (and any positive integer).
     Respects explicit HourlyForecastConfig if provided.
-    Dispatches to rolling-mean or seasonal-naive based on model_version.
+    Dispatches to ML models, rolling-mean, or seasonal-naive based on model_version.
     """
     if config is not None:
         horizon_hours = config.horizon_hours
@@ -668,10 +670,23 @@ def forecast_hourly_cashflows(
         mult = config.uncertainty_multiplier
         rolling_window = config.rolling_window_hours
         season_hours = config.season_hours
+        if ml_model is None and getattr(config, "ml_model", None) is not None:
+            ml_model = config.ml_model
     else:
         mult = Decimal("1.0")
         rolling_window = 24
         season_hours = 24
+
+    if "ml" in model_version or "hist-gb" in model_version or "random-forest" in model_version or ml_model is not None:
+        from .ml_forecasting import hourly_ml_forecast
+        return hourly_ml_forecast(
+            history,
+            as_of=as_of,
+            horizon_hours=horizon_hours,
+            ml_model=ml_model,
+            start_at=start_at,
+            model_version=model_version,
+        )
 
     if "rolling" in model_version:
         return hourly_rolling_mean_forecast(

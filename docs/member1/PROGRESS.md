@@ -8,6 +8,66 @@
 
 ## Task Log
 
+### [RJ-M1-09] Hourly ML Forecasting and Evaluation
+- **Status**: COMPLETED
+- **Scope**: Implemented and evaluated real machine-learning forecasting for hourly cash flows
+  against the organizer's historical hourly banking dataset. Extended the native hourly
+  forecasting engine with `HourlyCashFlowMLModel` supporting `hist_gradient_boosting` and
+  `random_forest`, out-of-sample chronological evaluation (`evaluate_hourly_forecast_models`),
+  and structured evaluation reporting (`HourlyModelEvaluationReport`).
+- **Models & Algorithms**:
+  - `HourlyCashFlowMLModel`: Implements dual lightweight estimators for separate deposit
+    and withdrawal forecasting with non-negativity clipping (`deposits >= 0`, `withdrawals >= 0`).
+  - Supported algorithms: `"hist_gradient_boosting"` (fast histogram GBDT) and `"random_forest"`.
+  - Scikit-learn regressors and metrics are lazily loaded on demand inside model methods,
+    preserving zero eager ML dependencies for base contracts and standalone pipelines.
+  - Full model serialization (`save`, `load`, `to_bytes`, `from_bytes`) to avoid retraining
+    during simulation replay.
+- **Causal Feature Engineering**:
+  - `extract_ml_features_for_step`: Constructs strictly causal feature vectors:
+    - Target step calendar features: hour of day (0-23) and day of week (0-6) with sin/cos
+      cyclical encodings, plus weekend indicator.
+    - Historical baseline references: target-relative 24h and 168h seasonal naive flows.
+    - As-of historical lags: 1h, 2h, 3h, and 24h prior deposits, withdrawals, and net flow.
+    - As-of rolling window statistics: 3h and 24h rolling averages and standard deviations.
+    - As-of market quotes: repo rate, bond yield, and stock price index observed at `as_of`.
+    - No future cash flows, future realized observations, or future market quotes are exposed.
+- **Multi-Step Horizons & Pathwise Inference**:
+  - Native multi-step horizons: 1h, 3h, 6h, 15h (overnight repo 17:00-08:00), and 24h (daily cycle).
+  - Multi-step paths are generated recursively roll-forwarding predicted flows for intermediate
+    lags without future realized lookahead.
+  - Full path output returns ordered `HourlyForecastPoint` items directly compatible with
+    `HourlyForecastResult` and four-tier decision engine inputs.
+- **Safe Fallback**:
+  - Explicit baseline fallback: untrained, unavailable, or history < 24h automatically falls back
+    to `hourly_seasonal_naive_forecast` or `hourly_rolling_mean_forecast`.
+- **Chronological Evaluation Framework**:
+  - `evaluate_hourly_forecast_models`: Performs strict out-of-sample chronological evaluation
+    without shuffling or data leakage.
+  - Evaluation partition: Chronological train (e.g. 60%), validation (e.g. 20%), and test (e.g. 20%)
+    splits with explicit `train_cutoff`, `test_start`, and `test_end`.
+  - Metrics computed:
+    - MAE and RMSE for deposits, withdrawals, and net cash flow ($).
+    - Cumulative multi-hour forecast net error MAE ($).
+    - Maximum cumulative liquidity shortfall prediction error MAE ($).
+    - Baseline comparative metrics and un-doctored improvement percentages (`net_mae_improvement_pct`,
+      `net_rmse_improvement_pct`).
+  - Measured performance on organizer dataset (8,760 hours): HistGradientBoosting outperforms
+    seasonal-naive baseline across all horizons (e.g., 1h net MAE +46.9%, 15h peak shortfall MAE +65.9%).
+- **Tests**: Full suite 328 passed (314 previous tests preserved; 14 new ML forecasting tests).
+  Tests cover causal feature timing, evaluation boundaries, all 5 horizons, non-negativity,
+  seed reproducibility, model fallback, metric math, market-data visibility, and model comparison.
+  Command: `$env:PYTHONPATH=".;backend"; uv run --with pytest --with fastapi --with pydantic --with httpx --with sqlalchemy --with pydantic-settings pytest tests/`
+- **Files**:
+  - `treasury_intelligence/ml_forecasting.py` (new)
+  - `treasury_intelligence/hourly_forecasting.py` (extended with `ml_model` config dispatch)
+  - `treasury_intelligence/api.py` and `treasury_intelligence/__init__.py` (exports)
+  - `tests/treasury_intelligence/test_ml_forecasting.py` (14 new tests)
+  - `docs/member1/PROGRESS.md` and `docs/member1/ENGINE_CONTRACT.md` (documentation)
+- **Commit**: `feat(forecast): add evaluated hourly ML predictions`
+- **Push Target**: `origin/feat/treasury-intelligence`
+- **Next Task**: Await explicit assignment; stop after RJ-M1-09.
+
 ### [RJ-M1-08] Four-Tier Financial Mathematics
 - **Status**: COMPLETED
 - **Scope**: Added pure `instrument_economics.py` helpers and typed JSON results
