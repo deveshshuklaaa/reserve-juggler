@@ -133,6 +133,7 @@ export function flattenBacktestMetrics(data, originalRequest = {}) {
   const rawResults = Array.isArray(data.results) ? data.results : [];
   const results = rawResults.map((item) => {
     const metrics = item.metrics || {};
+    const accounting = item.accounting || {};
     const strategy = normalizeStrategyToFrontend(item.strategy);
     return {
       strategy,
@@ -144,18 +145,19 @@ export function flattenBacktestMetrics(data, originalRequest = {}) {
       redemption_penalties_cents: metrics.redemption_penalties_cents ?? metrics.penalties_cents ?? item.redemption_penalties_cents ?? 0,
       borrowing_costs_cents: metrics.emergency_borrowing_cost_cents ?? metrics.borrowing_costs_cents ?? item.borrowing_costs_cents ?? 0,
       emergency_borrowing_cost_cents: metrics.emergency_borrowing_cost_cents ?? metrics.borrowing_costs_cents ?? item.emergency_borrowing_cost_cents ?? 0,
-      borrowing_outstanding_cents: metrics.borrowing_outstanding_cents ?? item.borrowing_outstanding_cents ?? 0,
+      borrowing_outstanding_cents: accounting.borrowing_outstanding_cents ?? metrics.borrowing_outstanding_cents ?? item.borrowing_outstanding_cents ?? 0,
       emergency_events: metrics.emergency_events ?? item.emergency_events ?? 0,
       reserve_breaches: metrics.reserve_breaches ?? item.reserve_breaches ?? 0,
       failed_payouts: metrics.failed_payouts ?? item.failed_payouts ?? 0,
       failed_payout_cents: metrics.unpaid_cents ?? metrics.failed_payout_cents ?? item.failed_payout_cents ?? 0,
       unpaid_cents: metrics.unpaid_cents ?? metrics.failed_payout_cents ?? item.unpaid_cents ?? 0,
-      sweeps: metrics.sweeps ?? item.sweeps ?? 0,
+      sweeps: accounting.sweeps ?? metrics.sweeps ?? item.sweeps ?? 0,
       net_benefit_cents: metrics.net_benefit_cents ?? item.net_benefit_cents ?? 0,
       inflow_cents: metrics.inflow_cents ?? item.inflow_cents ?? 0,
       paid_outflow_cents: metrics.paid_outflow_cents ?? item.paid_outflow_cents ?? 0,
       history: item.history || [],
       metrics,
+      accounting,
     };
   });
 
@@ -185,6 +187,8 @@ export function flattenPerformanceReport(data) {
         {
           strategy: data.strategy || 'RESERVE_JUGGLER',
           metrics: data.metrics,
+          accounting: data.accounting,
+          history: data.history,
         },
       ],
     });
@@ -237,7 +241,8 @@ export function createRealApi(baseUrl = '') {
     getTransactions: async (id, options) => validateItems(await get(path(id, 'transactions'), options)),
     runBacktest: async (id, body, options) => {
       const payload = sanitizeBacktestRequest(body);
-      const data = await post(path(id, 'backtest'), payload, { timeout_ms: 60000, ...options });
+      // The real seven-day PostgreSQL comparison is synchronous (~171s locally).
+      const data = await post(path(id, 'backtest'), payload, { timeout_ms: 300000, ...options });
       return flattenBacktestMetrics(data, body);
     },
     getReport: async (id, options) => {

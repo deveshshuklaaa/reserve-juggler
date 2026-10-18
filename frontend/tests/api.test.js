@@ -18,8 +18,32 @@ import { createEngine, snapshot } from '../src/mocks/mockEngine';
 afterEach(() => vi.unstubAllGlobals());
 
 describe('API boundary', () => {
+  it('allows five minutes for the real synchronous seven-day comparison', async () => {
+    const timer = vi.spyOn(globalThis, 'setTimeout');
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ results: [] }))));
+    try {
+      await createRealApi('http://localhost:8017').runBacktest('id', { days: 7 });
+      expect(timer).toHaveBeenCalledWith(expect.any(Function), 300000);
+    } finally {
+      timer.mockRestore();
+    }
+  });
+
   it('exposes interchangeable mock and real operations', () => {
     expect(Object.keys(createRealApi()).sort()).toEqual(Object.keys(createMockApi()).sort());
+  });
+
+  it('reads actual sweeps and debt from detailed accounting and retains report history', () => {
+    const row = { strategy: 'RESERVE_JUGGLER', metrics: { net_benefit_cents: -3 },
+      accounting: { sweeps: 2, borrowing_outstanding_cents: 123 },
+      history: [{ timestamp: '2026-01-01T00:00:00', checking_cents: 456 }] };
+    const comparison = flattenBacktestMetrics({ results: [row] });
+    expect(comparison.results[0].sweeps).toBe(2);
+    expect(comparison.results[0].borrowing_outstanding_cents).toBe(123);
+    const report = flattenPerformanceReport(row);
+    expect(report.results[0].sweeps).toBe(2);
+    expect(report.results[0].borrowing_outstanding_cents).toBe(123);
+    expect(report.results[0].history).toEqual(row.history);
   });
 
   it('uses the exact versioned routes and snake_case payloads', async () => {
