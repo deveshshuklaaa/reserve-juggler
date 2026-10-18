@@ -274,7 +274,7 @@ class Tier2Snapshot(ContractModel):
     name: str = "Sovereign Bonds"
     notional_cents: Cents
     quantity: float
-    acquisition_price: str
+    acquisition_price: str | None
     current_price: str | None
     market_value_cents: Cents
     ytm_bps: BasisPoints | None
@@ -293,7 +293,7 @@ class Tier3Snapshot(ContractModel):
     id: str = "EQ-IDX-1"
     name: str = "Growth Equities"
     quantity: float
-    acquisition_price: str
+    acquisition_price: str | None
     current_price: str | None
     market_value_cents: Cents
     cost_basis_cents: Cents

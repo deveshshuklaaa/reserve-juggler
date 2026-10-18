@@ -1906,7 +1906,9 @@ components:
           type: number
           title: Quantity
         acquisition_price:
-          type: string
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Acquisition Price
         current_price:
           anyOf:
@@ -1995,7 +1997,9 @@ components:
           type: number
           title: Quantity
         acquisition_price:
-          type: string
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Acquisition Price
         current_price:
           anyOf:

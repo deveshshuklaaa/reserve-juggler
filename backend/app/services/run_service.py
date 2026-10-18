@@ -32,11 +32,14 @@ from app.persistence.models import (
     TreasuryDecision as DbTreasuryDecision,
 )
 from app.persistence.repositories import configuration_identity
+from app.services.accounting import aggregate_acquisition_price, financial_performance, market_cost_basis
+from treasury_intelligence.instrument_economics import percentage_cost_cents
 from app.services.hourly_engine import StepConflictError, execute_hourly_step
 from app.services.treasury_adapter import (
     build_four_tier_policy,
     get_hourly_forecasts_from_db,
     hydrate_portfolio_state,
+    get_published_observation,
 )
 from app.v1_contracts import (
     AdvanceRequest,
@@ -206,12 +209,11 @@ def get_simulation_snapshot(session: Session, run_id: UUID) -> SimulationSnapsho
         raise KeyError(f"Simulation run {run_id} not found")
 
     step_timestamp = run.source_start_timestamp + timedelta(hours=run.current_step)
-    obs = session.scalar(
-        select(DbOrganizerObservation).where(
-            DbOrganizerObservation.dataset_id == run.dataset_id,
-            DbOrganizerObservation.timestamp == step_timestamp,
-        )
-    )
+    publication_delay_seconds = (run.policy_json or {}).get("publication_delay_seconds", 0)
+    obs = get_published_observation(session, run.dataset_id, step_timestamp, publication_delay_seconds)
+    reference = obs or session.get(DbOrganizerObservation, (run.dataset_id, run.source_start_timestamp))
+    if reference is None:
+        raise ValueError("Snapshot requires its persisted source provenance")
 
     (
         portfolio,
@@ -220,7 +222,7 @@ def get_simulation_snapshot(session: Session, run_id: UUID) -> SimulationSnapsho
         db_bonds,
         db_equities,
         db_overdrafts,
-    ) = hydrate_portfolio_state(session, run, obs)
+    ) = hydrate_portfolio_state(session, run, reference, as_of=step_timestamp, use_market_data=obs is not None)
 
     policy_dict = run.policy_json or {}
     policy_obj = build_four_tier_policy(policy_dict)
@@ -228,13 +230,11 @@ def get_simulation_snapshot(session: Session, run_id: UUID) -> SimulationSnapsho
     # Repo positions
     active_repos = [r for r in db_repos if r.status in ("ACTIVE", "LOCKED")]
     tier1_principal = sum(r.principal_cents for r in active_repos)
-    repo_apy_bps = int(obs.tier1_repo_rate_apy * 100) if obs else 525
-    tier1_accrued = sum(
-        int(r.principal_cents * (obs.tier1_repo_rate_apy / Decimal("100")) * Decimal(1) / Decimal(8760))
-        for r in active_repos
-    ) if obs else 0
+    repo_apy_bps = int(obs.tier1_repo_rate_apy * 100) if obs else None
+    tier1_accrued = sum(p.accrued_interest_cents or 0 for p in portfolio.repo_positions)
     tier1_break_fee_bps = 50
-    tier1_break_fee_cents = int(tier1_principal * tier1_break_fee_bps / 10000) if policy_obj.allow_early_repo_redemption else 0
+    tier1_break_fee_cents = sum(percentage_cost_cents(r.principal_cents, r.early_redemption_haircut_pct)
+        for r in active_repos) if policy_obj.allow_early_repo_redemption else 0
     tier1_net_redeemable = max(0, tier1_principal - tier1_break_fee_cents) if policy_obj.allow_early_repo_redemption else 0
 
     # Bonds
@@ -242,15 +242,15 @@ def get_simulation_snapshot(session: Session, run_id: UUID) -> SimulationSnapsho
     tier2_notional = 0
     tier2_unrealized = 0
     for b in db_bonds:
-        cur_p = obs.tier2_bond_price_index if obs else b.acquisition_price_index
-        cost_b = int(round(b.quantity * b.acquisition_price_index * Decimal(100)))
+        cost_b = market_cost_basis(session, b)
         tier2_notional += cost_b
-        mkt_val = int(round(b.quantity * cur_p * Decimal(100))) if b.quantity > 0 else (b.current_market_value_cents or 0)
+        mkt_val = b.current_market_value_cents or 0
         tier2_mkt_val += mkt_val
         tier2_unrealized += (mkt_val - cost_b)
 
     tier2_haircut_bps = int(obs.tier2_bond_liquidation_haircut_pct * 100) if obs else 200
-    tier2_haircut_cents = int(tier2_mkt_val * tier2_haircut_bps / 10000)
+    tier2_haircut_cents = percentage_cost_cents(tier2_mkt_val,
+        obs.tier2_bond_liquidation_haircut_pct if obs else Decimal("2"))
     tier2_avail_liquidity = max(0, tier2_mkt_val - tier2_haircut_cents)
 
     # Equities
@@ -258,25 +258,29 @@ def get_simulation_snapshot(session: Session, run_id: UUID) -> SimulationSnapsho
     tier3_cost_basis = 0
     tier3_unrealized = 0
     for eq in db_equities:
-        cur_p = obs.tier3_stock_index_price if obs else eq.acquisition_price_index
-        cost_b = int(round(eq.quantity * eq.acquisition_price_index * Decimal(100)))
+        cost_b = market_cost_basis(session, eq)
         tier3_cost_basis += cost_b
-        mkt_val = int(round(eq.quantity * cur_p * Decimal(100))) if eq.quantity > 0 else (eq.current_market_value_cents or 0)
+        mkt_val = eq.current_market_value_cents or 0
         tier3_mkt_val += mkt_val
         tier3_unrealized += (mkt_val - cost_b)
 
     tier3_slippage_bps = int(obs.tier3_stock_liquidation_haircut_pct * 100) if obs else 1500
-    tier3_slippage_cents = int(tier3_mkt_val * tier3_slippage_bps / 10000)
+    tier3_slippage_cents = percentage_cost_cents(tier3_mkt_val,
+        obs.tier3_stock_liquidation_haircut_pct if obs else Decimal("15"))
     tier3_avail_liquidity = max(0, tier3_mkt_val - tier3_slippage_cents)
 
     # Overdraft
     od_borrowing = sum(od.outstanding_principal_cents for od in db_overdrafts)
-    od_fees = sum(od.financing_cost_cents or 0 for od in db_overdrafts)
+    od_fees = sum(od.outstanding_financing_cost_cents for od in portfolio.overdrafts)
+    total_liabilities = od_borrowing+od_fees
 
-    gross_assets = cash_acc.balance_cents + tier1_principal + tier2_mkt_val + tier3_mkt_val
-    net_value = gross_assets - od_borrowing
+    gross_assets = portfolio.valuation.total_portfolio_value_cents
+    net_value = portfolio.valuation.net_portfolio_value_cents
+    realized_returns, net_benefit = financial_performance(session, run, net_value)
 
-    req_reserve = policy_obj.minimum_liquid_reserve_cents
+    latest_dec = session.scalar(select(DbTreasuryDecision).where(
+        DbTreasuryDecision.run_id == run.id, DbTreasuryDecision.step == run.current_step))
+    req_reserve = latest_dec.required_reserve_cents if latest_dec is not None else policy_obj.minimum_liquid_reserve_cents
     deployable_surplus = max(0, cash_acc.balance_cents - req_reserve)
 
     total_immediate_liquidity = (
@@ -287,7 +291,10 @@ def get_simulation_snapshot(session: Session, run_id: UUID) -> SimulationSnapsho
     )
 
     four_tier_snapshot = FourTierPortfolioSnapshot(
-        timestamp=obs.timestamp.strftime("%Y-%m-%d %H:%M:%S") if obs else None,
+        timestamp=step_timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+        market_data_available=obs is not None,
+        market_observation_timestamp=obs.timestamp.isoformat() if obs else None,
+        publication_delay_seconds=publication_delay_seconds,
         tier0={
             "tier": 0,
             "name": "Operating Cash Buffer",
@@ -305,11 +312,12 @@ def get_simulation_snapshot(session: Session, run_id: UUID) -> SimulationSnapsho
             "name": "Overnight Repo",
             "principal_cents": tier1_principal,
             "repo_apy_bps": repo_apy_bps,
-            "repo_apy_decimal": f"{repo_apy_bps / 100:.2f}",
+            "repo_apy_decimal": str(obs.tier1_repo_rate_apy) if obs else None,
             "accrued_interest_cents": tier1_accrued,
-            "realized_interest_cents": 0,
+            "realized_interest_cents": sum(p.realized_interest_cents or 0 for p in session.scalars(
+                select(DbRepoPosition).where(DbRepoPosition.run_id == run.id))),
             "status": "LOCKED" if tier1_principal > 0 else "MATURED",
-            "entry_window_open": (obs.timestamp.hour == 17) if obs else False,
+            "entry_window_open": step_timestamp.hour == 17,
             "early_redemption_allowed": policy_obj.allow_early_repo_redemption,
             "early_break_fee_bps": tier1_break_fee_bps,
             "break_fee_cents": tier1_break_fee_cents,
@@ -317,7 +325,7 @@ def get_simulation_snapshot(session: Session, run_id: UUID) -> SimulationSnapsho
             "immediate_liquidity_cents": tier1_net_redeemable,
             "entry_time": "17:00",
             "maturity_time": "08:00",
-            "maturity_timestamp": (obs.timestamp.replace(hour=8) + timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S") if (obs and tier1_principal > 0) else None,
+            "maturity_timestamp": min(r.scheduled_maturity_at for r in active_repos).isoformat() if active_repos else None,
         },
         tier2={
             "tier": 2,
@@ -325,15 +333,16 @@ def get_simulation_snapshot(session: Session, run_id: UUID) -> SimulationSnapsho
             "name": "Sovereign Bonds",
             "notional_cents": tier2_notional,
             "quantity": float(sum(b.quantity for b in db_bonds)) if db_bonds else 0.0,
-            "acquisition_price": "100.0000",
-            "current_price": str(obs.tier2_bond_price_index) if obs else "100.0000",
+            "acquisition_price": aggregate_acquisition_price(db_bonds),
+            "current_price": str(obs.tier2_bond_price_index) if obs else None,
             "market_value_cents": tier2_mkt_val,
-            "ytm_bps": int(obs.tier2_bond_yield_pct * 100) if obs else 445,
-            "ytm_decimal": f"{obs.tier2_bond_yield_pct:.2f}" if obs else "4.45",
-            "modified_duration": float(obs.tier2_bond_mod_duration) if obs and obs.tier2_bond_mod_duration else 4.25,
+            "ytm_bps": int(obs.tier2_bond_yield_pct * 100) if obs else None,
+            "ytm_decimal": str(obs.tier2_bond_yield_pct) if obs else None,
+            "modified_duration": float(obs.tier2_bond_mod_duration) if obs else None,
             "liquidation_haircut_bps": tier2_haircut_bps,
             "haircut_cents": tier2_haircut_cents,
-            "realized_pnl_cents": 0,
+            "realized_pnl_cents": sum(v or 0 for v in session.scalars(select(DbBondPosition.realized_pnl_cents).where(
+                DbBondPosition.run_id == run.id))),
             "unrealized_pnl_cents": tier2_unrealized,
             "available_liquidity_cents": tier2_avail_liquidity,
             "liquidity_status": "2-DAY_SETTLEMENT_OR_HAIRCUT",
@@ -343,34 +352,35 @@ def get_simulation_snapshot(session: Session, run_id: UUID) -> SimulationSnapsho
             "id": "EQ-IDX-1",
             "name": "Growth Equities",
             "quantity": float(sum(eq.quantity for eq in db_equities)) if db_equities else 0.0,
-            "acquisition_price": "450.0000",
-            "current_price": str(obs.tier3_stock_index_price) if obs else "450.0000",
+            "acquisition_price": aggregate_acquisition_price(db_equities),
+            "current_price": str(obs.tier3_stock_index_price) if obs else None,
             "market_value_cents": tier3_mkt_val,
             "cost_basis_cents": tier3_cost_basis,
-            "volatility_bps": int(obs.tier3_stock_volatility_pct * 100) if obs else 1680,
-            "volatility_decimal": f"{obs.tier3_stock_volatility_pct:.2f}" if obs else "16.80",
+            "volatility_bps": int(obs.tier3_stock_volatility_pct * 100) if obs else None,
+            "volatility_decimal": str(obs.tier3_stock_volatility_pct) if obs else None,
             "emergency_slippage_bps": tier3_slippage_bps,
             "slippage_cents": tier3_slippage_cents,
-            "realized_pnl_cents": 0,
+            "realized_pnl_cents": sum(v or 0 for v in session.scalars(select(DbEquityPosition.realized_pnl_cents).where(
+                DbEquityPosition.run_id == run.id))),
             "unrealized_pnl_cents": tier3_unrealized,
             "available_liquidity_cents": tier3_avail_liquidity,
             "liquidity_status": "MARKET_VOLATILITY_AND_SLIPPAGE",
         },
         overdraft={
             "borrowing_outstanding_cents": od_borrowing,
-            "financing_rate_bps": 1000,
+            "financing_rate_bps": int(obs.emergency_overdraft_penalty_apr_pct*100) if obs else None,
             "financing_cost_cents": od_fees,
-            "liability_status": "ACTIVE" if od_borrowing > 0 else "CLEARED",
-            "is_active": (od_borrowing > 0),
+            "liability_status": "ACTIVE" if total_liabilities > 0 else "CLEARED",
+            "is_active": (total_liabilities > 0),
         },
         aggregates={
             "gross_assets_cents": gross_assets,
-            "total_liabilities_cents": od_borrowing,
+            "total_liabilities_cents": total_liabilities,
             "net_portfolio_value_cents": net_value,
             "total_immediate_liquidity_cents": total_immediate_liquidity,
-            "total_realized_returns_cents": 0,
+            "total_realized_returns_cents": realized_returns,
             "total_unrealized_returns_cents": tier1_accrued + tier2_unrealized + tier3_unrealized,
-            "net_financial_benefit_cents": -od_fees,
+            "net_financial_benefit_cents": net_benefit,
             "checking_cents": cash_acc.balance_cents,
             "required_reserve_cents": req_reserve,
             "deployable_surplus_cents": deployable_surplus,
@@ -417,7 +427,7 @@ def get_simulation_snapshot(session: Session, run_id: UUID) -> SimulationSnapsho
         forecast=forecast_sum,
         decision=decision_rec,
         status="READY" if run.current_step == 0 else ("RUNNING" if run.current_step < run.duration_steps else "COMPLETED"),
-        policy=TreasuryPolicy(**{k: v for k, v in policy_dict.items() if k != "scenarios"}),
+        policy=TreasuryPolicy(**{k: v for k, v in policy_dict.items() if k in TreasuryPolicy.model_fields}),
         deployable_surplus_cents=deployable_surplus,
         four_tier=four_tier_snapshot,
     )
@@ -617,7 +627,7 @@ def get_simulation_forecast(
     return ForecastResponse(
         as_of=datetime.now(timezone.utc),
         horizon_minutes=horizon_minutes,
-        model_version="evaluated-gb-v1",
+        model_version="hourly-seasonal-naive-v1",
         points=points,
         summary=ForecastSummary(
             horizon_minutes=horizon_minutes,

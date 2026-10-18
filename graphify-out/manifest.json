@@ -210,9 +210,9 @@
     "semantic_hash": ""
   },
   "backend/app/v1_contracts.py": {
-    "mtime": 1792282057.7130651,
-    "seen": 1792282145.38513,
-    "ast_hash": "2a910a8c689321789db8a5d721f6db9f",
+    "mtime": 1792282413.1760485,
+    "seen": 1792282499.862359,
+    "ast_hash": "3bc8a1461dc3b4cabc23922b3285ae1e",
     "semantic_hash": ""
   },
   "tests/backend/test_api_versioning.py": {
@@ -276,9 +276,9 @@
     "semantic_hash": ""
   },
   "contracts/openapi.yaml": {
-    "mtime": 1792282059.733669,
-    "seen": 1792282145.4162023,
-    "ast_hash": "8c7fe5287a7a7705b04a2f4d3e2957aa",
+    "mtime": 1792282415.1206267,
+    "seen": 1792282499.890023,
+    "ast_hash": "73281312eb927cdb4acd652abf61dab5",
     "semantic_hash": ""
   },
   "docker-compose.yml": {
@@ -378,15 +378,15 @@
     "semantic_hash": ""
   },
   "backend/app/services/hourly_engine.py": {
-    "mtime": 1792282137.9292898,
-    "seen": 1792282145.38513,
-    "ast_hash": "4e44fbf3bb7aa457f1ffd85f7a4a3dd1",
+    "mtime": 1792282413.1750505,
+    "seen": 1792282499.8603592,
+    "ast_hash": "7fe44dd66bd49577175706e5c78015b4",
     "semantic_hash": ""
   },
   "backend/app/services/run_service.py": {
-    "mtime": 1792281563.6645114,
-    "seen": 1792282145.38513,
-    "ast_hash": "594dfdd78fc19c525135c51ecdd4291e",
+    "mtime": 1792282413.174053,
+    "seen": 1792282499.8603592,
+    "ast_hash": "0ce5cd8d05d94661bfc4c0b31caa4e74",
     "semantic_hash": ""
   },
   "backend/app/treasury/four_tier_adapter.py": {
@@ -720,9 +720,9 @@
     "semantic_hash": "34c6deb75ec3bce999b8f50540c9db84"
   },
   "backend/app/services/accounting.py": {
-    "mtime": 1792281709.5355878,
-    "seen": 1792282145.38513,
-    "ast_hash": "b8aee2e2ecd58a42962a3df517886b50",
+    "mtime": 1792282413.1730418,
+    "seen": 1792282499.8603592,
+    "ast_hash": "b01c2bf4c20fd7152d4720c4009fd494",
     "semantic_hash": ""
   },
   "backend/app/services/market_execution.py": {
@@ -804,9 +804,9 @@
     "semantic_hash": ""
   },
   "docs/RUNTIME_RELEASE_CHECKPOINT.md": {
-    "mtime": 1792282137.929881,
-    "seen": 1792282145.4206395,
-    "ast_hash": "cfc59e3e70250f6f3804f5996387f4ea",
+    "mtime": 1792282492.6347525,
+    "seen": 1792282499.891022,
+    "ast_hash": "47162ae0a9020c85ec0a9b01df0b83f5",
     "semantic_hash": ""
   },
   "tests/integration/test_payout_execution.py": {
@@ -825,6 +825,12 @@
     "mtime": 1792281949.945444,
     "seen": 1792282145.400263,
     "ast_hash": "8c5bac7e2bed45e2e3614b70de0b03d2",
+    "semantic_hash": ""
+  },
+  "tests/integration/test_snapshot_accounting.py": {
+    "mtime": 1792282374.2820528,
+    "seen": 1792282499.8750224,
+    "ast_hash": "a4b9ddc04e7dedd278691be065a40883",
     "semantic_hash": ""
   }
 }

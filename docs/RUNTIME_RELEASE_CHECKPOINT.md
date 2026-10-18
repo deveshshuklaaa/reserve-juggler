@@ -252,3 +252,41 @@ The publication convention itself is now confirmed, not an open question.
 Exact final availability checkpoint focused rerun: 34 passed in 26.63 seconds,
 including the published entry-fee changes. Graphify verified 22 PostgreSQL
 tables and indexed 2117 nodes / 6198 relationships.
+
+## Snapshot projection follow-up
+
+Five fail-first projection cases cover initial unavailable quotes, next-hour
+quote leakage, missing financing expense in NAV, non-cumulative repo accrual,
+and omitted partial-sale P&L/benefit. All pass after the projection correction.
+The held-repo fixture explicitly zeros source flows in its rollback-only
+database so that it really exercises multiple earned hours rather than an
+already redeemed position. The organizer file is never changed.
+
+GET snapshot now uses the same available canonical portfolio and exact
+remaining cost basis as execution. Gross assets include accrued repo interest;
+liabilities include principal plus unpaid financing expense. Fee-only debt
+remains ACTIVE until settled. The latest persisted reserve target is used.
+Public forecast metadata no longer claims evaluated-gb-v1 for the actual
+hourly-seasonal-naive-v1 runtime.
+
+Shared read-only financial_performance derives economic benefit as
+`NAV - initial capital - actual settled customer cash delta`.
+This reconciles actual fees, market gains/losses, interest and financing expense
+without treating borrowing as income or unpaid requests as paid outflows.
+Gross realized return is separately reported before fees. It does not invent
+a second financial executor or replace Agent 2's detailed report accounting.
+
+An aggregate acquisition_price is now null for zero or mixed-price open lots;
+there is no single truthful acquisition index in those cases. One-price open
+lots expose their actual Decimal index string. Position receipts retain every
+lot's actual acquisition quote. Agent 2 must handle this nullable aggregate
+display field in addition to nullable unpublished market quotes.
+
+Focused snapshot/live-route PostgreSQL verification: 15 passed in 12.33 seconds.
+
+Additional Agent 2 gate: its runtime provider still pins RUNTIME_SHA and
+engine_version to 1ff1e655070d6b13e24c060d30c9782457d01598. It must pin the
+new core checkpoint when adapting receipts. A healthy response from that old
+provider is not evidence of the new runtime's provenance or full historical
+acceptance. This file is the handoff because no verified messaging destination
+was provided; no Agent 2 implementation or branch is changed.
