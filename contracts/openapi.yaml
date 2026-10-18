@@ -937,6 +937,12 @@ components:
             $ref: '#/components/schemas/ReportStrategyResult'
           type: array
           title: Results
+        child_run_ids:
+          additionalProperties:
+            type: string
+          type: object
+          title: Child Run Ids
+          default: {}
         execution_kind:
           type: string
           enum:
@@ -983,6 +989,28 @@ components:
           type: array
           minItems: 1
           title: Strategies
+        retain_runs:
+          type: boolean
+          title: Retain Runs
+          default: false
+        days:
+          anyOf:
+          - type: integer
+            enum:
+            - 7
+            - 14
+            - 30
+          - type: 'null'
+          title: Days
+        scenario:
+          anyOf:
+          - $ref: '#/components/schemas/Scenario'
+          - type: 'null'
+        seed:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Seed
       additionalProperties: false
       type: object
       title: BacktestRequest

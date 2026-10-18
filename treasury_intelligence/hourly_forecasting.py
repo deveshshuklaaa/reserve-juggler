@@ -667,6 +667,7 @@ def forecast_hourly_cashflows(
     config: HourlyForecastConfig | None = None,
     start_at: datetime | None = None,
     ml_model: Any | None = None,
+    publication_delay_seconds: int = 0,
 ) -> HourlyForecastResult:
     """Unified entry point for native hourly cash-flow forecasting.
     
@@ -696,6 +697,7 @@ def forecast_hourly_cashflows(
             ml_model=ml_model,
             start_at=start_at,
             model_version=model_version,
+            publication_delay_seconds=publication_delay_seconds,
         )
 
     if "rolling" in model_version:

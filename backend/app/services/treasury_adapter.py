@@ -504,6 +504,7 @@ def get_hourly_forecasts_from_db(
         horizon_hours=horizon_hours,
         start_at=as_of,
         model_version=model_version,
+        publication_delay_seconds=publication_delay_seconds,
     )
     points: list[HourlyForecastPoint] = []
     for p in result.points:

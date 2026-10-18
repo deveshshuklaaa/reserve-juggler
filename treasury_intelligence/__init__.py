@@ -87,6 +87,33 @@ from .monte_carlo_risk import (
     generate_multi_asset_scenarios,
     simulate_multi_asset_monte_carlo_risk,
 )
+from .portfolio import (
+    AllocationTargets,
+    BondPosition,
+    CashPosition,
+    EquityPosition,
+    FourTierDecisionResult,
+    FourTierReserveResult,
+    FourTierTreasuryPolicy,
+    PortfolioState,
+    PortfolioValuation,
+    RecommendedOrder,
+    RepoPosition,
+    TierAllocationLimit,
+    recommend_portfolio_allocation,
+)
+from .four_tier_demo import (
+    FourTierDemoScenarioResult,
+    FourTierDemoSuiteResult,
+    build_demo_portfolio_state,
+    load_demo_observations,
+    resolve_organizer_dataset_path,
+    run_four_tier_demo,
+    run_scenario_liquidity_shortage,
+    run_scenario_market_decline,
+    run_scenario_repo_sweep,
+    run_scenario_repo_unavailable,
+)
 
 __all__ = [
     "CashFlowBucket", "ForecastPoint", "ForecastResult", "TreasuryContext",
@@ -129,4 +156,11 @@ __all__ = [
     "MONTE_CARLO_RISK_MODEL_VERSION", "MarketRiskSummary", "MultiAssetMonteCarloRiskResult",
     "PercentileSummary", "PortfolioDownsideRiskSummary", "ShortfallDistributionSummary",
     "generate_multi_asset_scenarios", "simulate_multi_asset_monte_carlo_risk",
+    "PortfolioState", "CashPosition", "RepoPosition", "BondPosition", "EquityPosition",
+    "PortfolioValuation", "FourTierTreasuryPolicy", "FourTierReserveResult",
+    "FourTierDecisionResult", "RecommendedOrder", "AllocationTargets", "TierAllocationLimit",
+    "FourTierDemoScenarioResult", "FourTierDemoSuiteResult", "build_demo_portfolio_state",
+    "load_demo_observations", "resolve_organizer_dataset_path", "run_four_tier_demo",
+    "run_scenario_liquidity_shortage", "run_scenario_market_decline",
+    "run_scenario_repo_sweep", "run_scenario_repo_unavailable",
 ]

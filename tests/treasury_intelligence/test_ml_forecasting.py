@@ -343,3 +343,23 @@ def test_full_dataset_ml_evaluation_if_present():
         assert r.mae_net_usd > 0
         assert r.cumulative_net_mae_usd > 0
         assert r.peak_shortfall_mae_usd > 0
+
+
+def test_fitted_artifact_cannot_be_used_before_calibration_cutoff(hourly_series_168):
+    model = HourlyCashFlowMLModel().fit(hourly_series_168[:80],
+        validation_history=hourly_series_168[80:120], stride=24, horizons=(1,))
+    assert model.training_cutoff == hourly_series_168[119].timestamp
+    with pytest.raises(ValueError, match='cutoff'):
+        model.predict_path(hourly_series_168[:100], hourly_series_168[99].timestamp, 1)
+    with pytest.raises(ValueError, match='start_at'):
+        model.predict_path(hourly_series_168[:120], hourly_series_168[119].timestamp, 1,
+                           start_at=hourly_series_168[118].timestamp)
+
+
+def test_ml_seasonal_feature_uses_explicit_target_timestamp(hourly_series_168):
+    history = hourly_series_168[:50]
+    as_of = history[-1].timestamp
+    features = extract_ml_features_for_step(history, as_of, step_h=1, start_at=as_of)
+    assert features[8] == float(history[25].deposits_usd)
+    with pytest.raises(ValueError, match='causality'):
+        extract_ml_features_for_step(hourly_series_168, as_of, step_h=1)

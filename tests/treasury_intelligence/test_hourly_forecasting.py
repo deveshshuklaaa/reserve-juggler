@@ -528,3 +528,12 @@ def test_full_downloads_dataset_if_present():
     assert res.points[0].predicted_deposits_cents > 0
     assert res.points[0].predicted_withdrawals_cents > 0
     assert res.points[0].supplied_uncertainty_buffer_cents > 0
+
+
+def test_seasonal_forecast_explicit_current_hour_alignment(hourly_series_168):
+    history = hourly_series_168[:50]
+    as_of = history[-1].timestamp
+    result = hourly_seasonal_naive_forecast(history, as_of=as_of, start_at=as_of, horizon_hours=1)
+    assert result.points[0].predicted_deposits_cents == int(history[25].deposits_usd * 100)
+    with pytest.raises(ValueError, match='contiguous'):
+        hourly_seasonal_naive_forecast(history[:25] + history[26:], as_of=as_of, horizon_hours=1)

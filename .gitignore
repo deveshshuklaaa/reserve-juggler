@@ -24,6 +24,7 @@ build/
 .pytest_cache/
 *.db
 *.sqlite
+*.pkl
 
 # Node & Frontend
 node_modules/

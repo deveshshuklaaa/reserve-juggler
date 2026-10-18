@@ -412,9 +412,16 @@ class BacktestRequest(ContractModel):
         min_length=1,
     )
     retain_runs: bool = False
-    days: int | None = None
+    days: Literal[7, 14, 30] | None = None
     scenario: Scenario | None = None
     seed: int | None = None
+
+    @field_validator("days", mode="before")
+    @classmethod
+    def strict_backtest_days(cls, value):
+        if value is not None and (type(value) is not int or value not in (7, 14, 30)):
+            raise ValueError("Backtests require integer days of 7, 14 or 30")
+        return value
 
     @model_validator(mode="before")
     @classmethod

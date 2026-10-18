@@ -266,6 +266,7 @@ class HourlyCashFlowMLModel:
         self.training_cutoff: datetime | None = None
         self.train_sample_count: int = 0
         self.validation_residual_std_cents: int = 0
+        self.cutoff_includes_calibration: bool = False
         self.feature_names = ML_FEATURE_NAMES
 
     def fit(
@@ -284,6 +285,7 @@ class HourlyCashFlowMLModel:
         n = len(history)
         if n < 24:
             raise ValueError(f"insufficient history for ML training: {n} observations (need at least 24)")
+        self.cutoff_includes_calibration = False
         validate_hourly_forecast_inputs(history, as_of=_get_timestamp(history[-1]), horizon_hours=1)
         if stride <= 0 or not horizons or any(h <= 0 for h in horizons):
             raise ValueError("stride and training horizons must be positive")
@@ -365,6 +367,7 @@ class HourlyCashFlowMLModel:
         # the complete fitted artifact may first be used in historical replay.
         self.training_cutoff = (_get_timestamp(validation_history[-1])
                                 if validation_history and len(validation_history) >= 24 else timestamps[-1])
+        self.cutoff_includes_calibration = True
 
         return self
 
@@ -420,6 +423,7 @@ class HourlyCashFlowMLModel:
             "model_withdrawals": self.model_withdrawals,
             "is_fitted": self.is_fitted,
             "training_cutoff": self.training_cutoff,
+            "cutoff_includes_calibration": self.cutoff_includes_calibration,
             "train_sample_count": self.train_sample_count,
             "validation_residual_std_cents": self.validation_residual_std_cents,
         })
@@ -436,6 +440,7 @@ class HourlyCashFlowMLModel:
         model.model_withdrawals = state["model_withdrawals"]
         model.is_fitted = state["is_fitted"]
         model.training_cutoff = state["training_cutoff"]
+        model.cutoff_includes_calibration = state.get("cutoff_includes_calibration", False)
         model.train_sample_count = state["train_sample_count"]
         model.validation_residual_std_cents = state["validation_residual_std_cents"]
         return model
@@ -461,6 +466,7 @@ def hourly_ml_forecast(
     start_at: datetime | None = None,
     model_version: str = "hourly-hist-gb-v1",
     fallback_model: Literal["seasonal_naive", "rolling_mean"] = "seasonal_naive",
+    publication_delay_seconds: int = 0,
 ) -> HourlyForecastResult:
     """Generate native hourly forecast using trained ML model with safe baseline fallback.
     
@@ -468,6 +474,15 @@ def hourly_ml_forecast(
     to the seasonal-naive or rolling-mean baseline while recording fallback provenance.
     """
     validate_hourly_forecast_inputs(history, as_of=as_of, horizon_hours=horizon_hours)
+    if type(publication_delay_seconds) is not int or not 0 <= publication_delay_seconds <= 2147483647:
+        raise ValueError("publication_delay_seconds must be a nonnegative int32")
+    if ml_model is not None and ml_model.is_fitted:
+        if not getattr(ml_model, "cutoff_includes_calibration", False):
+            raise ValueError("ML artifact lacks complete calibration cutoff provenance; refit it")
+        cutoff = ml_model.training_cutoff
+        if (cutoff is None or cutoff.tzinfo is not None or
+                cutoff + timedelta(hours=1, seconds=publication_delay_seconds) > as_of):
+            raise ValueError("ML artifact calibration information is unavailable at the publication cutoff")
 
     # Safe fallback if ML model is unavailable or unfitted
     if ml_model is None or not ml_model.is_fitted or len(history) < 24:

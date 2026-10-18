@@ -213,7 +213,11 @@ def backtest(id: UUID, request: BacktestRequest, db: Session = Depends(get_db)):
     elif run.duration_steps in (168, 336, 720):
         days = run.duration_steps // 24
     else:
-        days = 7
+        raise HTTPException(status_code=422, detail={
+            "error_code": "UNPROCESSABLE_ENTITY",
+            "message": "Parent duration is unsupported; explicitly request days of 7, 14 or 30",
+            "details": {"duration_steps": run.duration_steps, "supported_days": [7, 14, 30]},
+        })
 
     import json
     from app.backtesting.contracts import BacktestRequest as InternalBacktestRequest, ScenarioSpec, canonical_config
