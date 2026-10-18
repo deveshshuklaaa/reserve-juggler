@@ -27,3 +27,10 @@ def request_spec():
         start=datetime(2026, 1, 1), days=7, initial_capital_cents=100_000, seed=17,
         policy_json='{"reserve_fraction":"0.20"}',
     )
+
+
+def make_shared_runtime_factory():
+    from app.database import SessionLocal
+    from app.backtesting.runtime import SharedRuntimeFactory
+    return SharedRuntimeFactory(session_factory=SessionLocal)
+

@@ -35,7 +35,7 @@ def test_actual_shared_engine_comparison(shared_factory, request_spec, days, sce
     path = Path(__file__).resolve().parents[2] / "treasury_4tier_dataset.csv"
     before = path.read_bytes()
     spec = BacktestRequest(**(request_spec.model_dump() | {
-        "comparison_id":uuid4(), "days":days, "scenario":ScenarioSpec(name=scenario)}))
+        "comparison_id": uuid4(), "days": days, "scenario": ScenarioSpec(name=scenario), "policy_json": "{}"}))
     result = BacktestService(shared_factory).compare(spec)
     assert result.execution_kind == "SHARED"
     assert result.engine_integration_sha == os.environ["BACKTEST_SHARED_ENGINE_SHA"]

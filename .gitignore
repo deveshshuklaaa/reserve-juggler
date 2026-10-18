@@ -39,4 +39,4 @@ docker-compose.override.yml
 graphify-out/cache/
 graphify-out/.graphify_*
 graphify-out/20*/
-
+*.pdf

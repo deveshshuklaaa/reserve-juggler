@@ -37,7 +37,7 @@ def main():
         with Session(engine) as session, session.begin():
             DatasetRepository(session).store(OrganizerDatasetSource().load())
         task_env = dict(os.environ)
-        task_env["DATABASE_URL"] = url.set(database=name, drivername="postgresql+psycopg2").render_as_string(hide_password=False)
+        task_env["DATABASE_URL"] = url.set(database=name, drivername="postgresql+psycopg").render_as_string(hide_password=False)
         task_env["PERSISTENCE_TEST_DATABASE_URL"] = os.environ["BACKTEST_TEST_DATABASE_URL"]
         task_env["PYTHONDONTWRITEBYTECODE"] = "1"
         return subprocess.run([sys.executable,"-m","pytest",*sys.argv[1:]], env=task_env, cwd=ROOT).returncode

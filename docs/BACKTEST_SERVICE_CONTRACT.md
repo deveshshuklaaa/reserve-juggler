@@ -3,8 +3,9 @@
 Status: orchestration, persisted receipt/report integration and real PostgreSQL
 probes implemented. **Full historical strategy comparisons remain blocked.**
 Verified base: **dee0aae3cbd77ed4ad4e6f0961b9594ad53461d2**; authorized runtime/API
-fixes are committed as **1ff1e655070d6b13e24c060d30c9782457d01598** on
-codex/runtime-api-acceptance (latest checkpoint section).
+checkpoints include **1ff1e655070d6b13e24c060d30c9782457d01598**, **f60ee70688d3a94c302376faa305cef3dab788d9**,
+and verified execution checkpoint **43c275c3efaf7ed986d92d732c55583f096ccadf** on
+feat/backtesting-engine (latest checkpoint section).
 The final independent-checkpoint verification below is authoritative; earlier
 082f019/483936c reviews and expectations are retained as historical evidence.
 This is a Python service boundary, not a new API, simulator, strategy algorithm,
@@ -1562,3 +1563,83 @@ and aligns public monetary schema bounds with existing validation.
 NOT complete.** The remaining blockers above require explicit implementation/
 contract agreement and the seven gated historical acceptance cases. Passing
 regression counts do not replace that financial sign-off.
+
+
+## Conservative historical publication cutoff and execution receipt checkpoint — 43c275c (2026-10-18)
+
+Verified runtime checkpoint: `43c275c3efaf7ed986d92d732c55583f096ccadf`.
+Ancestry incorporates:
+- `c3d04335fbfc4dddfc2f6f0702e1c3d3bf3201d0`: Canonical market purchases and partial sales.
+- `e3c5b125d65ac7046c82aec04fde60d244f103e0`: Capped emergency borrowing and recorded unpaid payouts.
+- `43c275c3efaf7ed986d92d732c55583f096ccadf`: Enforce published inputs and freeze delayed repo accrual.
+
+### 1. Integration contract: Conservative historical-data availability
+
+Member 1 confirmed the conservative historical-data convention:
+
+$$\text{row.timestamp} + 1\text{ hour} + \text{publication\_delay} \le \text{decision\_time}$$
+
+Key contractual rules:
+1. **Hourly Eligibility Boundary**:
+   - At 09:00 with default publication delay (0 seconds), the 08:00 row is eligible and the 09:00 row is strictly ineligible.
+   - With a 1-hour publication delay (3600 seconds), the 07:00 row is the latest eligible row.
+   - The same cutoff strictly gates cashflow forecast history, REACTIVE history, published market prices, bond yields, equity volatilities, repo APYs, direct risk inputs, and calibration-through timestamps.
+2. **Simulation Assumption vs Ground Truth**:
+   - The convention is an explicit simulation assumption, NOT a verified organizer timestamp guarantee.
+   - Source timestamps remain naive (`row.timestamp.tzinfo is None`) and timezone-unspecified (`run.source_timezone_status == "UNSPECIFIED"`). No UTC timezone or synthetic offset is invented.
+3. **Fixed Contractual Events**:
+   - Repo entry at 17:00 and scheduled maturity at 08:00 remain fixed contractual events and are never shifted by publication delays.
+   - For each earned interval $[h, h+1\text{h})$, the simulation freezes the latest source APY satisfying $\text{source\_time} + 1\text{h} + \text{delay} \le h + 1\text{h}$.
+   - At contractual maturity (08:00), the position settles principal plus the frozen earned accrual. There is **no automatic later true-up** or retroactive rewriting of past receipts when delayed quotes are published.
+
+### 2. Backtesting execution receipt adapter (`backend/app/backtesting/receipts.py`)
+
+The backtesting engine implements a dedicated, decoupled execution receipt adapter that consumes persisted receipts from `TreasuryDecision.decision_details_json` and reconciles them against `LedgerEntry`, `InvestmentMovement`, and `OverdraftMovement` rows without duplicating runtime financial logic:
+
+- **Execution Outcomes**: Canonical enum distinguishes `EXECUTED`, `PARTIALLY_EXECUTED`, `REJECTED`, `FAILED`, and `UNPAID`.
+- **Purchase Receipts** (`PurchaseReceipt`):
+  - Preserves executed quantity, executed unit price, principal cents spent, transaction fee cents, position ID, instrument tier, recommendation reference UUID, and quote timestamp.
+- **Partial-Sale Receipts** (`PartialSaleReceipt`):
+  - Preserves requested quantity, executed quantity, gross proceeds cents, transaction fee cents, liquidation haircut cents, net cash delta cents, cost basis released, realized market P&L cents, and remaining position.
+  - Cash proceeds strictly reflect the actual fill rather than the entire requested order.
+- **Rejected Trade Receipts** (`RejectedTradeReceipt`):
+  - Preserves requested order ID, action, tier, and explicit rejection reason without cash movement.
+- **Payout Receipts** (`PayoutReceipt`):
+  - Preserves requested amount due (`amount_due_cents`), actual amount paid (`amount_paid_cents`), unpaid remainder (`unpaid_remainder_cents`), overdraft draw cents, outstanding debt, unpaid financing expense, status, and settlement status.
+  - Distinguishes fully paid (`EXECUTED` / `PAID`), partially funded (`PARTIALLY_EXECUTED` / `PARTIALLY_PAID`), and unfunded (`FAILED` / `UNPAID`).
+- **Financing Receipts** (`FinancingReceipt`):
+  - Preserves movement kind (`BORROW`, `REPAYMENT`, `FINANCING_COST`), principal cents, financing cost cents, cash delta, outstanding principal liability, and unpaid accrued financing costs.
+- **Hourly Bundle** (`HourlyExecutionBundle`):
+  - Aggregates all trade, payout, financing, and repo maturity receipts for the step, providing cross-reconciliation against ledger cash, position valuations, and balance-sheet NAV.
+
+**Documented Runtime Gaps**:
+1. *Customer Payout Provenance*: Customer withdrawal instructions originate from organizer observation environment flows, not strategy orders (`recommendation_reference` is null).
+2. *Repo Aggregate Tracking*: Repo sweeps are tracked via portfolio aggregates rather than individual position lot records.
+3. *Intra-hour Market Settlement*: Market fills execute within the hourly step; deferred T+2 settlement is not yet modeled in runtime cash legs.
+
+### 3. Verification evidence against exact checkpoint `43c275c3efaf7ed986d92d732c55583f096ccadf`
+
+All targeted verification suites executed against real PostgreSQL without mocks:
+
+| Test Suite | Scope | Result | Execution Time |
+| --- | --- | --- | --- |
+| `test_market_data_availability.py` | Publication cutoff inequality, lookahead prevention, first-hour no-quote handling, delayed market marks | 5 passed | ~11s |
+| `test_delayed_repo_accrual.py` | 17:00 entry, 08:00 maturity, frozen APY accumulation, non-retroactivity | 1 passed | ~2.5s |
+| `test_market_order_execution.py` | Canonical market purchases, partial sales, fees, and lot tracking | 11 passed | ~5s |
+| `test_payout_execution.py` | Capped emergency borrowing, partial payouts, unpaid remainder tracking | 10 passed | ~8s |
+| `test_execution_receipt_adapter.py` | Receipt parsing, outcome classification, bundle cross-reconciliation | 9 passed | ~8.7s |
+| **Combined Execution Suite** | **All 5 suites above executed together** | **36 passed** | **32.45s** |
+| `test_checkpoint_verification.py` + `test_runtime_acceptance.py` | Independent release probes, canonical optimizer target invariance, JS-safe money bounds, single-expense financing, emergency sale P&L separation | **31 passed** | **103.23s** |
+| `test_contracts.py` + `test_reports.py` + `test_service.py` | Backtesting contracts, reporting aggregations, service core orchestration | **116 passed** | **10.57s** |
+
+### 4. Acceptance checklist and release gating
+
+- [x] **Conservative Historical Data Publication Gate**: Verified. `row.timestamp + 1h + publication_delay <= decision_time` strictly enforced.
+- [x] **Simulation Assumption Documentation**: Documented. Timestamps remain naive and unspecified.
+- [x] **Fixed Repo Contractual Events**: Verified. 17:00 entry and 08:00 maturity fixed; delayed accrual frozen without retroactivity.
+- [x] **Canonical Market Orders**: Verified. Recommended orders execute real purchases and partial sales via shared accounting.
+- [x] **Capped Emergency Borrowing & Unpaid Payouts**: Verified. Debt capped at policy limit; shortfall recorded as unpaid customer payouts.
+- [x] **Execution Receipt Adapter**: Verified. Persisted receipts consumed without duplicating financial logic.
+- [x] **Documented Runtime Gaps**: Recorded (withdrawal provenance, repo lot aggregates, intra-hour T+0 settlement).
+- [ ] **Full Historical Strategy Comparisons**: **REMAIN BLOCKED**. Backtest comparisons remain gated until final release sign-off by team members.
+

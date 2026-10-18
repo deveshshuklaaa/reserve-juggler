@@ -20,10 +20,9 @@ from .contracts import EngineState, HourReceipt
 from .protocol import DecisionFrame, EngineCapabilities, ExecutionFrame, HourlyRun, RunSpec
 from .service import EngineContractError, SharedEngineUnavailable, observation_digest
 
-RUNTIME_SHA = "1ff1e655070d6b13e24c060d30c9782457d01598"
+RUNTIME_SHA = "43c275c3efaf7ed986d92d732c55583f096ccadf"
 RUNTIME_BLOCKERS = (
     "Historical-comparison release gates remain unaccepted; configured sessions enable diagnostic execution only.",
-    "Canonical non-repo recommendation orders, including market purchases and partial sales, are explicitly rejected.",
     "Complete 7/14/30-day scenario acceptance and Member 1 availability/optimizer sign-off remain pending.",
     "Legacy public aware start_time remains a wall-clock compatibility selector, not source timezone provenance.",
 )
@@ -32,6 +31,8 @@ KNOWN_LEDGER_KINDS = frozenset((
     "REPO_MATURITY_CREDIT", "REPO_EARLY_REDEMPTION", "OVERDRAFT_DRAW_BORROW", "OVERDRAFT_REPAYMENT",
     "OVERDRAFT_FINANCING_PAYMENT",
     "MARKET_LIQUIDATION_CREDIT",
+    "MARKET_PURCHASE_DEBIT",
+    "MARKET_TRANSACTION_FEE",
 ))
 
 
@@ -94,7 +95,7 @@ class SharedRuntimeFactory:
     closed (and uncommitted work rolled back) at run close.
     """
     capabilities = EngineCapabilities(
-        engine_version="hourly-runtime-1ff1e65", integration_sha=RUNTIME_SHA,
+        engine_version="hourly-runtime-43c275c", integration_sha=RUNTIME_SHA,
         execution_kind="SHARED", strategies=(), scenarios=(),
     )
     blocking_reasons = RUNTIME_BLOCKERS
@@ -104,7 +105,7 @@ class SharedRuntimeFactory:
         self.session_factory = session_factory
         if session is not None or session_factory is not None:
             self.capabilities = EngineCapabilities(
-                engine_version="hourly-runtime-1ff1e65", integration_sha=RUNTIME_SHA,
+                engine_version="hourly-runtime-43c275c", integration_sha=RUNTIME_SHA,
                 execution_kind="SHARED", strategies=("STATIC", "REACTIVE", "RESERVE_JUGGLER"),
                 scenarios=("NORMAL", "HIGH_WITHDRAWAL", "LOW_DEPOSIT", "SETTLEMENT_DELAY", "LIQUIDITY_SHOCK"),
             )
@@ -242,8 +243,6 @@ def read_hour_receipt(session: Session, run_id: UUID, step: int) -> HourReceipt:
 
     ledgers = list(session.scalars(select(LedgerEntry).where(
         LedgerEntry.run_id == run.id, LedgerEntry.step == step, LedgerEntry.event_at == source_timestamp)))
-    if not ledgers or any(row.step != step or row.entry_type not in KNOWN_LEDGER_KINDS for row in ledgers):
-        raise RuntimeReceiptUnavailable("Missing or unrecognized hourly cash-ledger evidence")
     movements = _rows(session, InvestmentMovement, run.id, source_timestamp)
     loans = _rows(session, OverdraftMovement, run.id, source_timestamp)
     breaches = _rows(session, LiquidityBreach, run.id, source_timestamp)
@@ -253,13 +252,33 @@ def read_hour_receipt(session: Session, run_id: UUID, step: int) -> HourReceipt:
         raise RuntimeReceiptUnavailable("Exactly one persisted decision is required")
     decision = decisions[0]
 
+    payout_info = decision.decision_details_json.get("payout") if decision.decision_details_json else None
+    if payout_info is not None:
+        expected_paid_outflow = payout_info.get("executed_amount_cents", decision.expected_outflow_cents)
+        unpaid_payout_amount = payout_info.get("unpaid_amount_cents", 0)
+        payout_status = payout_info.get("status")
+        failed_count = 1 if (payout_status in ("FAILED", "PARTIALLY_EXECUTED") or unpaid_payout_amount > 0) else 0
+    else:
+        expected_paid_outflow = decision.expected_outflow_cents
+        unpaid_payout_amount = 0
+        failed_count = 0
+
+    expected_cash_legs = (
+        decision.expected_inflow_cents > 0
+        or expected_paid_outflow > 0
+        or len(movements) > 0
+        or len(loans) > 0
+    )
+    if (expected_cash_legs and not ledgers) or any(row.step != step or row.entry_type not in KNOWN_LEDGER_KINDS for row in ledgers):
+        raise RuntimeReceiptUnavailable("Missing or unrecognized hourly cash-ledger evidence")
+
     inflow = sum(r.amount_cents for r in ledgers if r.entry_type == "CUSTOMER_DEPOSIT_INFLOW")
     outflow = sum(r.amount_cents for r in ledgers if r.entry_type == "CUSTOMER_WITHDRAWAL_OUTFLOW")
-    if inflow != decision.expected_inflow_cents or outflow != decision.expected_outflow_cents:
+    if inflow != decision.expected_inflow_cents or outflow != expected_paid_outflow:
         raise RuntimeReceiptUnavailable("Requested customer flow lacks complete settled-payout ledger legs")
 
     if any((m.tier == 1 and m.kind not in ("INVESTMENT", "MATURITY", "REDEMPTION"))
-           or (m.tier in (2, 3) and m.kind != "LIQUIDATION")
+           or (m.tier in (2, 3) and m.kind not in ("INVESTMENT", "LIQUIDATION"))
            or m.tier not in (1, 2, 3)
            or m.interest_cents is None or m.haircut_cost_cents is None for m in movements):
         raise RuntimeReceiptUnavailable("Unrecognized or incomplete investment receipt")
@@ -296,6 +315,7 @@ def read_hour_receipt(session: Session, run_id: UUID, step: int) -> HourReceipt:
     financing_cash_delta = sum(m.principal_cents if m.kind == "BORROW" else -m.principal_cents
                                for m in loans if m.kind in ("BORROW", "REPAYMENT"))
     realized_mkt_pnl = sum(pv.realized_pnl_cents for pv in pos_vals_curr)
+    tx_costs = sum(r.amount_cents for r in ledgers if r.entry_type == "MARKET_TRANSACTION_FEE")
 
     observation = HourlyObservation(**{name: getattr(source, name) for name in EXPECTED_COLUMNS})
     return HourReceipt(
@@ -307,9 +327,10 @@ def read_hour_receipt(session: Session, run_id: UUID, step: int) -> HourReceipt:
         realized_market_pnl_cents=realized_mkt_pnl,
         contractual_penalties_cents=sum(m.haircut_cost_cents for m in movements if m.tier == 1),
         liquidation_losses_cents=sum(m.haircut_cost_cents for m in movements if m.tier in (2, 3)),
-        transaction_costs_cents=0,
+        transaction_costs_cents=tx_costs,
         borrowing_costs_cents=borrowing_costs, paid_borrowing_costs_cents=paid_borrowing_costs,
-        reserve_breaches=len(breaches), emergency_events=len(breaches), failed_payouts=0, unpaid_payouts_cents=0,
+        reserve_breaches=len(breaches), emergency_events=len(breaches),
+        failed_payouts=failed_count, unpaid_payouts_cents=unpaid_payout_amount,
         sweeps=sum(m.kind == "INVESTMENT" for m in movements),
         event_ids=tuple(f"{type(row).__name__}:{row.id}" for row in
                         (*ledgers, *movements, *loans, *breaches, decision, current, *pos_vals_curr)),
@@ -327,4 +348,10 @@ def execute_persisted_hour(session: Session, run_id: UUID, expected_step: int) -
     with session.begin_nested():
         execute_hourly_step(session, run_id, expected_step=expected_step)
         return read_hour_receipt(session, run_id, expected_step + 1)
+
+
+def make_shared_runtime_factory() -> SharedRuntimeFactory:
+    from app.database import SessionLocal
+    return SharedRuntimeFactory(session_factory=SessionLocal)
+
 
