@@ -702,6 +702,26 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/datasets:
+    post:
+      tags:
+      - Datasets
+      summary: Import Dataset
+      operationId: import_dataset_api_v1_datasets_post
+      requestBody:
+        content:
+          text/csv:
+            schema:
+              type: string
+              format: binary
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatasetImported'
 components:
   schemas:
     AccountingTotals:
@@ -847,7 +867,8 @@ components:
           title: Expected Step
         steps:
           type: integer
-          exclusiveMinimum: 0.0
+          maximum: 168.0
+          minimum: 1.0
           title: Steps
           default: 1
       additionalProperties: false
@@ -937,6 +958,16 @@ components:
             $ref: '#/components/schemas/ReportStrategyResult'
           type: array
           title: Results
+        dataset_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Dataset Id
+        dataset_sha256:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Dataset Sha256
         child_run_ids:
           additionalProperties:
             type: string
@@ -1016,6 +1047,13 @@ components:
       title: BacktestRequest
     CreateRunRequest:
       properties:
+        dataset_id:
+          anyOf:
+          - type: string
+            maxLength: 200
+            minLength: 1
+          - type: 'null'
+          title: Dataset Id
         initial_cash_cents:
           type: integer
           maximum: 9.223372036854776e+18
@@ -1047,6 +1085,54 @@ components:
       additionalProperties: false
       type: object
       title: CreateRunRequest
+    DatasetImported:
+      properties:
+        dataset_id:
+          type: string
+          title: Dataset Id
+        row_count:
+          type: integer
+          title: Row Count
+        content_hash:
+          type: string
+          title: Content Hash
+        native_interval_seconds:
+          type: integer
+          const: 3600
+          title: Native Interval Seconds
+        first_timestamp:
+          type: string
+          title: First Timestamp
+        last_timestamp:
+          type: string
+          title: Last Timestamp
+        timezone_status:
+          type: string
+          const: UNSPECIFIED
+          title: Timezone Status
+        validation_status:
+          type: string
+          enum:
+          - VALIDATED
+          - VALIDATED_WITH_DIAGNOSTICS
+          title: Validation Status
+        validation:
+          additionalProperties: true
+          type: object
+          title: Validation
+      additionalProperties: false
+      type: object
+      required:
+      - dataset_id
+      - row_count
+      - content_hash
+      - native_interval_seconds
+      - first_timestamp
+      - last_timestamp
+      - timezone_status
+      - validation_status
+      - validation
+      title: DatasetImported
     DecisionRecord:
       properties:
         action:
@@ -1586,6 +1672,16 @@ components:
           anyOf:
           - $ref: '#/components/schemas/FrontendFinancialMetrics'
           - type: 'null'
+        dataset_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Dataset Id
+        dataset_sha256:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Dataset Sha256
         history:
           items:
             $ref: '#/components/schemas/HistoryPoint'
@@ -1677,6 +1773,18 @@ components:
       title: ScenarioRequest
     SimulationSnapshot:
       properties:
+        source_dataset:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Source Dataset
+        duration_steps:
+          anyOf:
+          - type: integer
+            exclusiveMinimum: 0.0
+          - type: 'null'
+          title: Duration Steps
         run_id:
           type: string
           format: uuid

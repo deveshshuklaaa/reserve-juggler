@@ -38,10 +38,12 @@ def conditions_digest(request, metadata, capabilities):
 
 class BacktestService:
     def __init__(self, engine_factory: HourlyEngineFactory | None = None, *,
-                 source: OrganizerDatasetSource | None = None, allow_test_double: bool = False):
+                 source: OrganizerDatasetSource | None = None, allow_test_double: bool = False,
+                 allow_uploaded_source: bool = False):
         self.engine_factory = engine_factory
         self.source = source if source is not None else OrganizerDatasetSource()
         self.allow_test_double = allow_test_double
+        self.allow_uploaded_source = allow_uploaded_source
 
     def compare(self, request: BacktestRequest) -> ComparisonResult:
         request = BacktestRequest.model_validate(request)
@@ -54,7 +56,9 @@ class BacktestService:
         if not set(request.strategies) <= set(caps.strategies) or request.scenario.name not in caps.scenarios:
             raise SharedEngineUnavailable("Provider does not support all requested strategies/scenario")
         dataset = self.source.load()
-        if dataset.metadata.content_hash != ORGANIZER_SHA256 or len(dataset) != 8760:
+        if (dataset.metadata.content_hash != ORGANIZER_SHA256 or len(dataset) != 8760) and not (
+                self.allow_uploaded_source and dataset.metadata.source_path.startswith("upload/")
+                and dataset.metadata.validation_status in ("VALIDATED", "VALIDATED_WITH_DIAGNOSTICS")):
             raise ValueError("Backtesting requires the byte-identical authoritative 8760-row organizer dataset")
         offset = request.start - dataset.metadata.first_timestamp
         start_index = offset // NATIVE_INTERVAL

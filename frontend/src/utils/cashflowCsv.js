@@ -33,7 +33,6 @@ export function parseCsvRecords(text) {
   const finishRecord = () => {
     cells.push(value);
     records.push({ cells, line: recordLine });
-    if (records.length > MAX_ROWS + 1) fail(recordLine, `a maximum of ${MAX_ROWS.toLocaleString('en-US')} cash-flow rows is supported.`);
     cells = [];
     value = '';
     closedQuote = false;
@@ -77,6 +76,11 @@ export function parseCsvRecords(text) {
 
   if (quoted) fail(recordLine, 'the quoted field is not closed.');
   if (value !== '' || cells.length || closedQuote) finishRecord();
+  // Spreadsheet exports can retain thousands of empty trailing records.
+  // Remove only the empty suffix: interior gaps must still fail validation,
+  // and physical source line numbers must remain intact.
+  while (records.length && records.at(-1).cells.every((cell) => cell.trim() === '')) records.pop();
+  if (records.length > MAX_ROWS + 1) fail(records[MAX_ROWS + 1].line, `a maximum of ${MAX_ROWS.toLocaleString('en-US')} cash-flow rows is supported.`);
   return records;
 }
 

@@ -58,7 +58,10 @@ def create_run(request: CreateRunRequest, db: Session = Depends(get_db)):
         run_created = create_simulation_run(db, request)
         db.commit()
         return run_created
-    except Exception as exc:
+    except ValueError as exc:
+        db.rollback()
+        raise HTTPException(422, detail={"error_code": "INVALID_RUN", "message": str(exc), "details": {}}) from exc
+    except Exception:
         db.rollback()
         raise
 
@@ -81,13 +84,16 @@ def advance(id: UUID, request: AdvanceRequest, db: Session = Depends(get_db)):
         snap = advance_simulation_run(db, id, request)
         db.commit()
         return snap
-    except (KeyError, ValueError):
+    except KeyError:
         db.rollback()
         raise HTTPException(status_code=404, detail={
             "error_code": "NOT_FOUND",
             "message": f"Simulation run {id} not found.",
             "details": {},
         })
+    except ValueError as exc:
+        db.rollback()
+        raise HTTPException(422, detail={"error_code": "INVALID_ADVANCE", "message": str(exc), "details": {}}) from exc
     except StepConflictError as exc:
         db.rollback()
         raise HTTPException(status_code=409, detail={
@@ -254,7 +260,10 @@ def backtest(id: UUID, request: BacktestRequest, db: Session = Depends(get_db)):
                           "RESERVE_JUGGLER": "RESERVE_JUGGLER"}[name] for name in request.strategies),
     )
     try:
-        report_svc = BacktestReportService(BacktestService(SharedRuntimeFactory(session=db)))
+        from app.services.dataset_import import StoredDatasetSource
+        report_svc = BacktestReportService(BacktestService(
+            SharedRuntimeFactory(session=db), source=StoredDatasetSource(db, run.dataset_id),
+            allow_uploaded_source=True))
         # Ephemeral evaluation: reuse deterministic comparison/run identities
         # safely on repeated requests, and never mutate the parent's live ledger.
         # The validated response is materialized before rolling back child runs.

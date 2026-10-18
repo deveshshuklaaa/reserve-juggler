@@ -36,6 +36,7 @@ from app.services.accounting import aggregate_acquisition_price, financial_perfo
 from treasury_intelligence.instrument_economics import percentage_cost_cents
 from app.services.hourly_engine import StepConflictError, execute_hourly_step
 from app.services.treasury_adapter import (
+    forecast_history_scope,
     build_four_tier_policy,
     get_hourly_forecasts_from_db,
     hydrate_portfolio_state,
@@ -62,46 +63,22 @@ from app.v1_contracts import (
 )
 
 
-def _get_or_load_dataset(session: Session) -> DbDatasetSource:
-    """Retrieves the active dataset source."""
-    ds = session.scalar(select(DbDatasetSource).limit(1))
-    if ds is not None:
-        return ds
-
-    # If not yet registered in dataset_sources, query organizer_observations
-    obs = session.scalar(
-        select(DbOrganizerObservation).order_by(DbOrganizerObservation.timestamp.asc()).limit(1)
-    )
-    if obs is not None:
-        last_obs = session.scalar(
-            select(DbOrganizerObservation).order_by(DbOrganizerObservation.timestamp.desc()).limit(1)
-        )
-        ds = DbDatasetSource(
-            dataset_id=obs.dataset_id,
-            dataset_name="treasury_4tier_dataset",
-            source_type="ORGANIZER_CSV",
-            source_path="treasury_4tier_dataset.csv",
-            content_hash="2e7c1d2e5b678e9975250211e7e0017022067fc4d01b173bf8a335759714856f",
-            hash_algorithm="sha256",
-            row_count=8760,
-            first_timestamp=obs.timestamp,
-            last_timestamp=last_obs.timestamp,
-            native_interval_seconds=3600,
-            timezone_status="UNSPECIFIED",
-            validation_status="VALIDATED",
-            validation_json={},
-        )
-        session.add(ds)
-        session.flush()
-        return ds
-
-    raise RuntimeError("No organizer dataset found in database.")
+def _get_or_load_dataset(session: Session, dataset_id: str | None = None) -> DbDatasetSource:
+    """Select an explicit dataset, or the bundled organizer; never an arbitrary upload."""
+    if dataset_id is not None:
+        dataset = session.get(DbDatasetSource, dataset_id)
+    else:
+        dataset = session.scalar(select(DbDatasetSource).where(
+            DbDatasetSource.dataset_name == "treasury_4tier_dataset").order_by(DbDatasetSource.dataset_id).limit(1))
+    if dataset is None:
+        raise ValueError("Selected dataset was not found. Import the CSV before creating a simulation.")
+    return dataset
 
 
 def create_simulation_run(session: Session, request: CreateRunRequest, run_id: UUID | None = None,
                           *, source_start_timestamp: datetime | None = None) -> RunCreated:
     """Creates a new simulation run with default $20 million in Tier 0 checking."""
-    ds = _get_or_load_dataset(session)
+    ds = _get_or_load_dataset(session, request.dataset_id)
     policy_dict = request.policy.model_dump(mode="json")
     policy_dict.setdefault("scenarios", [])
 
@@ -416,7 +393,15 @@ def get_simulation_snapshot(session: Session, run_id: UUID) -> SimulationSnapsho
         model_version="hourly-seasonal-naive-v1",
     )
 
+    dataset = session.get(DbDatasetSource, run.dataset_id)
     return SimulationSnapshot(
+        duration_steps=run.duration_steps,
+        source_dataset={
+            "dataset_id": dataset.dataset_id, "row_count": dataset.row_count,
+            "content_hash": dataset.content_hash, "uploaded": dataset.source_path.startswith("upload/"),
+            "start_time": str(run.source_start_timestamp), "end_time": str(run.source_end_timestamp),
+            "timezone_status": dataset.timezone_status,
+        },
         run_id=run.id,
         step=run.current_step,
         timestamp=datetime.now(timezone.utc),
@@ -439,10 +424,16 @@ def advance_simulation_run(
     request: AdvanceRequest,
 ) -> SimulationSnapshot:
     """Advances the simulation by the requested steps."""
-    for _ in range(request.steps):
-        execute_hourly_step(session, run_id, expected_step=request.expected_step)
-        # Advance expected_step for subsequent steps if steps > 1
-        request.expected_step += 1
+    run = session.scalar(select(DbSimulationRun).where(DbSimulationRun.id == run_id).with_for_update())
+    if run is None:
+        raise KeyError(run_id)
+    if run.current_step != request.expected_step:
+        raise StepConflictError(expected_step=request.expected_step, current_step=run.current_step)
+    if request.steps > run.duration_steps - run.current_step:
+        raise ValueError('Requested steps exceed the remaining simulation window.')
+    with forecast_history_scope(session):
+        for index in range(request.steps):
+            execute_hourly_step(session, run_id, expected_step=request.expected_step + index)
 
     return get_simulation_snapshot(session, run_id)
 

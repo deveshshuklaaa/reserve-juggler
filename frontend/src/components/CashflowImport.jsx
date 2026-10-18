@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Check, Download, FileSpreadsheet, Upload, X } from 'lucide-react';
 import { useSimulation } from '../context/SimulationContext';
 import { parseCashflowCsv, parseCsvRecords } from '../utils/cashflowCsv';
-import { parseOrganizerCsv } from '../utils/organizerCsv';
+import { ORGANIZER_HEADERS, parseOrganizerCsv } from '../utils/organizerCsv';
 import { exportCsv, money } from '../utils/format';
 import { Alert, Button } from './ui';
 import './CashflowImport.css';
@@ -14,6 +14,10 @@ const sample = [
   ['2026-10-17T08:15:00Z', 240000000, 310000000],
   ['2026-10-17T08:30:00Z', 190000000, 420000000],
   ['2026-10-17T08:45:00Z', 310000000, 180000000],
+];
+const organizerSample = [
+  ['2026-01-01 00:00:00', '1000.00', '500.00', '500.00', 'False', 'False', '4', '5', '100', '2', '5000', '18', '0.5', '2', '15', '12'],
+  ['2026-01-01 01:00:00', '1200.00', '600.00', '600.00', 'False', 'False', '4', '5', '100', '2', '5000', '18', '0.5', '2', '15', '12'],
 ];
 const readText = (file) => new Promise((resolve, reject) => {
   const reader = new FileReader();
@@ -78,14 +82,14 @@ export default function CashflowImport() {
         if (steps > 2880) throw new Error('Local replay supports up to 30 days. Choose a shorter cash-flow period.');
         if (dataset.rows.some((row) => row.inflow_cents > 100000000000 || row.outflow_cents > 100000000000) || dataset.total_inflow_cents > 1000000000000 || dataset.total_outflow_cents > 1000000000000) throw new Error('Local replay supports up to $1B per flow and $10B total in each direction.');
       }
-      setPreview({ ...dataset, format: organizer ? 'organizer' : 'cashflows' }); setName(file.name);
+      setPreview({ ...dataset, csv_text: text, csv_file: file, format: organizer ? 'organizer' : 'cashflows' }); setName(file.name);
     } catch (failure) { if (request.current === token) setError(failure.message); }
     finally { if (request.current === token) setReading(false); }
   };
 
   const launch = async () => {
     setError('');
-    try { const result = await sim.importCashflows(preview); if (!result) setError('The simulation could not start. Close this preview to see the connection details, then retry.'); else if (pathname === '/') navigate('/command-center'); }
+    try { const result = await sim.importCashflows(preview); if (!result) setError('The simulation could not start. Review the backend error below and retry.'); else if (pathname === '/') navigate('/command-center'); }
     catch (failure) { setError(failure.message); }
   };
   const organizer = preview?.format === 'organizer';
@@ -97,16 +101,16 @@ export default function CashflowImport() {
         <input ref={picker} type="file" accept=".csv,text/csv" hidden aria-label="Cash flow CSV file" disabled={sim.busy} onChange={(event) => { choose(event.target.files); event.target.value = ''; }} />
         <Button onClick={() => picker.current.click()} disabled={sim.busy || reading}><Upload size={14} />Choose CSV</Button>
       </div>
-      <div className="cashflow-template"><p><strong>Local replay template</strong><span>timestamp, inflow_cents, outflow_cents · USD cents · UTC · 15 or 60 minutes</span></p><Button variant="quiet" onClick={() => exportCsv('reserve-juggler-cashflows.csv', headers, sample)}><Download size={14} />Download template</Button></div>
-      {error && <Alert tone="danger">{error}</Alert>}
+      <div className="cashflow-template"><p><strong>{sim.mode === 'real' ? 'Live organizer CSV' : 'Local replay template'}</strong><span>{sim.mode === 'real' ? '16 columns · USD values · hourly · YYYY-MM-DD HH:00:00 · True/False flags' : 'timestamp, inflow_cents, outflow_cents · USD cents · UTC · 15 or 60 minutes'}</span></p><Button variant="quiet" onClick={() => sim.mode === 'real' ? exportCsv('reserve-juggler-organizer.csv', ORGANIZER_HEADERS, organizerSample) : exportCsv('reserve-juggler-cashflows.csv', headers, sample)}><Download size={14} />Download template</Button></div>
+      {(error || sim.error) && <Alert tone="danger">{error}{sim.error && ` ${sim.error}`}</Alert>}
       {preview && <div className="cashflow-preview">
         <div className="cashflow-file"><Check size={17} /><strong>{name}</strong><span>{organizer ? 'Organizer dataset' : 'Cash-flow replay'} · Validated</span></div>
         <div className="cashflow-summary"><div><span>OBSERVATIONS</span><strong>{preview.rows.length.toLocaleString('en-US')}</strong></div><div><span>INTERVAL</span><strong>{preview.interval_minutes} min</strong></div><div><span>TIME BASIS</span><strong>{organizer ? 'Unspecified' : 'UTC'}</strong></div>{!organizer && <><div><span>TOTAL INFLOW</span><strong>{money(preview.total_inflow_cents, true)}</strong></div><div><span>TOTAL OUTFLOW</span><strong>{money(preview.total_outflow_cents, true)}</strong></div></>}</div>
         <p className="cashflow-range">{preview.start_time} → {preview.end_time}{!organizer && ' · UTC'}</p>
         <div className="table-scroll"><table><caption>First {Math.min(5, preview.rows.length)} observations · {organizer ? 'source USD values' : 'formatted USD values'}</caption><thead><tr><th>Timestamp</th><th className="numeric">{organizer ? 'Deposits' : 'Inflow'}</th><th className="numeric">{organizer ? 'Withdrawals' : 'Outflow'}</th>{organizer && <th className="numeric">Source net flow</th>}</tr></thead><tbody>{preview.rows.slice(0, 5).map((row) => <tr key={row.timestamp}><td>{row.timestamp}</td><td className="numeric">{organizer ? row.deposits_usd : money(row.inflow_cents)}</td><td className="numeric">{organizer ? row.withdrawals_usd : money(row.outflow_cents)}</td>{organizer && <td className="numeric">{row.net_flow_usd}</td>}</tr>)}</tbody></table></div>
-        {organizer ? <><Alert>All market fields and source timestamps are preserved. Backend ingestion is required to run this organizer dataset. Preview only.</Alert>{preview.reconciliation_warnings?.length > 0 && <Alert>{preview.reconciliation_warnings.length} source net-flow differences found. Values are preserved. {preview.reconciliation_warnings[0].message}</Alert>}</> : <Alert>Local mock replay uses these cash flows with $20M checking and $6M opening vault principal. Hourly rows post at their recorded time; intervening 15-minute steps have zero flow. Forecasts use observed history.</Alert>}
+        {organizer ? <><Alert>All market fields and source timestamps are preserved. {sim.mode === 'real' ? 'Start imports this dataset to the backend and creates a simulation with $20M opening cash. Each step processes one hourly observation.' : 'Switch to live mode to run this organizer dataset.'}</Alert>{preview.reconciliation_warnings?.length > 0 && <Alert>{preview.reconciliation_warnings.length} source net-flow differences found. Values are preserved. {preview.reconciliation_warnings[0].message}</Alert>}</> : <Alert>Local mock replay uses these cash flows with $20M checking and $6M opening vault principal. Hourly rows post at their recorded time; intervening 15-minute steps have zero flow. Forecasts use observed history.</Alert>}
       </div>}
-      <footer className="cashflow-actions"><p>Files stay on this device. {sim.mode === 'real' ? 'Live upload awaits the backend contract.' : 'Local replay uses the frontend mock engine.'}</p><Button variant="primary" disabled={!preview || organizer || reading || sim.mode !== 'mock'} busy={sim.busy} onClick={launch}>Start CSV simulation</Button></footer>
+      <footer className="cashflow-actions"><p>{sim.mode === 'real' ? 'Your CSV is sent to the connected backend only when you start. Live simulation requires the 16-column organizer format.' : 'Files stay on this device. Local replay uses the frontend mock engine.'}</p><Button variant="primary" disabled={!preview || reading || sim.busy || (organizer ? sim.mode !== 'real' : sim.mode !== 'mock')} busy={sim.busy} onClick={launch}>Start CSV simulation</Button></footer>
     </section>
   </div>;
 }

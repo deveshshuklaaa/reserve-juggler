@@ -52,6 +52,8 @@ class ReportStrategyResult(PublicStrategyResult):
 
 
 class BacktestReport(PublicBacktestResult):
+    dataset_id: str | None = None
+    dataset_sha256: str | None = None
     child_run_ids: dict[str, str] = {}
     model_config = ConfigDict(frozen=True, extra="forbid")
     results: tuple[ReportStrategyResult, ...]
@@ -63,6 +65,8 @@ class BacktestReport(PublicBacktestResult):
 
 
 class RunReport(PublicPerformanceReport):
+    dataset_id: str | None = None
+    dataset_sha256: str | None = None
     model_config = ConfigDict(frozen=True, extra="forbid")
     metrics: FrontendFinancialMetrics | None
     history: tuple[HistoryPoint, ...]
@@ -113,6 +117,7 @@ def project_comparison(comparison: ComparisonResult, *, started_at, ended_at, hi
             history=sample_history(summary.history, history_limit),
             accounting=AccountingTotals(**summary.model_dump(exclude={"history"}))))
     return BacktestReport(
+        dataset_id=comparison.dataset_id, dataset_sha256=comparison.dataset_sha256,
         run_id=comparison.comparison_id, scenario=comparison.scenario.name, seed=comparison.seed,
         started_at=started_at, ended_at=ended_at, results=results,
         execution_kind=comparison.execution_kind, engine_integration_sha=comparison.engine_integration_sha,
@@ -138,8 +143,8 @@ class BacktestReportService:
         if run is None:
             raise KeyError(run_id)
         source = session.get(DatasetSource, run.dataset_id)
-        if run.source_type != "ORGANIZER_HISTORICAL" or source is None or source.content_hash != ORGANIZER_SHA256:
-            raise RuntimeReceiptUnavailable("Report requires the authoritative organizer historical source")
+        if run.source_type != "ORGANIZER_HISTORICAL" or source is None or (source.content_hash != ORGANIZER_SHA256 and not (source.source_path.startswith("upload/") and source.validation_status in ("VALIDATED", "VALIDATED_WITH_DIAGNOSTICS"))):
+            raise RuntimeReceiptUnavailable("Report requires a validated persisted organizer historical source")
         if run.seed is None:
             raise RuntimeReceiptUnavailable("Run has no reproducible seed")
         def _sanitize(obj):
@@ -158,6 +163,7 @@ class BacktestReportService:
             receipts = [read_hour_receipt(session, run.id, step) for step in range(1,run.current_step+1)]
             summary = summarize_receipts(receipts[0].opening, receipts)
         return RunReport(
+            dataset_id=source.dataset_id, dataset_sha256=source.content_hash,
             run_id=run.id, scenario=run.scenario, seed=run.seed,
             started_at=run.created_at, ended_at=run.updated_at if run.current_step >= run.duration_steps else None,
             metrics=frontend_metrics(summary) if summary is not None else None,

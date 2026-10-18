@@ -36,7 +36,7 @@ export default function SimulationStart({ children, onImport }) {
       <div className="simulation-start-copy">
         <span className="simulation-start-eyebrow">Your treasury workspace</span>
         <h2 id={headingId}>Put your cash<br /><span>in perspective.</span></h2>
-        <p>{isMock ? 'Start with a repeatable sample, or bring your cash-flow history. Explore liquidity and compare strategies in one place.' : 'Create a backend simulation to explore liquidity and compare treasury strategies.'}</p>
+        <p>{isMock ? 'Start with a repeatable sample, or bring your cash-flow history. Explore liquidity and compare strategies in one place.' : 'Import your organizer CSV above, or use the bundled dataset to explore liquidity and compare strategies.'}</p>
         <div className="simulation-start-actions">
           <Button variant="primary" aria-label="Create simulation" busy={busy} onClick={() => createRun()}>{isMock ? 'Use demo data' : 'Create simulation'} <ArrowRight size={16} aria-hidden="true" /></Button>
           {onImport && <button type="button" className="simulation-start-import" onClick={onImport} disabled={busy}><FileUp size={16} aria-hidden="true" />Import cash flows</button>}
