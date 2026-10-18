@@ -597,7 +597,8 @@ def get_simulation_forecast(
     step_timestamp = run.source_start_timestamp + timedelta(hours=run.current_step)
     horizon_hours = max(1, horizon_minutes // 60)
     db_forecasts = get_hourly_forecasts_from_db(
-        session, run.dataset_id, step_timestamp, horizon_hours=horizon_hours
+        session, run.dataset_id, step_timestamp, horizon_hours=horizon_hours,
+        publication_delay_seconds=(run.policy_json or {}).get("publication_delay_seconds", 0),
     )
 
     points = []

@@ -171,3 +171,84 @@ accounting probes: 47 passed, 2 explicitly deselected in 20.99 seconds.
 The two deselections are exactly the endpoint incompatibilities above; the
 unfiltered run recorded 47 passed / 2 failed, not a green integration result.
 Graphify refreshed successfully (2098 nodes / 6093 relationships). No push.
+
+## Confirmed publication and delayed repo convention
+
+Member 1 confirmed the availability convention during this work:
+`row.timestamp + 1 hour + publication_delay <= decision_at`.
+Public policy / patch field publication_delay_seconds defaults to zero and
+accepts nonnegative integer seconds. Source timestamps remain naive with
+time_basis=UNSPECIFIED. At 09:00 with zero delay, 08:00 is eligible and 09:00
+is not. With a one-hour delay, 07:00 is the latest eligible row.
+
+The same cutoff gates cashflow forecast history, REACTIVE history, published
+market/rate quotes, direct risk inputs, calibration-through timestamps and
+canonical optimizer requests. The first dataset hour still executes; its
+opening canonical optimizer input has no published market quotes. Its required
+source reference is provenance only, not an assertion that the first row is
+available. No synthetic prior row or timezone is invented.
+The allowance remains explicitly named fallback-baseline-v1, not an
+empirically calibrated model; model_evaluation remains null.
+
+Market fills now reference the canonical recommendation's actual published
+source quote. The simulation's explicit fill convention uses that available
+index at one USD/index-point/unit, not an unavailable same-hour price.
+quote_observation_timestamp and quote_available_at are recorded in each fill.
+Closing marks and emergency liquidation quotes use the last row published by
+the closing boundary; new debt uses its available APR. With no published APR,
+the payout remains unpaid rather than borrowing at an invented rate.
+Cashflow application remains actual shared-ledger execution; unknown future
+cashflows are not passed as forecast features or opening cash.
+
+Repo entry remains 17:00, with the APY and early-break fee available then;
+maturity remains 08:00. Confirmed **simulation convention**, not an assertion
+about the actual organizer instrument:
+
+1. For each earned interval [h,h+1h), freeze the latest source APY satisfying
+   `source_time+1h+delay <= h+1h`.
+2. Carry forward that last eligible APY if the earning-hour rate is unpublished.
+3. Accumulate selected Decimal APYs, apply simple ACT/365, round aggregate
+   interest once (HALF_UP cents). Zero-delay results retain the verified
+   source-hour convention.
+4. At contractual maturity settle principal plus that frozen earned amount.
+   There is no automatic later true-up or rewriting of past receipts.
+
+MATURITY InvestmentMovement / REPO_MATURITY_CREDIT remain actual settlement
+evidence. The decision's maturity receipt now adds position_id, interest_cents,
+hourly_rates[] (earned_at, accrual_cutoff, rate_observed_at, rate_available_at,
+apy_pct) and automatic_true_up=false. All rate strings retain source precision.
+
+Availability metadata is persisted under decision_details_json.availability:
+rule=completed-source-hour-v1, status=MEMBER1_CONFIRMED, delay seconds,
+decision_at, observation_cutoff, opening/closing market observation timestamps,
+named fallback calibration and null model evaluation.
+
+Agent 2/public projection handoff: FourTierPortfolioSnapshot adds
+market_data_available, market_observation_timestamp, publication_delay_seconds.
+Source-derived price/rate/duration display fields can be null when no quote
+has been published. This prevents invented initial prices/APYs; monetary
+balances remain integer cents. Agent 2 must verify these nullable quote fields
+in its frontend integration. No frontend or backtesting implementation is edited.
+
+Fail-first evidence: two optimizer availability cases initially failed; direct
+risk initially accepted unpublished quotes; a positive-delay closing mark used
+an unpublished price; delayed repo execution initially produced no repo.
+All have focused regressions. The existing calibration test now supplies the
+available decision view rather than an unpublished raw closing observation.
+The original future-calibration rejection assertion is preserved.
+
+Focused PostgreSQL result: 34 passed in 25.49 seconds (market-data availability,
+delayed repo, market fills, payouts and strategy dispatch). Additional closing
+fee-source edits only replace the unavailable current-hour fee with the same
+published entry quote; they will be included in final verification.
+The positive-delay maturity test verifies selected rates, exact interest,
+08:00 credit, cash/NAV, and no second settlement after late publication.
+
+Remaining gates supersede earlier historical notes: Agent 2's new receipt/
+unpaid-payout and nullable-quote compatibility; calibrated quantitative reward/
+risk assumptions; complete historical acceptance and RJ-M1-16 owner sign-off.
+The publication convention itself is now confirmed, not an open question.
+
+Exact final availability checkpoint focused rerun: 34 passed in 26.63 seconds,
+including the published entry-fee changes. Graphify verified 22 PostgreSQL
+tables and indexed 2117 nodes / 6198 relationships.

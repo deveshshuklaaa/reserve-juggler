@@ -18,7 +18,7 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from app.services.accounting import market_cost_basis, paid_financing_costs, repo_interest_cents
+from app.services.accounting import market_cost_basis, paid_financing_costs, repo_hourly_rates, repo_interest_cents
 from app.services.market_execution import emergency_liquidate, execute_market_order, record_market_valuation, TradeRejected
 from treasury_intelligence.instrument_economics import usd_to_ledger_cents, percentage_cost_cents
 
@@ -43,7 +43,9 @@ from app.services.treasury_adapter import (
     evaluate_liquidity_risk,
     get_hourly_forecasts_from_db,
     get_information_cutoff,
+    get_published_observation,
     hydrate_portfolio_state,
+    hydrate_decision_portfolio,
     recommend_four_tier_allocation_decision,
 )
 
@@ -140,6 +142,12 @@ def execute_hourly_step(
             f"Observation for dataset {run.dataset_id} at step {target_step} ({source_observation_timestamp}) not found"
         )
 
+    policy_dict = run.policy_json or {}
+    publication_delay_seconds = policy_dict.get("publication_delay_seconds", 0)
+    get_information_cutoff(observation.timestamp, publication_delay_seconds)  # validate before any write
+    closing_observation = get_published_observation(session, run.dataset_id,
+        target_timestamp, publication_delay_seconds)
+
     # 1. Hydrate current portfolio
     (
         portfolio,
@@ -148,9 +156,9 @@ def execute_hourly_step(
         db_bonds,
         db_equities,
         db_overdrafts,
-    ) = hydrate_portfolio_state(session, run, observation)
+        published_observation,
+    ) = hydrate_decision_portfolio(session, run, observation, publication_delay_seconds)
 
-    policy_dict = run.policy_json or {}
     policy_obj = build_four_tier_policy(
         policy_dict,
         repo_sweep_window_open=(observation.timestamp.hour == 17),
@@ -167,7 +175,9 @@ def execute_hourly_step(
     if observation.timestamp.hour == 8:
         active_repos = [r for r in db_repos if r.status in ("ACTIVE", "LOCKED")]
         for r in active_repos:
-            interest_cents = repo_interest_cents(session, r, observation.timestamp)
+            if r.scheduled_maturity_at > observation.timestamp:
+                continue
+            interest_cents = repo_interest_cents(session, r, observation.timestamp, publication_delay_seconds)
             total_credit = r.principal_cents + interest_cents
             pre_bal = cash_acc.balance_cents
             cash_acc.balance_cents += total_credit
@@ -222,6 +232,10 @@ def execute_hourly_step(
                 "instrument": "OVERNIGHT_REPO",
                 "action": "REDEEM_REPO",
                 "amount_cents": total_credit,
+                "position_id": str(r.id),
+                "interest_cents": interest_cents,
+                "hourly_rates": repo_hourly_rates(session, r, observation.timestamp, publication_delay_seconds),
+                "automatic_true_up": False,
             })
 
     # 3. Apply customer cash flows with scenario adjustments
@@ -401,10 +415,13 @@ def execute_hourly_step(
         market_positions = (
             (db_bonds if policy_obj.allow_bond_liquidation else [])
             + (db_equities if policy_obj.allow_emergency_equity_liquidation else []))
+        if closing_observation is None:
+            market_positions = []  # no source-backed executable market quote
         for position in market_positions:
             if cash_shortfall <= 0:
                 break
-            quote = emergency_liquidate(session, run, cash_acc, position, observation, target_step)
+            quote = emergency_liquidate(session, run, cash_acc, position, observation, target_step,
+                market_observation=closing_observation)
             used = min(cash_shortfall, quote.net_liquidation_proceeds_cents)
             before_payout = cash_acc.balance_cents
             cash_acc.balance_cents -= used
@@ -439,7 +456,8 @@ def execute_hourly_step(
 
             outstanding = sum(session.scalars(select(DbOverdraftLiability.outstanding_principal_cents).where(
                 DbOverdraftLiability.run_id == run.id)))
-            capacity = max(0, policy_obj.max_overdraft_cents - outstanding) if policy_obj.allow_overdraft else 0
+            capacity = (max(0, policy_obj.max_overdraft_cents - outstanding)
+                        if policy_obj.allow_overdraft and closing_observation is not None else 0)
             cash_shortfall = min(cash_shortfall, capacity)
             if cash_shortfall > 0:
                 od_ref = f"overdraft-{run.id}-{target_step}"
@@ -453,7 +471,7 @@ def execute_hourly_step(
                     borrowed_cents=cash_shortfall,
                     outstanding_principal_cents=cash_shortfall,
                     repaid_principal_cents=0,
-                    apr_pct=observation.emergency_overdraft_penalty_apr_pct if observation else Decimal("10.0"),
+                    apr_pct=closing_observation.emergency_overdraft_penalty_apr_pct,
                     financing_cost_cents=0,
                     breach_id=breach.id,
                     reference_id=od_ref,
@@ -643,7 +661,7 @@ def execute_hourly_step(
 
     # 5. Required Reserve & Sweep Decision by Strategy
     active_strategy = normalize_strategy_id(strategy or policy_dict.get("strategy"))
-    cutoff = get_information_cutoff(observation.timestamp)
+    cutoff = get_information_cutoff(observation.timestamp, publication_delay_seconds)
 
     forecasts = None
     if active_strategy == STRATEGY_STATIC:
@@ -673,15 +691,17 @@ def execute_hourly_step(
         )
     else:
         forecasts = get_hourly_forecasts_from_db(
-            session, run.dataset_id, observation.timestamp, horizon_hours=15
+            session, run.dataset_id, observation.timestamp, horizon_hours=15,
+            publication_delay_seconds=publication_delay_seconds,
         )
         opt_result = recommend_four_tier_allocation_decision(
             portfolio,
             policy_obj,
-            observation,
+            published_observation,
             forecasts=forecasts,
             horizon_hours=15,
             risk_aversion=policy_dict.get("risk_aversion", "1"),
+            publication_delay_seconds=publication_delay_seconds,
         )
         req_reserve = opt_result.decision.targets.tier0_target_cents
         strategy_rationale = (
@@ -698,7 +718,8 @@ def execute_hourly_step(
             if order.action in {"BUY_BONDS", "SELL_BONDS", "BUY_EQUITIES", "SELL_EQUITIES"}:
                 try:
                     fill = execute_market_order(session, run, cash_acc, order, observation,
-                        target_step, minimum_cash_cents=req_reserve)
+                        target_step, minimum_cash_cents=req_reserve,
+                        publication_delay_seconds=publication_delay_seconds)
                     fill["position_id"] = str(fill["position_id"])
                     orders_executed.append(fill)
                     # Preserve the public legacy summary enum; exact instrument
@@ -718,6 +739,12 @@ def execute_hourly_step(
                 decision_explanations.append(f"Rejected unimplemented recommendation {order.action}; no fill was fabricated.")
                 continue
             if order.action == "INVEST_REPO" and order.amount_cents > 0:
+                if published_observation is None or observation.timestamp.hour != 17:
+                    orders_rejected.append({"order_id": str(order.id), "action": order.action,
+                        "requested_amount_cents": order.amount_cents, "executed_amount_cents": 0,
+                        "status": "REJECTED", "reason": "Repo requires the contractual window and a supported published rate"})
+                    executed_decision = False
+                    continue
                 sweep_cents = min(order.amount_cents, max(0, cash_acc.balance_cents - req_reserve))
                 if sweep_cents > 0:
                     pre_sweep = cash_acc.balance_cents
@@ -751,9 +778,9 @@ def execute_hourly_step(
                         principal_cents=sweep_cents,
                         entered_at=observation.timestamp,
                         scheduled_maturity_at=maturity_time,
-                        applicable_apy_pct=observation.tier1_repo_rate_apy,
+                        applicable_apy_pct=published_observation.tier1_repo_rate_apy,
                         status="LOCKED",
-                        early_redemption_haircut_pct=observation.tier1_early_redemption_haircut_pct,
+                        early_redemption_haircut_pct=published_observation.tier1_early_redemption_haircut_pct,
                     )
                     session.add(new_repo)
                     session.flush()
@@ -789,8 +816,11 @@ def execute_hourly_step(
                         "order_id": str(order.id),
                     })
 
-    if active_strategy in (STRATEGY_STATIC, STRATEGY_REACTIVE) and observation.timestamp.hour == 17:
-        deployable_surplus = max(0, cash_acc.balance_cents - req_reserve)
+    if (active_strategy in (STRATEGY_STATIC, STRATEGY_REACTIVE) and observation.timestamp.hour == 17
+            and published_observation is not None):
+        # Plan from opening funds, never from unpublished same-hour flows.
+        planned_surplus = max(0, portfolio.cash.balance_cents - req_reserve)
+        deployable_surplus = min(planned_surplus, max(0, cash_acc.balance_cents - req_reserve))
         min_sweep = policy_dict.get("min_sweep_cents", policy_dict.get("minimum_sweep_cents", 1000000))
         if deployable_surplus >= min_sweep:
             sweep_cents = deployable_surplus
@@ -825,9 +855,9 @@ def execute_hourly_step(
                 principal_cents=sweep_cents,
                 entered_at=observation.timestamp,
                 scheduled_maturity_at=maturity_time,
-                applicable_apy_pct=observation.tier1_repo_rate_apy,
+                applicable_apy_pct=published_observation.tier1_repo_rate_apy,
                 status="LOCKED",
-                early_redemption_haircut_pct=observation.tier1_early_redemption_haircut_pct,
+                early_redemption_haircut_pct=published_observation.tier1_early_redemption_haircut_pct,
             )
             session.add(new_repo)
             session.flush()
@@ -871,14 +901,18 @@ def execute_hourly_step(
     tier2_unrealized = 0
     tier2_realized = sum(b.realized_pnl_cents or 0 for b in db_bonds)
     for b in (position for position in db_bonds if position.status == "OPEN"):
-        cur_p = observation.tier2_bond_price_index if observation else Decimal("100.0")
+        cur_p = (closing_observation.tier2_bond_price_index if closing_observation
+                 else b.current_market_price_index or b.acquisition_price_index)
         cost_b = market_cost_basis(session, b)
         tier2_notional += cost_b
         mkt_val = usd_to_ledger_cents(b.quantity * cur_p)
         b.current_market_price_index = cur_p
         b.current_market_value_cents = mkt_val
         b.unrealized_pnl_cents = mkt_val - cost_b
-        b.market_observation_timestamp = observation.timestamp
+        if closing_observation:
+            b.market_observation_timestamp = closing_observation.timestamp
+            b.supplied_yield_pct = closing_observation.tier2_bond_yield_pct
+            b.modified_duration = closing_observation.tier2_bond_mod_duration
         tier2_mkt_val += mkt_val
         tier2_unrealized += (mkt_val - cost_b)
         record_market_valuation(session, run, b, observation)
@@ -888,14 +922,17 @@ def execute_hourly_step(
     tier3_unrealized = 0
     tier3_realized = sum(eq.realized_pnl_cents or 0 for eq in db_equities)
     for eq in (position for position in db_equities if position.status == "OPEN"):
-        cur_p = observation.tier3_stock_index_price if observation else Decimal("450.0")
+        cur_p = (closing_observation.tier3_stock_index_price if closing_observation
+                 else eq.current_market_price_index or eq.acquisition_price_index)
         cost_b = market_cost_basis(session, eq)
         tier3_cost_basis += cost_b
         mkt_val = usd_to_ledger_cents(eq.quantity * cur_p)
         eq.current_market_price_index = cur_p
         eq.current_market_value_cents = mkt_val
         eq.unrealized_pnl_cents = mkt_val - cost_b
-        eq.market_observation_timestamp = observation.timestamp
+        if closing_observation:
+            eq.market_observation_timestamp = closing_observation.timestamp
+            eq.supplied_volatility_pct = closing_observation.tier3_stock_volatility_pct
         tier3_mkt_val += mkt_val
         tier3_unrealized += (mkt_val - cost_b)
         record_market_valuation(session, run, eq, observation)
@@ -909,9 +946,9 @@ def execute_hourly_step(
         )
     )
     tier1_principal = sum(r.principal_cents for r in active_repos_after)
-    repo_apy_bps = int(observation.tier1_repo_rate_apy * 100) if observation else 525
+    repo_apy_bps = int(closing_observation.tier1_repo_rate_apy * 100) if closing_observation else None
     for position in active_repos_after:
-        position.accrued_interest_cents = repo_interest_cents(session, position, target_timestamp)
+        position.accrued_interest_cents = repo_interest_cents(session, position, target_timestamp, publication_delay_seconds)
     tier1_accrued = sum(position.accrued_interest_cents for position in active_repos_after)
 
     all_ods = list(
@@ -930,16 +967,19 @@ def execute_hourly_step(
     net_value = gross_assets - total_liabilities
 
     # Haircut and slippage
-    tier2_haircut_bps = int(observation.tier2_bond_liquidation_haircut_pct * 100) if observation else 200
-    tier2_haircut_cents = percentage_cost_cents(tier2_mkt_val, observation.tier2_bond_liquidation_haircut_pct)
+    tier2_haircut_pct = closing_observation.tier2_bond_liquidation_haircut_pct if closing_observation else Decimal("2")
+    tier2_haircut_bps = int(tier2_haircut_pct * 100)
+    tier2_haircut_cents = percentage_cost_cents(tier2_mkt_val, tier2_haircut_pct)
     tier2_avail_liquidity = max(0, tier2_mkt_val - tier2_haircut_cents)
 
-    tier3_slippage_bps = int(observation.tier3_stock_liquidation_haircut_pct * 100) if observation else 1500
-    tier3_slippage_cents = percentage_cost_cents(tier3_mkt_val, observation.tier3_stock_liquidation_haircut_pct)
+    tier3_slippage_pct = closing_observation.tier3_stock_liquidation_haircut_pct if closing_observation else Decimal("15")
+    tier3_slippage_bps = int(tier3_slippage_pct * 100)
+    tier3_slippage_cents = percentage_cost_cents(tier3_mkt_val, tier3_slippage_pct)
     tier3_avail_liquidity = max(0, tier3_mkt_val - tier3_slippage_cents)
 
     tier1_break_fee_bps = 50
-    tier1_break_fee_cents = percentage_cost_cents(tier1_principal, observation.tier1_early_redemption_haircut_pct) if policy_obj.allow_early_repo_redemption else 0
+    tier1_break_fee_cents = sum(percentage_cost_cents(p.principal_cents, p.early_redemption_haircut_pct)
+        for p in active_repos_after) if policy_obj.allow_early_repo_redemption else 0
     tier1_net_redeemable = max(0, tier1_principal - tier1_break_fee_cents) if policy_obj.allow_early_repo_redemption else 0
 
     total_immediate_liquidity = (
@@ -979,6 +1019,15 @@ def execute_hourly_step(
 
     details = {
         "receipt_version": "runtime-execution-v1",
+        "availability": {
+            "rule": "completed-source-hour-v1", "status": "MEMBER1_CONFIRMED",
+            "publication_delay_seconds": publication_delay_seconds,
+            "decision_at": observation.timestamp.isoformat(),
+            "observation_cutoff": cutoff.isoformat(),
+            "market_observation_timestamp": published_observation.timestamp.isoformat() if published_observation else None,
+            "closing_market_observation_timestamp": closing_observation.timestamp.isoformat() if closing_observation else None,
+            "calibration": "fallback-baseline-v1", "model_evaluation": None,
+        },
         "strategy": active_strategy,
         "pre_checking_cents": pre_out,
         "post_checking_cents": cash_acc.balance_cents,
@@ -999,7 +1048,8 @@ def execute_hourly_step(
         "unpaid_amount_cents": unpaid_outflow_cents,
         "status": "EXECUTED" if not unpaid_outflow_cents else ("PARTIALLY_EXECUTED" if paid_outflow_cents else "FAILED"),
         "settlement_status": "PAID" if not unpaid_outflow_cents else ("PARTIALLY_PAID" if paid_outflow_cents else "UNPAID"),
-        "reason": "All requested funds settled" if not unpaid_outflow_cents else "Overdraft disabled or principal cap exhausted",
+        "reason": ("All requested funds settled" if not unpaid_outflow_cents else
+                   ("No published borrowing rate" if closing_observation is None else "Overdraft disabled or principal cap exhausted")),
         "cash_delta_cents": -paid_outflow_cents, "fees_cents": 0, "realized_pnl_cents": 0,
         "overdraft_draw_cents": sum(e.amount_cents for e in draw_ledgers),
         "borrowing_outstanding_cents": od_borrowing, "unpaid_financing_cost_cents": od_fees,
@@ -1055,6 +1105,9 @@ def execute_hourly_step(
 
     four_tier_dict = {
         "timestamp": observation.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+        "market_data_available": closing_observation is not None,
+        "market_observation_timestamp": closing_observation.timestamp.isoformat() if closing_observation else None,
+        "publication_delay_seconds": publication_delay_seconds,
         "tier0": {
             "tier": 0,
             "name": "Operating Cash Buffer",
@@ -1072,7 +1125,7 @@ def execute_hourly_step(
             "name": "Overnight Repo",
             "principal_cents": tier1_principal,
             "repo_apy_bps": repo_apy_bps,
-            "repo_apy_decimal": f"{repo_apy_bps / 100:.2f}",
+            "repo_apy_decimal": str(closing_observation.tier1_repo_rate_apy) if closing_observation else None,
             "accrued_interest_cents": tier1_accrued,
             "realized_interest_cents": 0,
             "status": "LOCKED" if tier1_principal > 0 else "MATURED",
@@ -1091,13 +1144,13 @@ def execute_hourly_step(
             "id": "BOND-SOV-1",
             "name": "Sovereign Bonds",
             "notional_cents": tier2_notional,
-            "quantity": float(sum(b.quantity for b in db_bonds)) if db_bonds else 0.0,
+            "quantity": float(sum(b.quantity for b in db_bonds if b.status == "OPEN")),
             "acquisition_price": "100.0000",
-            "current_price": str(observation.tier2_bond_price_index) if observation else "100.0000",
+            "current_price": str(closing_observation.tier2_bond_price_index) if closing_observation else None,
             "market_value_cents": tier2_mkt_val,
-            "ytm_bps": int(observation.tier2_bond_yield_pct * 100) if observation else 445,
-            "ytm_decimal": f"{observation.tier2_bond_yield_pct:.2f}" if observation else "4.45",
-            "modified_duration": float(observation.tier2_bond_mod_duration) if observation and observation.tier2_bond_mod_duration else 4.25,
+            "ytm_bps": int(closing_observation.tier2_bond_yield_pct * 100) if closing_observation else None,
+            "ytm_decimal": str(closing_observation.tier2_bond_yield_pct) if closing_observation else None,
+            "modified_duration": float(closing_observation.tier2_bond_mod_duration) if closing_observation else None,
             "liquidation_haircut_bps": tier2_haircut_bps,
             "haircut_cents": tier2_haircut_cents,
             "realized_pnl_cents": tier2_realized,
@@ -1109,13 +1162,13 @@ def execute_hourly_step(
             "tier": 3,
             "id": "EQ-IDX-1",
             "name": "Growth Equities",
-            "quantity": float(sum(eq.quantity for eq in db_equities)) if db_equities else 0.0,
+            "quantity": float(sum(eq.quantity for eq in db_equities if eq.status == "OPEN")),
             "acquisition_price": "450.0000",
-            "current_price": str(observation.tier3_stock_index_price) if observation else "450.0000",
+            "current_price": str(closing_observation.tier3_stock_index_price) if closing_observation else None,
             "market_value_cents": tier3_mkt_val,
             "cost_basis_cents": tier3_cost_basis,
-            "volatility_bps": int(observation.tier3_stock_volatility_pct * 100) if observation else 1680,
-            "volatility_decimal": f"{observation.tier3_stock_volatility_pct:.2f}" if observation else "16.80",
+            "volatility_bps": int(closing_observation.tier3_stock_volatility_pct * 100) if closing_observation else None,
+            "volatility_decimal": str(closing_observation.tier3_stock_volatility_pct) if closing_observation else None,
             "emergency_slippage_bps": tier3_slippage_bps,
             "slippage_cents": tier3_slippage_cents,
             "realized_pnl_cents": tier3_realized,
@@ -1125,14 +1178,14 @@ def execute_hourly_step(
         },
         "overdraft": {
             "borrowing_outstanding_cents": od_borrowing,
-            "financing_rate_bps": 1000,
+            "financing_rate_bps": int(closing_observation.emergency_overdraft_penalty_apr_pct*100) if closing_observation else None,
             "financing_cost_cents": od_fees,
-            "liability_status": "ACTIVE" if od_borrowing > 0 else "CLEARED",
-            "is_active": (od_borrowing > 0),
+            "liability_status": "ACTIVE" if total_liabilities > 0 else "CLEARED",
+            "is_active": (total_liabilities > 0),
         },
         "aggregates": {
             "gross_assets_cents": gross_assets,
-            "total_liabilities_cents": od_borrowing,
+            "total_liabilities_cents": total_liabilities,
             "net_portfolio_value_cents": net_value,
             "total_immediate_liquidity_cents": total_immediate_liquidity,
             "total_realized_returns_cents": 0,

@@ -33,25 +33,54 @@ def market_cost_basis(session, position):
     return basis
 
 
-def repo_interest_cents(session, position, as_of):
-    """Simple ACT/365 floating APY; sum earned hourly rates, then round once.
+def repo_hourly_rates(session, position, as_of, publication_delay_seconds=0):
+    """Freeze each earning hour's rate at that hour's close, not at later replay.
 
-    Entry hour is included only when it has closed. Maturity caps accrual at
-    the scheduled 08:00 boundary. Source timestamps retain unspecified timezone.
+    Simulation convention confirmed by the project owner. It is not a claim
+    about the organizer's actual publication behavior or real repo contracts.
     """
+    from bisect import bisect_right
+    if type(publication_delay_seconds) is not int or not 0 <= publication_delay_seconds <= 2147483647:
+        raise ValueError("Publication delay must be nonnegative integer seconds within int32")
     end = min(as_of, position.scheduled_maturity_at)
+    seconds = (end-position.entered_at).total_seconds()
+    if seconds < 0 or seconds % 3600:
+        raise ValueError("Repo accrual requires complete native earning hours")
+    count = int(seconds // 3600)
+    if not count:
+        return []
+    last_cutoff = end-timedelta(hours=1, seconds=publication_delay_seconds)
     rows = list(session.scalars(select(OrganizerObservation).where(
         OrganizerObservation.dataset_id == position.dataset_id,
-        OrganizerObservation.timestamp >= position.entered_at,
-        OrganizerObservation.timestamp < end).order_by(OrganizerObservation.timestamp)))
-    expected = int((end - position.entered_at).total_seconds() // 3600)
-    if expected < 0 or len(rows) != expected or any(
-            row.timestamp != position.entered_at + timedelta(hours=i) for i, row in enumerate(rows)):
-        raise ValueError("Repo accrual requires complete, contiguous earned source hours")
+        OrganizerObservation.timestamp <= last_cutoff
+    ).order_by(OrganizerObservation.timestamp.desc()).limit(count+2)))
+    rows.reverse()
+    timestamps = [row.timestamp for row in rows]
+    result = []
+    for hour in range(count):
+        earned_at = position.entered_at+timedelta(hours=hour)
+        close = earned_at+timedelta(hours=1)
+        cutoff = earned_at-timedelta(seconds=publication_delay_seconds)
+        index = bisect_right(timestamps, cutoff)-1
+        if index < 0:
+            raise ValueError("Repo accrual has no eligible published rate")
+        row = rows[index]
+        if not publication_delay_seconds and row.timestamp != earned_at:
+            raise ValueError("Repo accrual requires complete, contiguous earned source hours")
+        result.append(dict(earned_at=earned_at.isoformat(), accrual_cutoff=close.isoformat(),
+            rate_observed_at=row.timestamp.isoformat(),
+            rate_available_at=(row.timestamp+timedelta(hours=1, seconds=publication_delay_seconds)).isoformat(),
+            apy_pct=str(row.tier1_repo_rate_apy)))
+    return result
+
+
+def repo_interest_cents(session, position, as_of, publication_delay_seconds=0):
+    """ACT/365 simple floating interest: accumulate exact selected APYs, round once."""
+    rates = repo_hourly_rates(session, position, as_of, publication_delay_seconds)
     with localcontext() as context:
-        context.prec = 60
+        context.prec = 80
         interest = Decimal(position.principal_cents) * sum(
-            (row.tier1_repo_rate_apy for row in rows), Decimal(0)) / Decimal(876000)
+            (Decimal(row["apy_pct"]) for row in rates), Decimal(0)) / Decimal(876000)
         return int(interest.to_integral_value(rounding=ROUND_HALF_UP))
 
 

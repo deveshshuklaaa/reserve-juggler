@@ -1203,6 +1203,19 @@ components:
           - type: string
           - type: 'null'
           title: Timestamp
+        market_data_available:
+          type: boolean
+          title: Market Data Available
+          default: true
+        market_observation_timestamp:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Market Observation Timestamp
+        publication_delay_seconds:
+          type: integer
+          title: Publication Delay Seconds
+          default: 0
         tier0:
           $ref: '#/components/schemas/Tier0Snapshot'
         tier1:
@@ -1349,9 +1362,11 @@ components:
           minimum: 0.0
           title: Borrowing Outstanding Cents
         financing_rate_bps:
-          type: integer
-          maximum: 10000.0
-          minimum: 0.0
+          anyOf:
+          - type: integer
+            maximum: 10000.0
+            minimum: 0.0
+          - type: 'null'
           title: Financing Rate Bps
         financing_cost_cents:
           type: integer
@@ -1446,6 +1461,13 @@ components:
             minimum: 0.0
           - type: 'null'
           title: Max Overdraft Cents
+        publication_delay_seconds:
+          anyOf:
+          - type: integer
+            maximum: 2147483647.0
+            minimum: 0.0
+          - type: 'null'
+          title: Publication Delay Seconds
       additionalProperties: false
       type: object
       title: PolicyPatch
@@ -1778,12 +1800,16 @@ components:
           minimum: 0.0
           title: Principal Cents
         repo_apy_bps:
-          type: integer
-          maximum: 10000.0
-          minimum: 0.0
+          anyOf:
+          - type: integer
+            maximum: 10000.0
+            minimum: 0.0
+          - type: 'null'
           title: Repo Apy Bps
         repo_apy_decimal:
-          type: string
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Repo Apy Decimal
         accrued_interest_cents:
           type: integer
@@ -1883,7 +1909,9 @@ components:
           type: string
           title: Acquisition Price
         current_price:
-          type: string
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Current Price
         market_value_cents:
           type: integer
@@ -1891,15 +1919,21 @@ components:
           minimum: 0.0
           title: Market Value Cents
         ytm_bps:
-          type: integer
-          maximum: 10000.0
-          minimum: 0.0
+          anyOf:
+          - type: integer
+            maximum: 10000.0
+            minimum: 0.0
+          - type: 'null'
           title: Ytm Bps
         ytm_decimal:
-          type: string
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Ytm Decimal
         modified_duration:
-          type: number
+          anyOf:
+          - type: number
+          - type: 'null'
           title: Modified Duration
         liquidation_haircut_bps:
           type: integer
@@ -1964,7 +1998,9 @@ components:
           type: string
           title: Acquisition Price
         current_price:
-          type: string
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Current Price
         market_value_cents:
           type: integer
@@ -1977,12 +2013,16 @@ components:
           minimum: 0.0
           title: Cost Basis Cents
         volatility_bps:
-          type: integer
-          maximum: 10000.0
-          minimum: 0.0
+          anyOf:
+          - type: integer
+            maximum: 10000.0
+            minimum: 0.0
+          - type: 'null'
           title: Volatility Bps
         volatility_decimal:
-          type: string
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Volatility Decimal
         emergency_slippage_bps:
           type: integer
@@ -2152,6 +2192,12 @@ components:
           minimum: 0.0
           title: Max Overdraft Cents
           default: 5000000000
+        publication_delay_seconds:
+          type: integer
+          maximum: 2147483647.0
+          minimum: 0.0
+          title: Publication Delay Seconds
+          default: 0
       additionalProperties: false
       type: object
       title: TreasuryPolicy

@@ -107,11 +107,12 @@ def hydrate_portfolio_state(
     session: Session,
     run: DbSimulationRun,
     observation: DbOrganizerObservation,
+    *, as_of: datetime | None = None, use_market_data: bool = True,
 ) -> Tuple[PortfolioState, DbCashAccount, list[DbRepoPosition], list[DbBondPosition], list[DbEquityPosition], list[DbOverdraftLiability]]:
     """Hydrates Member 1's canonical PortfolioState from Member 2's database tables."""
     time_basis = "UNSPECIFIED" if run.source_type == "ORGANIZER_HISTORICAL" else "UTC"
-    as_of = observation.timestamp
-    src_obs_time = as_of if run.source_type == "ORGANIZER_HISTORICAL" else None
+    as_of = as_of or observation.timestamp
+    src_obs_time = observation.timestamp if run.source_type == "ORGANIZER_HISTORICAL" else None
 
     # 1. Tier 0 Cash
     cash_acc = session.scalar(select(DbCashAccount).where(DbCashAccount.run_id == run.id))
@@ -165,7 +166,8 @@ def hydrate_portfolio_state(
                     // 3600
                 ),
             )
-            accrued = repo_interest_cents(session, r, as_of)
+            accrued = repo_interest_cents(session, r, as_of,
+                (run.policy_json or {}).get("publication_delay_seconds", 0))
             market_val = r.principal_cents + accrued
             avail = 0
             locked = market_val
@@ -217,16 +219,19 @@ def hydrate_portfolio_state(
     m1_bonds: list[M1BondPosition] = []
     for b in db_bonds:
         basis = market_cost_basis(session, b)
-        cur_price = observation.tier2_bond_price_index
+        cur_price = (observation.tier2_bond_price_index if use_market_data
+                     else b.current_market_price_index or b.acquisition_price_index)
         cur_market_val = usd_to_ledger_cents(b.quantity * cur_price)
         haircut = b.liquidation_haircut_pct
         liq_val = cur_market_val - percentage_cost_cents(cur_market_val, haircut)
-        b.market_observation_timestamp = observation.timestamp
+        if use_market_data:
+            b.market_observation_timestamp = observation.timestamp
         b.current_market_price_index = cur_price
         b.current_market_value_cents = cur_market_val
         b.unrealized_pnl_cents = cur_market_val - basis
-        b.supplied_yield_pct = observation.tier2_bond_yield_pct
-        b.modified_duration = observation.tier2_bond_mod_duration
+        if use_market_data:
+            b.supplied_yield_pct = observation.tier2_bond_yield_pct
+            b.modified_duration = observation.tier2_bond_mod_duration
         m1_bonds.append(
             M1BondPosition(
                 id=b.id,
@@ -243,11 +248,11 @@ def hydrate_portfolio_state(
                 acquired_at=b.acquired_at,
                 current_market_price_index=cur_price,
                 current_market_value_cents=cur_market_val,
-                supplied_yield_pct=observation.tier2_bond_yield_pct,
-                modified_duration=observation.tier2_bond_mod_duration,
+                supplied_yield_pct=b.supplied_yield_pct,
+                modified_duration=b.modified_duration,
                 liquidation_haircut_pct=haircut,
                 status=b.status,
-                market_observation_timestamp=observation.timestamp,
+                market_observation_timestamp=b.market_observation_timestamp or b.acquired_at,
                 liquidity=PositionLiquidity(
                     classification="LIQUIDATABLE",
                     available_cents=0,
@@ -269,15 +274,18 @@ def hydrate_portfolio_state(
     m1_equities: list[M1EquityPosition] = []
     for eq in db_equities:
         basis = market_cost_basis(session, eq)
-        cur_price = observation.tier3_stock_index_price
+        cur_price = (observation.tier3_stock_index_price if use_market_data
+                     else eq.current_market_price_index or eq.acquisition_price_index)
         cur_market_val = usd_to_ledger_cents(eq.quantity * cur_price)
         haircut = eq.liquidation_haircut_pct
         liq_val = cur_market_val - percentage_cost_cents(cur_market_val, haircut)
-        eq.market_observation_timestamp = observation.timestamp
+        if use_market_data:
+            eq.market_observation_timestamp = observation.timestamp
         eq.current_market_price_index = cur_price
         eq.current_market_value_cents = cur_market_val
         eq.unrealized_pnl_cents = cur_market_val - basis
-        eq.supplied_volatility_pct = observation.tier3_stock_volatility_pct
+        if use_market_data:
+            eq.supplied_volatility_pct = observation.tier3_stock_volatility_pct
         m1_equities.append(
             M1EquityPosition(
                 id=eq.id,
@@ -294,10 +302,10 @@ def hydrate_portfolio_state(
                 acquired_at=eq.acquired_at,
                 current_market_price_index=cur_price,
                 current_market_value_cents=cur_market_val,
-                supplied_volatility_pct=observation.tier3_stock_volatility_pct,
+                supplied_volatility_pct=eq.supplied_volatility_pct,
                 liquidation_haircut_pct=haircut,
                 status=eq.status,
-                market_observation_timestamp=observation.timestamp,
+                market_observation_timestamp=eq.market_observation_timestamp or eq.acquired_at,
                 liquidity=PositionLiquidity(
                     classification="LIQUIDATABLE",
                     available_cents=0,
@@ -385,19 +393,19 @@ def hydrate_portfolio_state(
     # 7. Market Rates & Prices
     market_rates = MarketRateObservation(
         time_basis=time_basis,
-        observed_at=as_of,
+        observed_at=observation.timestamp,
         repo_apy_pct=observation.tier1_repo_rate_apy,
         bond_yield_pct=observation.tier2_bond_yield_pct,
         equity_volatility_pct=observation.tier3_stock_volatility_pct,
         overdraft_apr_pct=observation.emergency_overdraft_penalty_apr_pct,
-    )
+    ) if use_market_data else None
     market_prices = MarketPriceObservation(
         time_basis=time_basis,
-        observed_at=as_of,
+        observed_at=observation.timestamp,
         bond_price_index=observation.tier2_bond_price_index,
         bond_modified_duration_years=observation.tier2_bond_mod_duration,
         equity_index_price=observation.tier3_stock_index_price,
-    )
+    ) if use_market_data else None
 
     state = PortfolioState(
         run_id=run.id,
@@ -421,11 +429,31 @@ def hydrate_portfolio_state(
     return state, cash_acc, db_repos, db_bonds, db_equities, db_overdrafts
 
 
-def get_information_cutoff(as_of: datetime) -> datetime:
+def get_published_observation(session, dataset_id, as_of, publication_delay_seconds=0):
+    return session.scalar(select(DbOrganizerObservation).where(
+        DbOrganizerObservation.dataset_id == dataset_id,
+        DbOrganizerObservation.timestamp <= get_information_cutoff(as_of, publication_delay_seconds)
+    ).order_by(DbOrganizerObservation.timestamp.desc()).limit(1))
+
+
+def hydrate_decision_portfolio(session, run, execution_observation, publication_delay_seconds=0):
+    """Opening decision: consume only rows whose complete source hour has closed.
+
+    Member 1 confirmed t+1h+delay <= decision time. The initial source
+    reference is provenance only when no market quote exists.
+    """
+    at = execution_observation.timestamp
+    published = get_published_observation(session, run.dataset_id, at, publication_delay_seconds)
+    hydrated = hydrate_portfolio_state(session, run, published or execution_observation,
+        as_of=at, use_market_data=published is not None)
+    return (*hydrated, published)
+
+
+def get_information_cutoff(as_of: datetime, publication_delay_seconds: int = 0) -> datetime:
     """Returns the strict causal observation-availability cutoff for decision time as_of.
 
-    Organizer timestamps have unspecified timezone and publication semantics.
-    A row timestamped T records the aggregated flows that occurred during hour T.
+    Confirmed by Member 1: t+1h+publication_delay <= decision time.
+    Source timezone remains UNSPECIFIED; never localize naive source times.
     Those complete hourly flows are finalized and available only after hour T closes (at T + 1 hour).
     Therefore, at decision timestamp `as_of`, the latest fully observed and published
     hourly observation is `as_of - timedelta(hours=1)`.
@@ -433,7 +461,9 @@ def get_information_cutoff(as_of: datetime) -> datetime:
     Any observation with timestamp >= as_of belongs to the future relative to the decision cutoff
     and is strictly rejected / excluded.
     """
-    return as_of - timedelta(hours=1)
+    if type(publication_delay_seconds) is not int or not 0 <= publication_delay_seconds <= 2147483647:
+        raise ValueError("Publication delay must be nonnegative integer seconds within int32")
+    return as_of - timedelta(hours=1, seconds=publication_delay_seconds)
 
 
 def get_hourly_forecasts_from_db(
@@ -442,11 +472,12 @@ def get_hourly_forecasts_from_db(
     as_of: datetime,
     horizon_hours: int = 4,
     model_version: str = "hourly-seasonal-naive-v1",
+    publication_delay_seconds: int = 0,
 ) -> tuple[HourlyForecastPoint, ...]:
     """Retrieves strictly causal historical observations up to the information cutoff
     and evaluates forward forecasts without lookahead leakage.
     """
-    cutoff = get_information_cutoff(as_of)
+    cutoff = get_information_cutoff(as_of, publication_delay_seconds)
 
     # Causal filter: strictly prior to decision timestamp
     history = list(
@@ -496,9 +527,10 @@ def evaluate_liquidity_risk(
     forecasts: tuple[HourlyForecastPoint, ...] | list[HourlyForecastPoint] | None = None,
     calibrated_allowance: CalibratedForecastAllowance | None = None,
     horizon_hours: int = 4,
+    publication_delay_seconds: int = 0,
 ) -> FourTierLiquidityRiskResult:
     """Evaluates canonical Member 1 four-tier liquidity risk with causal artifact validation."""
-    cutoff = get_information_cutoff(portfolio.as_of)
+    cutoff = get_information_cutoff(portfolio.as_of, publication_delay_seconds)
 
     # Validate calibration artifact: reject artifacts fitted/calibrated after cutoff
     if calibrated_allowance is not None:
@@ -515,6 +547,11 @@ def evaluate_liquidity_risk(
             calibration_reference="fallback-baseline-v1",
             calibrated_through=cutoff,
         )
+
+    if (observation is not None and observation.timestamp > cutoff) or any(
+            quote is not None and quote.observed_at > cutoff
+            for quote in (portfolio.market_rates, portfolio.market_prices)):
+        raise ValueError("Risk input is after the publication cutoff")
 
     if forecasts is None or len(forecasts) == 0:
         forecast_tuple = (
@@ -559,14 +596,20 @@ def evaluate_liquidity_risk(
 def recommend_four_tier_allocation_decision(
     portfolio: PortfolioState,
     policy: FourTierTreasuryPolicy,
-    observation: DbOrganizerObservation,
+    observation: DbOrganizerObservation | None,
     forecasts: tuple[HourlyForecastPoint, ...] | list[HourlyForecastPoint] | None = None,
     calibrated_allowance: CalibratedForecastAllowance | None = None,
     horizon_hours: int = 15,
     risk_aversion: Decimal | str = "1",
+    publication_delay_seconds: int = 0,
 ) -> AllocationOptimizerResult:
     """Invokes canonical Member 1 recommend_four_tier_allocation with validated inputs."""
-    cutoff = get_information_cutoff(portfolio.as_of)
+    cutoff = get_information_cutoff(portfolio.as_of, publication_delay_seconds)
+    if observation is not None and observation.timestamp > cutoff:
+        raise ValueError("Market observation is after the publication cutoff")
+    if any(quote is not None and quote.observed_at > cutoff
+           for quote in (portfolio.market_rates, portfolio.market_prices)):
+        raise ValueError("Market quote is after the publication cutoff")
     if calibrated_allowance is not None and calibrated_allowance.calibrated_through > cutoff:
         raise ValueError(
             f"Calibration artifact dated {calibrated_allowance.calibrated_through} "
@@ -619,9 +662,11 @@ def recommend_four_tier_allocation_decision(
         repo_settlements=repo_settlements,
     )
 
-    t1_haircut = observation.tier1_early_redemption_haircut_pct if observation.tier1_early_redemption_haircut_pct is not None else Decimal("0.5")
-    t2_haircut = observation.tier2_bond_liquidation_haircut_pct if observation.tier2_bond_liquidation_haircut_pct is not None else Decimal("2.0")
-    t3_haircut = observation.tier3_stock_liquidation_haircut_pct if observation.tier3_stock_liquidation_haircut_pct is not None else Decimal("15.0")
+    # With no published row, only organizer-specified fee constants are known;
+    # market prices/rates remain absent, so no first-hour acquisition is eligible.
+    t1_haircut = observation.tier1_early_redemption_haircut_pct if observation else Decimal("0.5")
+    t2_haircut = observation.tier2_bond_liquidation_haircut_pct if observation else Decimal("2.0")
+    t3_haircut = observation.tier3_stock_liquidation_haircut_pct if observation else Decimal("15.0")
 
     assets = (
         AssetRewardAssumption(
@@ -652,14 +697,15 @@ def recommend_four_tier_allocation_decision(
         model_version="hourly-runtime-v1",
         policy_version="v1",
         assumption_reference="organizer-source-rates-policy-baseline",
-        assumptions_available_at=observation.timestamp,
+        assumptions_available_at=(observation.timestamp + timedelta(hours=1, seconds=publication_delay_seconds)
+                                  if observation else cutoff),
         holding_hours=15,
         risk_aversion=Decimal(str(risk_aversion)),
         assets=assets,
     )
 
     opt_req = AllocationOptimizerRequest(
-        request_id=f"opt-{portfolio.run_id}-{observation.timestamp.strftime('%Y%m%d%H%M%S')}",
+        request_id=f"opt-{portfolio.run_id}-{portfolio.as_of.strftime('%Y%m%d%H%M%S')}",
         liquidity=liquidity_req,
         rewards=rewards,
     )

@@ -1679,7 +1679,8 @@
       "source_location": "L71",
       "_callable": true,
       "_callable_class": true,
-      "_origin": "ast"
+      "_origin": "ast",
+      "owner": "Member 2"
     },
     {
       "id": "backend_app_persistence_models_py_base",
@@ -1697,7 +1698,8 @@
       "source_location": "L98",
       "_callable": true,
       "_callable_class": true,
-      "_origin": "ast"
+      "_origin": "ast",
+      "owner": "Member 2"
     },
     {
       "id": "backend_app_persistence_models_simulationrun",
@@ -1707,7 +1709,8 @@
       "source_location": "L131",
       "_callable": true,
       "_callable_class": true,
-      "_origin": "ast"
+      "_origin": "ast",
+      "owner": "Member 2"
     },
     {
       "id": "backend_app_persistence_models_ledgerentry",
@@ -1717,7 +1720,8 @@
       "source_location": "L167",
       "_callable": true,
       "_callable_class": true,
-      "_origin": "ast"
+      "_origin": "ast",
+      "owner": "Member 2"
     },
     {
       "id": "backend_app_persistence_models_source_constraints",
@@ -1764,7 +1768,8 @@
       "source_location": "L217",
       "_callable": true,
       "_callable_class": true,
-      "_origin": "ast"
+      "_origin": "ast",
+      "owner": "Member 2"
     },
     {
       "id": "backend_app_persistence_models_repoposition",
@@ -1774,7 +1779,8 @@
       "source_location": "L224",
       "_callable": true,
       "_callable_class": true,
-      "_origin": "ast"
+      "_origin": "ast",
+      "owner": "Member 2"
     },
     {
       "id": "backend_app_persistence_models_marketposition",
@@ -1803,7 +1809,8 @@
       "source_location": "L271",
       "_callable": true,
       "_callable_class": true,
-      "_origin": "ast"
+      "_origin": "ast",
+      "owner": "Member 2"
     },
     {
       "id": "backend_app_persistence_models_equityposition",
@@ -1813,7 +1820,8 @@
       "source_location": "L278",
       "_callable": true,
       "_callable_class": true,
-      "_origin": "ast"
+      "_origin": "ast",
+      "owner": "Member 2"
     },
     {
       "id": "backend_app_persistence_models_positionlinked",
@@ -1842,7 +1850,8 @@
       "source_location": "L301",
       "_callable": true,
       "_callable_class": true,
-      "_origin": "ast"
+      "_origin": "ast",
+      "owner": "Member 2"
     },
     {
       "id": "backend_app_persistence_models_investmentmovement",
@@ -1852,7 +1861,8 @@
       "source_location": "L312",
       "_callable": true,
       "_callable_class": true,
-      "_origin": "ast"
+      "_origin": "ast",
+      "owner": "Member 2"
     },
     {
       "id": "backend_app_persistence_models_portfoliovaluation",
@@ -1862,7 +1872,8 @@
       "source_location": "L329",
       "_callable": true,
       "_callable_class": true,
-      "_origin": "ast"
+      "_origin": "ast",
+      "owner": "Member 2"
     },
     {
       "id": "backend_app_persistence_models_liquiditybreach",
@@ -1872,7 +1883,8 @@
       "source_location": "L351",
       "_callable": true,
       "_callable_class": true,
-      "_origin": "ast"
+      "_origin": "ast",
+      "owner": "Member 2"
     },
     {
       "id": "backend_app_persistence_models_overdraftliability",
@@ -1882,7 +1894,8 @@
       "source_location": "L360",
       "_callable": true,
       "_callable_class": true,
-      "_origin": "ast"
+      "_origin": "ast",
+      "owner": "Member 2"
     },
     {
       "id": "backend_app_persistence_models_overdraftmovement",
@@ -1892,7 +1905,8 @@
       "source_location": "L376",
       "_callable": true,
       "_callable_class": true,
-      "_origin": "ast"
+      "_origin": "ast",
+      "owner": "Member 2"
     },
     {
       "id": "backend_app_persistence_models_treasurydecision",
@@ -1902,7 +1916,8 @@
       "source_location": "L394",
       "_callable": true,
       "_callable_class": true,
-      "_origin": "ast"
+      "_origin": "ast",
+      "owner": "Member 2"
     },
     {
       "id": "backend_app_persistence_models_rationale_1",
@@ -2730,11 +2745,20 @@
       "_origin": "ast"
     },
     {
+      "id": "backend_app_services_accounting_repo_hourly_rates",
+      "label": "repo_hourly_rates()",
+      "file_type": "code",
+      "source_file": "backend/app/services/accounting.py",
+      "source_location": "L36",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
       "id": "backend_app_services_accounting_repo_interest_cents",
       "label": "repo_interest_cents()",
       "file_type": "code",
       "source_file": "backend/app/services/accounting.py",
-      "source_location": "L36",
+      "source_location": "L77",
       "_callable": true,
       "_origin": "ast"
     },
@@ -2743,7 +2767,7 @@
       "label": "paid_financing_costs()",
       "file_type": "code",
       "source_file": "backend/app/services/accounting.py",
-      "source_location": "L58",
+      "source_location": "L87",
       "_callable": true,
       "_origin": "ast"
     },
@@ -2765,18 +2789,26 @@
     },
     {
       "id": "backend_app_services_accounting_rationale_37",
-      "label": "Simple ACT/365 floating APY; sum earned hourly rates, then round once. Entry…",
+      "label": "Freeze each earning hour's rate at that hour's close, not at later replay.…",
       "file_type": "rationale",
       "source_file": "backend/app/services/accounting.py",
       "source_location": "L37",
       "_origin": "ast"
     },
     {
-      "id": "backend_app_services_accounting_rationale_59",
+      "id": "backend_app_services_accounting_rationale_78",
+      "label": "ACT/365 simple floating interest: accumulate exact selected APYs, round once.",
+      "file_type": "rationale",
+      "source_file": "backend/app/services/accounting.py",
+      "source_location": "L78",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_app_services_accounting_rationale_88",
       "label": "Cumulative paid expense by loan, distinct from principal repayment.",
       "file_type": "rationale",
       "source_file": "backend/app/services/accounting.py",
-      "source_location": "L59",
+      "source_location": "L88",
       "_origin": "ast"
     },
     {
@@ -2792,7 +2824,7 @@
       "label": "normalize_strategy_id()",
       "file_type": "code",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L63",
+      "source_location": "L65",
       "_callable": true,
       "_origin": "ast"
     },
@@ -2801,7 +2833,7 @@
       "label": "StepConflictError",
       "file_type": "code",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L79",
+      "source_location": "L81",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -2819,7 +2851,7 @@
       "label": ".__init__()",
       "file_type": "code",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L81",
+      "source_location": "L83",
       "_callable": true,
       "_origin": "ast"
     },
@@ -2828,7 +2860,7 @@
       "label": "get_active_scenario()",
       "file_type": "code",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L89",
+      "source_location": "L91",
       "_callable": true,
       "_origin": "ast"
     },
@@ -2845,7 +2877,7 @@
       "label": "execute_hourly_step()",
       "file_type": "code",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L108",
+      "source_location": "L110",
       "_callable": true,
       "_origin": "ast"
     },
@@ -2874,35 +2906,35 @@
       "_origin": "ast"
     },
     {
-      "id": "backend_app_services_hourly_engine_rationale_64",
+      "id": "backend_app_services_hourly_engine_rationale_66",
       "label": "Normalizes strategy identifier to canonical ID: STATIC, REACTIVE, or…",
       "file_type": "rationale",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L64",
+      "source_location": "L66",
       "_origin": "ast"
     },
     {
-      "id": "backend_app_services_hourly_engine_rationale_80",
+      "id": "backend_app_services_hourly_engine_rationale_82",
       "label": "Raised when expected_step conflicts with current simulation step.",
       "file_type": "rationale",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L80",
+      "source_location": "L82",
       "_origin": "ast"
     },
     {
-      "id": "backend_app_services_hourly_engine_rationale_90",
+      "id": "backend_app_services_hourly_engine_rationale_92",
       "label": "Resolves active scenario and parameters for the target step.",
       "file_type": "rationale",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L90",
+      "source_location": "L92",
       "_origin": "ast"
     },
     {
-      "id": "backend_app_services_hourly_engine_rationale_114",
+      "id": "backend_app_services_hourly_engine_rationale_116",
       "label": "Executes exactly one hour of the simulation. Shared by live simulation advance…",
       "file_type": "rationale",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L114",
+      "source_location": "L116",
       "_origin": "ast"
     },
     {
@@ -2954,7 +2986,7 @@
       "label": "emergency_liquidate()",
       "file_type": "code",
       "source_file": "backend/app/services/market_execution.py",
-      "source_location": "L193",
+      "source_location": "L204",
       "_callable": true,
       "_origin": "ast"
     },
@@ -2983,11 +3015,11 @@
       "_origin": "ast"
     },
     {
-      "id": "backend_app_services_market_execution_rationale_49",
+      "id": "backend_app_services_market_execution_rationale_50",
       "label": "Fill a canonical market order atomically in the caller's transaction. One USD…",
       "file_type": "rationale",
       "source_file": "backend/app/services/market_execution.py",
-      "source_location": "L49",
+      "source_location": "L50",
       "_origin": "ast"
     },
     {
@@ -3235,15 +3267,6 @@
       "_origin": "ast"
     },
     {
-      "id": "backend_app_services_treasury_adapter_get_information_cutoff",
-      "label": "get_information_cutoff()",
-      "file_type": "code",
-      "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L424",
-      "_callable": true,
-      "_origin": "ast"
-    },
-    {
       "id": "backend_app_services_treasury_adapter_py_datetime",
       "label": "datetime",
       "file_type": "code",
@@ -3252,11 +3275,38 @@
       "_origin": "ast"
     },
     {
+      "id": "backend_app_services_treasury_adapter_get_published_observation",
+      "label": "get_published_observation()",
+      "file_type": "code",
+      "source_file": "backend/app/services/treasury_adapter.py",
+      "source_location": "L432",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_app_services_treasury_adapter_hydrate_decision_portfolio",
+      "label": "hydrate_decision_portfolio()",
+      "file_type": "code",
+      "source_file": "backend/app/services/treasury_adapter.py",
+      "source_location": "L439",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_app_services_treasury_adapter_get_information_cutoff",
+      "label": "get_information_cutoff()",
+      "file_type": "code",
+      "source_file": "backend/app/services/treasury_adapter.py",
+      "source_location": "L452",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
       "id": "backend_app_services_treasury_adapter_get_hourly_forecasts_from_db",
       "label": "get_hourly_forecasts_from_db()",
       "file_type": "code",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L439",
+      "source_location": "L469",
       "_callable": true,
       "_origin": "ast"
     },
@@ -3265,7 +3315,7 @@
       "label": "evaluate_liquidity_risk()",
       "file_type": "code",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L492",
+      "source_location": "L523",
       "_callable": true,
       "_origin": "ast"
     },
@@ -3274,7 +3324,7 @@
       "label": "recommend_four_tier_allocation_decision()",
       "file_type": "code",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L559",
+      "source_location": "L596",
       "_callable": true,
       "_origin": "ast"
     },
@@ -3303,43 +3353,51 @@
       "_origin": "ast"
     },
     {
-      "id": "backend_app_services_treasury_adapter_rationale_111",
+      "id": "backend_app_services_treasury_adapter_rationale_112",
       "label": "Hydrates Member 1's canonical PortfolioState from Member 2's database tables.",
       "file_type": "rationale",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L111",
+      "source_location": "L112",
       "_origin": "ast"
     },
     {
-      "id": "backend_app_services_treasury_adapter_rationale_425",
+      "id": "backend_app_services_treasury_adapter_rationale_440",
+      "label": "Opening decision: consume only rows whose complete source hour has closed.…",
+      "file_type": "rationale",
+      "source_file": "backend/app/services/treasury_adapter.py",
+      "source_location": "L440",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_app_services_treasury_adapter_rationale_453",
       "label": "Returns the strict causal observation-availability cutoff for decision time…",
       "file_type": "rationale",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L425",
+      "source_location": "L453",
       "_origin": "ast"
     },
     {
-      "id": "backend_app_services_treasury_adapter_rationale_446",
+      "id": "backend_app_services_treasury_adapter_rationale_477",
       "label": "Retrieves strictly causal historical observations up to the information cutoff…",
       "file_type": "rationale",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L446",
+      "source_location": "L477",
       "_origin": "ast"
     },
     {
-      "id": "backend_app_services_treasury_adapter_rationale_500",
+      "id": "backend_app_services_treasury_adapter_rationale_532",
       "label": "Evaluates canonical Member 1 four-tier liquidity risk with causal artifact…",
       "file_type": "rationale",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L500",
+      "source_location": "L532",
       "_origin": "ast"
     },
     {
-      "id": "backend_app_services_treasury_adapter_rationale_568",
+      "id": "backend_app_services_treasury_adapter_rationale_606",
       "label": "Invokes canonical Member 1 recommend_four_tier_allocation with validated inputs.",
       "file_type": "rationale",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L568",
+      "source_location": "L606",
       "_origin": "ast"
     },
     {
@@ -3669,7 +3727,7 @@
       "label": ".overdraft_policy()",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L53",
+      "source_location": "L54",
       "_callable": true,
       "_origin": "ast"
     },
@@ -3678,7 +3736,7 @@
       "label": ".map_frontend_policy_fields()",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L60",
+      "source_location": "L61",
       "_callable": true,
       "_origin": "ast"
     },
@@ -3695,7 +3753,7 @@
       "label": "CreateRunRequest",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L81",
+      "source_location": "L82",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -3705,7 +3763,7 @@
       "label": ".map_frontend_create_fields()",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L91",
+      "source_location": "L92",
       "_callable": true,
       "_origin": "ast"
     },
@@ -3714,7 +3772,7 @@
       "label": "RunCreated",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L100",
+      "source_location": "L101",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -3724,7 +3782,7 @@
       "label": "AdvanceRequest",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L108",
+      "source_location": "L109",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -3734,7 +3792,7 @@
       "label": "ScenarioRequest",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L113",
+      "source_location": "L114",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -3744,7 +3802,7 @@
       "label": "ScenarioApplied",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L119",
+      "source_location": "L120",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -3754,7 +3812,7 @@
       "label": "PolicyPatch",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L126",
+      "source_location": "L127",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -3764,7 +3822,7 @@
       "label": ".map_frontend_patch_fields()",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L141",
+      "source_location": "L143",
       "_callable": true,
       "_origin": "ast"
     },
@@ -3773,7 +3831,7 @@
       "label": "CashFlowBucket",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L159",
+      "source_location": "L161",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -3783,7 +3841,7 @@
       "label": "TransactionRecord",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L166",
+      "source_location": "L168",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -3793,7 +3851,7 @@
       "label": ".validate_direction()",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L178",
+      "source_location": "L180",
       "_callable": true,
       "_origin": "ast"
     },
@@ -3802,7 +3860,7 @@
       "label": "LedgerEntry",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L185",
+      "source_location": "L187",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -3812,7 +3870,7 @@
       "label": "VaultPosition",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L197",
+      "source_location": "L199",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -3822,7 +3880,7 @@
       "label": ".validate_maturity()",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L209",
+      "source_location": "L211",
       "_callable": true,
       "_origin": "ast"
     },
@@ -3831,7 +3889,7 @@
       "label": "ForecastSummary",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L215",
+      "source_location": "L217",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -3841,7 +3899,7 @@
       "label": "DecisionRecord",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L223",
+      "source_location": "L225",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -3851,7 +3909,7 @@
       "label": "Tier0Snapshot",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L236",
+      "source_location": "L238",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -3861,7 +3919,7 @@
       "label": "Tier1Snapshot",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L248",
+      "source_location": "L250",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -3871,7 +3929,7 @@
       "label": "Tier2Snapshot",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L269",
+      "source_location": "L271",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -3881,7 +3939,7 @@
       "label": "Tier3Snapshot",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L289",
+      "source_location": "L291",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -3891,7 +3949,7 @@
       "label": "OverdraftSnapshot",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L308",
+      "source_location": "L310",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -3901,7 +3959,7 @@
       "label": "AggregatesSnapshot",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L316",
+      "source_location": "L318",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -3911,7 +3969,7 @@
       "label": "FourTierPortfolioSnapshot",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L329",
+      "source_location": "L331",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -3921,7 +3979,7 @@
       "label": "SimulationSnapshot",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L339",
+      "source_location": "L344",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -3931,7 +3989,7 @@
       "label": "HistoryResponse",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L359",
+      "source_location": "L364",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -3941,7 +3999,7 @@
       "label": "DecisionsResponse",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L363",
+      "source_location": "L368",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -3951,7 +4009,7 @@
       "label": "TransactionsResponse",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L367",
+      "source_location": "L372",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -3961,7 +4019,7 @@
       "label": "ForecastPoint",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L371",
+      "source_location": "L376",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -3971,7 +4029,7 @@
       "label": "ForecastResponse",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L380",
+      "source_location": "L385",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -3981,7 +4039,7 @@
       "label": "FinancialMetrics",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L388",
+      "source_location": "L393",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -3991,7 +4049,7 @@
       "label": "BacktestRequest",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L402",
+      "source_location": "L407",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -4001,7 +4059,7 @@
       "label": ".unique_strategies()",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L410",
+      "source_location": "L415",
       "_callable": true,
       "_origin": "ast"
     },
@@ -4010,7 +4068,7 @@
       "label": "StrategyResult",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L416",
+      "source_location": "L421",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -4020,7 +4078,7 @@
       "label": "BacktestResult",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L421",
+      "source_location": "L426",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -4030,7 +4088,7 @@
       "label": "PerformanceReport",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L430",
+      "source_location": "L435",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -4040,7 +4098,7 @@
       "label": "ErrorResponse",
       "file_type": "code",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L439",
+      "source_location": "L444",
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast"
@@ -6592,6 +6650,31 @@
       "_origin": "ast"
     },
     {
+      "id": "tests_integration_test_delayed_repo_accrual",
+      "label": "test_delayed_repo_accrual.py",
+      "file_type": "code",
+      "source_file": "tests/integration/test_delayed_repo_accrual.py",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_integration_test_delayed_repo_accrual_test_delayed_rates_settle_at_eight_once_without_later_true_up",
+      "label": "test_delayed_rates_settle_at_eight_once_without_later_true_up()",
+      "file_type": "code",
+      "source_file": "tests/integration/test_delayed_repo_accrual.py",
+      "source_location": "L16",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_integration_test_delayed_repo_accrual_rationale_1",
+      "label": "Confirmed simulation convention: delayed published APYs, fixed maturity.",
+      "file_type": "rationale",
+      "source_file": "tests/integration/test_delayed_repo_accrual.py",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
       "id": "tests_integration_test_four_tier_runtime",
       "label": "test_four_tier_runtime.py",
       "file_type": "code",
@@ -6798,6 +6881,93 @@
       "_origin": "ast"
     },
     {
+      "id": "tests_integration_test_market_data_availability",
+      "label": "test_market_data_availability.py",
+      "file_type": "code",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_integration_test_market_data_availability_test_canonical_decisions_use_only_closed_market_hours",
+      "label": "test_canonical_decisions_use_only_closed_market_hours()",
+      "file_type": "code",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L21",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_integration_test_market_data_availability_test_canonical_decisions_use_only_closed_market_hours_capture",
+      "label": "capture()",
+      "file_type": "code",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L25",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_integration_test_market_data_availability_test_first_source_hour_has_no_published_market_quote",
+      "label": "test_first_source_hour_has_no_published_market_quote()",
+      "file_type": "code",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L59",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_integration_test_market_data_availability_test_first_source_hour_has_no_published_market_quote_capture",
+      "label": "capture()",
+      "file_type": "code",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L63",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_integration_test_market_data_availability_py_parametrize",
+      "label": "parametrize",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_integration_test_market_data_availability_test_publication_boundary_for_training_and_market_quotes",
+      "label": "test_publication_boundary_for_training_and_market_quotes()",
+      "file_type": "code",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L77",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_integration_test_market_data_availability_test_risk_rejects_unpublished_market_inputs",
+      "label": "test_risk_rejects_unpublished_market_inputs()",
+      "file_type": "code",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L106",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_integration_test_market_data_availability_test_delayed_closing_market_mark_uses_last_published_quote",
+      "label": "test_delayed_closing_market_mark_uses_last_published_quote()",
+      "file_type": "code",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L115",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_integration_test_market_data_availability_rationale_1",
+      "label": "Conservative publication gates for actual runtime decisions and snapshots.",
+      "file_type": "rationale",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
       "id": "tests_integration_test_market_order_execution",
       "label": "test_market_order_execution.py",
       "file_type": "code",
@@ -6819,7 +6989,7 @@
       "label": "order()",
       "file_type": "code",
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L32",
+      "source_location": "L34",
       "_callable": true,
       "_origin": "ast"
     },
@@ -6828,7 +6998,7 @@
       "label": "execute()",
       "file_type": "code",
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L42",
+      "source_location": "L44",
       "_callable": true,
       "_origin": "ast"
     },
@@ -6845,7 +7015,7 @@
       "label": "test_purchase_and_partial_sale_conserve_basis_and_account_for_fees()",
       "file_type": "code",
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L50",
+      "source_location": "L52",
       "_callable": true,
       "_origin": "ast"
     },
@@ -6854,7 +7024,7 @@
       "label": "test_invalid_trade_leaves_no_partial_financial_posts()",
       "file_type": "code",
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L81",
+      "source_location": "L83",
       "_callable": true,
       "_origin": "ast"
     },
@@ -6863,7 +7033,7 @@
       "label": "test_full_sale_releases_every_basis_cent_after_partial_sale()",
       "file_type": "code",
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L105",
+      "source_location": "L107",
       "_callable": true,
       "_origin": "ast"
     },
@@ -6872,7 +7042,7 @@
       "label": "test_canonical_optional_costs_are_not_required_for_a_zero_fee_trade()",
       "file_type": "code",
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L120",
+      "source_location": "L122",
       "_callable": true,
       "_origin": "ast"
     },
@@ -6881,7 +7051,7 @@
       "label": "test_shared_hourly_engine_posts_recommendation_and_partial_sale()",
       "file_type": "code",
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L128",
+      "source_location": "L130",
       "_callable": true,
       "_origin": "ast"
     },
@@ -6890,7 +7060,7 @@
       "label": "recommend()",
       "file_type": "code",
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L135",
+      "source_location": "L137",
       "_callable": true,
       "_origin": "ast"
     },
@@ -7305,7 +7475,7 @@
       "label": "test_accounting_invariants_and_sweep_across_strategies()",
       "file_type": "code",
       "source_file": "tests/integration/test_strategy_dispatch_and_causality.py",
-      "source_location": "L344",
+      "source_location": "L345",
       "_callable": true,
       "_origin": "ast"
     },
@@ -7366,11 +7536,11 @@
       "_origin": "ast"
     },
     {
-      "id": "tests_integration_test_strategy_dispatch_and_causality_rationale_345",
+      "id": "tests_integration_test_strategy_dispatch_and_causality_rationale_346",
       "label": "6. Sweep window (17:00) and maturity (08:00) execute with strict accounting…",
       "file_type": "rationale",
       "source_file": "tests/integration/test_strategy_dispatch_and_causality.py",
-      "source_location": "L345",
+      "source_location": "L346",
       "_origin": "ast"
     },
     {
@@ -16996,6 +17166,15 @@
       "_origin": "ast"
     },
     {
+      "id": "docs_runtime_release_checkpoint_confirmed_publication_and_delayed_repo_convention",
+      "label": "Confirmed publication and delayed repo convention",
+      "file_type": "document",
+      "node_kind": "heading",
+      "source_file": "docs/RUNTIME_RELEASE_CHECKPOINT.md",
+      "source_location": "L175",
+      "_origin": "ast"
+    },
+    {
       "id": "docs_decision_engine",
       "label": "decision-engine.md",
       "file_type": "document",
@@ -25597,7 +25776,7 @@
     },
     {
       "source": "backend_app_services_accounting",
-      "target": "backend_app_services_accounting_repo_interest_cents",
+      "target": "backend_app_services_accounting_repo_hourly_rates",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/accounting.py",
@@ -25607,11 +25786,32 @@
     },
     {
       "source": "backend_app_services_accounting",
+      "target": "backend_app_services_accounting_repo_interest_cents",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/app/services/accounting.py",
+      "source_location": "L77",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_app_services_accounting",
       "target": "backend_app_services_accounting_paid_financing_costs",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/accounting.py",
-      "source_location": "L58",
+      "source_location": "L87",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_app_services_accounting_repo_interest_cents",
+      "target": "backend_app_services_accounting_repo_hourly_rates",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/app/services/accounting.py",
+      "source_location": "L79",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -25637,7 +25837,7 @@
     },
     {
       "source": "backend_app_services_accounting_rationale_37",
-      "target": "backend_app_services_accounting_repo_interest_cents",
+      "target": "backend_app_services_accounting_repo_hourly_rates",
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/accounting.py",
@@ -25646,12 +25846,22 @@
       "_origin": "ast"
     },
     {
-      "source": "backend_app_services_accounting_rationale_59",
+      "source": "backend_app_services_accounting_rationale_78",
+      "target": "backend_app_services_accounting_repo_interest_cents",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/app/services/accounting.py",
+      "source_location": "L78",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_app_services_accounting_rationale_88",
       "target": "backend_app_services_accounting_paid_financing_costs",
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/accounting.py",
-      "source_location": "L59",
+      "source_location": "L88",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -25782,7 +25992,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L63",
+      "source_location": "L65",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -25792,7 +26002,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L79",
+      "source_location": "L81",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -25802,7 +26012,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L79",
+      "source_location": "L81",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -25812,7 +26022,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L81",
+      "source_location": "L83",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -25822,7 +26032,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L89",
+      "source_location": "L91",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -25833,7 +26043,7 @@
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L89",
+      "source_location": "L91",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -25844,7 +26054,7 @@
       "context": "generic_arg",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L89",
+      "source_location": "L91",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -25854,7 +26064,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L108",
+      "source_location": "L110",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -25865,7 +26075,7 @@
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L108",
+      "source_location": "L110",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -25876,7 +26086,7 @@
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L108",
+      "source_location": "L110",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -25887,7 +26097,7 @@
       "context": "generic_arg",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L108",
+      "source_location": "L110",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -25898,7 +26108,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L84",
+      "source_location": "L86",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -25909,7 +26119,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L124",
+      "source_location": "L126",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -25920,7 +26130,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L228",
+      "source_location": "L242",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -25931,7 +26141,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L645",
+      "source_location": "L663",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -25946,42 +26156,42 @@
       "_origin": "ast"
     },
     {
-      "source": "backend_app_services_hourly_engine_rationale_64",
+      "source": "backend_app_services_hourly_engine_rationale_66",
       "target": "backend_app_services_hourly_engine_normalize_strategy_id",
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L64",
+      "source_location": "L66",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
-      "source": "backend_app_services_hourly_engine_rationale_80",
+      "source": "backend_app_services_hourly_engine_rationale_82",
       "target": "backend_app_services_hourly_engine_stepconflicterror",
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L80",
+      "source_location": "L82",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
-      "source": "backend_app_services_hourly_engine_rationale_90",
+      "source": "backend_app_services_hourly_engine_rationale_92",
       "target": "backend_app_services_hourly_engine_get_active_scenario",
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L90",
+      "source_location": "L92",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
-      "source": "backend_app_services_hourly_engine_rationale_114",
+      "source": "backend_app_services_hourly_engine_rationale_116",
       "target": "backend_app_services_hourly_engine_execute_hourly_step",
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L114",
+      "source_location": "L116",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -26119,7 +26329,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/market_execution.py",
-      "source_location": "L193",
+      "source_location": "L204",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -26130,7 +26340,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/market_execution.py",
-      "source_location": "L58",
+      "source_location": "L59",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -26141,7 +26351,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/market_execution.py",
-      "source_location": "L182",
+      "source_location": "L191",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -26152,7 +26362,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/market_execution.py",
-      "source_location": "L235",
+      "source_location": "L247",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -26187,12 +26397,12 @@
       "_origin": "ast"
     },
     {
-      "source": "backend_app_services_market_execution_rationale_49",
+      "source": "backend_app_services_market_execution_rationale_50",
       "target": "backend_app_services_market_execution_execute_market_order",
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/market_execution.py",
-      "source_location": "L49",
+      "source_location": "L50",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -27143,6 +27353,17 @@
     },
     {
       "source": "backend_app_services_treasury_adapter_hydrate_portfolio_state",
+      "target": "backend_app_services_treasury_adapter_py_datetime",
+      "relation": "references",
+      "context": "parameter_type",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/app/services/treasury_adapter.py",
+      "source_location": "L106",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_app_services_treasury_adapter_hydrate_portfolio_state",
       "target": "treasury_intelligence_portfolio_portfoliostate",
       "relation": "references",
       "context": "generic_arg",
@@ -27209,11 +27430,31 @@
     },
     {
       "source": "backend_app_services_treasury_adapter",
+      "target": "backend_app_services_treasury_adapter_get_published_observation",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/app/services/treasury_adapter.py",
+      "source_location": "L432",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_app_services_treasury_adapter",
+      "target": "backend_app_services_treasury_adapter_hydrate_decision_portfolio",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/app/services/treasury_adapter.py",
+      "source_location": "L439",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_app_services_treasury_adapter",
       "target": "backend_app_services_treasury_adapter_get_information_cutoff",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L424",
+      "source_location": "L452",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -27224,7 +27465,7 @@
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L424",
+      "source_location": "L452",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -27234,7 +27475,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L439",
+      "source_location": "L469",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -27245,7 +27486,7 @@
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L439",
+      "source_location": "L469",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -27256,7 +27497,7 @@
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L439",
+      "source_location": "L469",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -27267,7 +27508,7 @@
       "context": "generic_arg",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L439",
+      "source_location": "L469",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -27277,7 +27518,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L492",
+      "source_location": "L523",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -27288,7 +27529,7 @@
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L492",
+      "source_location": "L523",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -27299,7 +27540,7 @@
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L492",
+      "source_location": "L523",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -27310,7 +27551,7 @@
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L492",
+      "source_location": "L523",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -27321,7 +27562,7 @@
       "context": "generic_arg",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L492",
+      "source_location": "L523",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -27332,7 +27573,7 @@
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L492",
+      "source_location": "L523",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -27343,7 +27584,7 @@
       "context": "return_type",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L492",
+      "source_location": "L523",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -27353,7 +27594,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L559",
+      "source_location": "L596",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -27364,7 +27605,7 @@
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L559",
+      "source_location": "L596",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -27375,7 +27616,7 @@
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L559",
+      "source_location": "L596",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -27386,7 +27627,7 @@
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L559",
+      "source_location": "L596",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -27397,7 +27638,7 @@
       "context": "generic_arg",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L559",
+      "source_location": "L596",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -27408,7 +27649,7 @@
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L559",
+      "source_location": "L596",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -27419,7 +27660,7 @@
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L559",
+      "source_location": "L596",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -27430,7 +27671,40 @@
       "context": "return_type",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L559",
+      "source_location": "L596",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_app_services_treasury_adapter_get_published_observation",
+      "target": "backend_app_services_treasury_adapter_get_information_cutoff",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/app/services/treasury_adapter.py",
+      "source_location": "L435",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_app_services_treasury_adapter_hydrate_decision_portfolio",
+      "target": "backend_app_services_treasury_adapter_get_published_observation",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/app/services/treasury_adapter.py",
+      "source_location": "L446",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_app_services_treasury_adapter_hydrate_decision_portfolio",
+      "target": "backend_app_services_treasury_adapter_hydrate_portfolio_state",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/app/services/treasury_adapter.py",
+      "source_location": "L447",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -27441,7 +27715,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L449",
+      "source_location": "L480",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -27452,7 +27726,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L501",
+      "source_location": "L533",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -27463,7 +27737,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L569",
+      "source_location": "L607",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -27488,52 +27762,62 @@
       "_origin": "ast"
     },
     {
-      "source": "backend_app_services_treasury_adapter_rationale_111",
+      "source": "backend_app_services_treasury_adapter_rationale_112",
       "target": "backend_app_services_treasury_adapter_hydrate_portfolio_state",
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L111",
+      "source_location": "L112",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
-      "source": "backend_app_services_treasury_adapter_rationale_425",
+      "source": "backend_app_services_treasury_adapter_rationale_440",
+      "target": "backend_app_services_treasury_adapter_hydrate_decision_portfolio",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/app/services/treasury_adapter.py",
+      "source_location": "L440",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_app_services_treasury_adapter_rationale_453",
       "target": "backend_app_services_treasury_adapter_get_information_cutoff",
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L425",
+      "source_location": "L453",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
-      "source": "backend_app_services_treasury_adapter_rationale_446",
+      "source": "backend_app_services_treasury_adapter_rationale_477",
       "target": "backend_app_services_treasury_adapter_get_hourly_forecasts_from_db",
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L446",
+      "source_location": "L477",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
-      "source": "backend_app_services_treasury_adapter_rationale_500",
+      "source": "backend_app_services_treasury_adapter_rationale_532",
       "target": "backend_app_services_treasury_adapter_evaluate_liquidity_risk",
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L500",
+      "source_location": "L532",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
-      "source": "backend_app_services_treasury_adapter_rationale_568",
+      "source": "backend_app_services_treasury_adapter_rationale_606",
       "target": "backend_app_services_treasury_adapter_recommend_four_tier_allocation_decision",
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L568",
+      "source_location": "L606",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28351,7 +28635,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L52",
+      "source_location": "L53",
       "weight": 1.0,
       "context": "decorator",
       "_origin": "ast"
@@ -28362,7 +28646,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L53",
+      "source_location": "L54",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28372,7 +28656,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L58",
+      "source_location": "L59",
       "weight": 1.0,
       "context": "decorator",
       "_origin": "ast"
@@ -28383,7 +28667,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L60",
+      "source_location": "L61",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28394,7 +28678,7 @@
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L60",
+      "source_location": "L61",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28404,7 +28688,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L81",
+      "source_location": "L82",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28414,7 +28698,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L81",
+      "source_location": "L82",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28424,7 +28708,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L89",
+      "source_location": "L90",
       "weight": 1.0,
       "context": "decorator",
       "_origin": "ast"
@@ -28435,7 +28719,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L91",
+      "source_location": "L92",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28446,7 +28730,7 @@
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L91",
+      "source_location": "L92",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28456,7 +28740,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L100",
+      "source_location": "L101",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28466,7 +28750,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L100",
+      "source_location": "L101",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28476,7 +28760,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L108",
+      "source_location": "L109",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28486,7 +28770,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L108",
+      "source_location": "L109",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28496,7 +28780,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L113",
+      "source_location": "L114",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28506,7 +28790,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L113",
+      "source_location": "L114",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28516,7 +28800,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L119",
+      "source_location": "L120",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28526,7 +28810,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L119",
+      "source_location": "L120",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28536,7 +28820,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L126",
+      "source_location": "L127",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28546,7 +28830,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L126",
+      "source_location": "L127",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28556,7 +28840,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L139",
+      "source_location": "L141",
       "weight": 1.0,
       "context": "decorator",
       "_origin": "ast"
@@ -28567,7 +28851,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L141",
+      "source_location": "L143",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28578,7 +28862,7 @@
       "context": "parameter_type",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L141",
+      "source_location": "L143",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28588,7 +28872,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L159",
+      "source_location": "L161",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28598,7 +28882,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L159",
+      "source_location": "L161",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28608,7 +28892,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L166",
+      "source_location": "L168",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28618,7 +28902,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L166",
+      "source_location": "L168",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28628,7 +28912,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L177",
+      "source_location": "L179",
       "weight": 1.0,
       "context": "decorator",
       "_origin": "ast"
@@ -28639,7 +28923,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L178",
+      "source_location": "L180",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28649,7 +28933,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L185",
+      "source_location": "L187",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28659,7 +28943,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L185",
+      "source_location": "L187",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28669,7 +28953,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L197",
+      "source_location": "L199",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28679,7 +28963,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L197",
+      "source_location": "L199",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28689,7 +28973,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L208",
+      "source_location": "L210",
       "weight": 1.0,
       "context": "decorator",
       "_origin": "ast"
@@ -28700,7 +28984,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L209",
+      "source_location": "L211",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28710,7 +28994,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L215",
+      "source_location": "L217",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28720,7 +29004,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L215",
+      "source_location": "L217",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28730,7 +29014,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L223",
+      "source_location": "L225",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28740,7 +29024,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L223",
+      "source_location": "L225",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28750,7 +29034,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L236",
+      "source_location": "L238",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28760,7 +29044,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L236",
+      "source_location": "L238",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28770,7 +29054,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L248",
+      "source_location": "L250",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28780,7 +29064,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L248",
+      "source_location": "L250",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28790,7 +29074,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L269",
+      "source_location": "L271",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28800,7 +29084,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L269",
+      "source_location": "L271",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28810,7 +29094,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L289",
+      "source_location": "L291",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28820,7 +29104,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L289",
+      "source_location": "L291",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28830,7 +29114,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L308",
+      "source_location": "L310",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28840,7 +29124,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L308",
+      "source_location": "L310",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28850,7 +29134,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L316",
+      "source_location": "L318",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28860,7 +29144,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L316",
+      "source_location": "L318",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28870,7 +29154,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L329",
+      "source_location": "L331",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28880,7 +29164,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L329",
+      "source_location": "L331",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28890,7 +29174,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L339",
+      "source_location": "L344",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28900,7 +29184,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L339",
+      "source_location": "L344",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28910,7 +29194,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L359",
+      "source_location": "L364",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28920,7 +29204,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L359",
+      "source_location": "L364",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28930,7 +29214,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L363",
+      "source_location": "L368",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28940,7 +29224,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L363",
+      "source_location": "L368",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28950,7 +29234,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L367",
+      "source_location": "L372",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28960,7 +29244,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L367",
+      "source_location": "L372",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28970,7 +29254,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L371",
+      "source_location": "L376",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28980,7 +29264,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L371",
+      "source_location": "L376",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -28990,7 +29274,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L380",
+      "source_location": "L385",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -29000,7 +29284,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L380",
+      "source_location": "L385",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -29010,7 +29294,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L388",
+      "source_location": "L393",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -29020,7 +29304,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L388",
+      "source_location": "L393",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -29030,7 +29314,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L402",
+      "source_location": "L407",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -29040,7 +29324,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L402",
+      "source_location": "L407",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -29050,7 +29334,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L408",
+      "source_location": "L413",
       "weight": 1.0,
       "context": "decorator",
       "_origin": "ast"
@@ -29061,7 +29345,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L410",
+      "source_location": "L415",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -29071,7 +29355,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L416",
+      "source_location": "L421",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -29081,7 +29365,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L416",
+      "source_location": "L421",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -29091,7 +29375,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L421",
+      "source_location": "L426",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -29101,7 +29385,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L421",
+      "source_location": "L426",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -29111,7 +29395,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L430",
+      "source_location": "L435",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -29121,7 +29405,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L430",
+      "source_location": "L435",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -29131,7 +29415,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L439",
+      "source_location": "L444",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -29141,7 +29425,7 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/v1_contracts.py",
-      "source_location": "L439",
+      "source_location": "L444",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -35220,6 +35504,114 @@
       "_origin": "ast"
     },
     {
+      "source": "tests_integration_test_delayed_repo_accrual",
+      "target": "datetime",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_delayed_repo_accrual.py",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_delayed_repo_accrual",
+      "target": "decimal",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_delayed_repo_accrual.py",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_delayed_repo_accrual",
+      "target": "sqlalchemy",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_delayed_repo_accrual.py",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_delayed_repo_accrual",
+      "target": "tests_integration_test_four_tier_runtime",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_delayed_repo_accrual.py",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_delayed_repo_accrual",
+      "target": "backend_app_persistence_models",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_delayed_repo_accrual.py",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_delayed_repo_accrual",
+      "target": "backend_app_services_hourly_engine",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_delayed_repo_accrual.py",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_delayed_repo_accrual",
+      "target": "backend_app_services_run_service",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_delayed_repo_accrual.py",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_delayed_repo_accrual",
+      "target": "backend_app_v1_contracts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_delayed_repo_accrual.py",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_delayed_repo_accrual",
+      "target": "tests_integration_test_delayed_repo_accrual_test_delayed_rates_settle_at_eight_once_without_later_true_up",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_delayed_repo_accrual.py",
+      "source_location": "L16",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_delayed_repo_accrual_rationale_1",
+      "target": "tests_integration_test_delayed_repo_accrual",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_delayed_repo_accrual.py",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
       "source": "tests_integration_test_four_tier_runtime",
       "target": "os",
       "relation": "imports",
@@ -35738,6 +36130,242 @@
       "_origin": "ast"
     },
     {
+      "source": "tests_integration_test_market_data_availability",
+      "target": "datetime",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability",
+      "target": "decimal",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability",
+      "target": "pytest",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability",
+      "target": "sqlalchemy",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability",
+      "target": "tests_integration_test_four_tier_runtime",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability",
+      "target": "backend_app_persistence_models",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability",
+      "target": "backend_app_services_hourly_engine",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability",
+      "target": "backend_app_services_run_service",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability",
+      "target": "backend_app_v1_contracts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability",
+      "target": "backend_app_services_treasury_adapter",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability",
+      "target": "treasury_intelligence_liquidity_risk",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L18",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability",
+      "target": "tests_integration_test_market_data_availability_test_canonical_decisions_use_only_closed_market_hours",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L21",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_canonical_decisions_use_only_closed_market_hours",
+      "target": "tests_integration_test_market_data_availability_test_canonical_decisions_use_only_closed_market_hours_capture",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L25",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability",
+      "target": "tests_integration_test_market_data_availability_test_first_source_hour_has_no_published_market_quote",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L59",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_first_source_hour_has_no_published_market_quote",
+      "target": "tests_integration_test_market_data_availability_test_first_source_hour_has_no_published_market_quote_capture",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L63",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_publication_boundary_for_training_and_market_quotes",
+      "target": "tests_integration_test_market_data_availability_py_parametrize",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L76",
+      "weight": 1.0,
+      "context": "decorator",
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability",
+      "target": "tests_integration_test_market_data_availability_test_publication_boundary_for_training_and_market_quotes",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L77",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability",
+      "target": "tests_integration_test_market_data_availability_test_risk_rejects_unpublished_market_inputs",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L106",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability",
+      "target": "tests_integration_test_market_data_availability_test_delayed_closing_market_mark_uses_last_published_quote",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L115",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_canonical_decisions_use_only_closed_market_hours",
+      "target": "tests_integration_test_market_data_availability_test_canonical_decisions_use_only_closed_market_hours_capture",
+      "relation": "indirect_call",
+      "context": "argument",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L30",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_first_source_hour_has_no_published_market_quote",
+      "target": "tests_integration_test_market_data_availability_test_canonical_decisions_use_only_closed_market_hours_capture",
+      "relation": "indirect_call",
+      "context": "argument",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L66",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_rationale_1",
+      "target": "tests_integration_test_market_data_availability",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
       "source": "tests_integration_test_market_order_execution",
       "target": "datetime",
       "relation": "imports_from",
@@ -35896,7 +36524,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L32",
+      "source_location": "L34",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -35906,7 +36534,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L42",
+      "source_location": "L44",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -35916,7 +36544,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L49",
+      "source_location": "L51",
       "weight": 1.0,
       "context": "decorator",
       "_origin": "ast"
@@ -35927,7 +36555,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L50",
+      "source_location": "L52",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -35937,7 +36565,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L80",
+      "source_location": "L82",
       "weight": 1.0,
       "context": "decorator",
       "_origin": "ast"
@@ -35948,7 +36576,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L81",
+      "source_location": "L83",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -35958,7 +36586,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L105",
+      "source_location": "L107",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -35968,7 +36596,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L120",
+      "source_location": "L122",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -35978,7 +36606,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L127",
+      "source_location": "L129",
       "weight": 1.0,
       "context": "decorator",
       "_origin": "ast"
@@ -35989,7 +36617,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L128",
+      "source_location": "L130",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -35999,7 +36627,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L135",
+      "source_location": "L137",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -36010,7 +36638,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L53",
+      "source_location": "L55",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -36021,24 +36649,13 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L54",
+      "source_location": "L56",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "tests_integration_test_market_order_execution_test_invalid_trade_leaves_no_partial_financial_posts",
       "target": "tests_integration_test_market_order_execution_order",
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L83",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "tests_integration_test_market_order_execution_test_invalid_trade_leaves_no_partial_financial_posts",
-      "target": "tests_integration_test_market_order_execution_execute",
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
@@ -36048,13 +36665,24 @@
       "_origin": "ast"
     },
     {
+      "source": "tests_integration_test_market_order_execution_test_invalid_trade_leaves_no_partial_financial_posts",
+      "target": "tests_integration_test_market_order_execution_execute",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_market_order_execution.py",
+      "source_location": "L87",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
       "source": "tests_integration_test_market_order_execution_test_full_sale_releases_every_basis_cent_after_partial_sale",
       "target": "tests_integration_test_market_order_execution_execute",
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L107",
+      "source_location": "L109",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -36065,29 +36693,29 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L107",
+      "source_location": "L109",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "tests_integration_test_market_order_execution_test_canonical_optional_costs_are_not_required_for_a_zero_fee_trade",
       "target": "tests_integration_test_market_order_execution_order",
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L121",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "tests_integration_test_market_order_execution_test_canonical_optional_costs_are_not_required_for_a_zero_fee_trade",
-      "target": "tests_integration_test_market_order_execution_execute",
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tests/integration/test_market_order_execution.py",
       "source_location": "L123",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_order_execution_test_canonical_optional_costs_are_not_required_for_a_zero_fee_trade",
+      "target": "tests_integration_test_market_order_execution_execute",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_market_order_execution.py",
+      "source_location": "L125",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -36098,7 +36726,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L134",
+      "source_location": "L136",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -36110,7 +36738,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.85,
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L138",
+      "source_location": "L140",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -37157,7 +37785,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "tests/integration/test_strategy_dispatch_and_causality.py",
-      "source_location": "L344",
+      "source_location": "L345",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -37213,7 +37841,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tests/integration/test_strategy_dispatch_and_causality.py",
-      "source_location": "L347",
+      "source_location": "L348",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -37288,12 +37916,12 @@
       "_origin": "ast"
     },
     {
-      "source": "tests_integration_test_strategy_dispatch_and_causality_rationale_345",
+      "source": "tests_integration_test_strategy_dispatch_and_causality_rationale_346",
       "target": "tests_integration_test_strategy_dispatch_and_causality_test_accounting_invariants_and_sweep_across_strategies",
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "tests/integration/test_strategy_dispatch_and_causality.py",
-      "source_location": "L345",
+      "source_location": "L346",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -59772,6 +60400,16 @@
       "_origin": "ast"
     },
     {
+      "source": "docs_runtime_release_checkpoint_core_runtime_release_checkpoints",
+      "target": "docs_runtime_release_checkpoint_confirmed_publication_and_delayed_repo_convention",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/RUNTIME_RELEASE_CHECKPOINT.md",
+      "source_location": "L175",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
       "source": "docs_decision_engine",
       "target": "docs_decision_engine_1_overview_objective",
       "relation": "contains",
@@ -62569,6 +63207,17 @@
     },
     {
       "source": "backend_app_services_hourly_engine",
+      "target": "backend_app_services_accounting_repo_hourly_rates",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/app/services/hourly_engine.py",
+      "source_location": "L21",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_app_services_hourly_engine",
       "target": "backend_app_services_accounting_repo_interest_cents",
       "relation": "imports",
       "context": "import",
@@ -62844,7 +63493,29 @@
     },
     {
       "source": "backend_app_services_hourly_engine",
+      "target": "backend_app_services_treasury_adapter_get_published_observation",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/app/services/hourly_engine.py",
+      "source_location": "L41",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_app_services_hourly_engine",
       "target": "backend_app_services_treasury_adapter_hydrate_portfolio_state",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/app/services/hourly_engine.py",
+      "source_location": "L41",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_app_services_hourly_engine",
+      "target": "backend_app_services_treasury_adapter_hydrate_decision_portfolio",
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -62900,6 +63571,17 @@
     {
       "source": "backend_app_services_market_execution",
       "target": "backend_app_persistence_models_ledgerentry",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/app/services/market_execution.py",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_app_services_market_execution",
+      "target": "backend_app_persistence_models_organizerobservation",
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -64423,6 +65105,116 @@
       "confidence": "EXTRACTED",
       "source_file": "tests/forecasting/test_forecaster.py",
       "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_delayed_repo_accrual",
+      "target": "tests_integration_test_four_tier_runtime_dataset",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_delayed_repo_accrual.py",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_delayed_repo_accrual",
+      "target": "tests_integration_test_four_tier_runtime_pg_engine",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_delayed_repo_accrual.py",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_delayed_repo_accrual",
+      "target": "tests_integration_test_four_tier_runtime_pg_url",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_delayed_repo_accrual.py",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_delayed_repo_accrual",
+      "target": "tests_integration_test_four_tier_runtime_session",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_delayed_repo_accrual.py",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability",
+      "target": "tests_integration_test_four_tier_runtime_dataset",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability",
+      "target": "tests_integration_test_four_tier_runtime_pg_engine",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability",
+      "target": "tests_integration_test_four_tier_runtime_pg_url",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability",
+      "target": "tests_integration_test_four_tier_runtime_session",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability",
+      "target": "treasury_intelligence_liquidity_risk_calibratedforecastallowance",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L18",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability",
+      "target": "tests_integration_test_market_order_execution_order",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L116",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68267,12 +69059,34 @@
     },
     {
       "source": "backend_app_services_hourly_engine_execute_hourly_step",
-      "target": "backend_app_services_treasury_adapter_hydrate_portfolio_state",
+      "target": "backend_app_services_treasury_adapter_get_information_cutoff",
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L151",
+      "source_location": "L147",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_app_services_hourly_engine_execute_hourly_step",
+      "target": "backend_app_services_treasury_adapter_get_published_observation",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/app/services/hourly_engine.py",
+      "source_location": "L148",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_app_services_hourly_engine_execute_hourly_step",
+      "target": "backend_app_services_treasury_adapter_hydrate_decision_portfolio",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/app/services/hourly_engine.py",
+      "source_location": "L160",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68283,7 +69097,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L154",
+      "source_location": "L162",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68294,7 +69108,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L170",
+      "source_location": "L180",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68305,7 +69119,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L179",
+      "source_location": "L189",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68316,7 +69130,18 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L198",
+      "source_location": "L208",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_app_services_hourly_engine_execute_hourly_step",
+      "target": "backend_app_services_accounting_repo_hourly_rates",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/app/services/hourly_engine.py",
+      "source_location": "L237",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68327,7 +69152,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L327",
+      "source_location": "L341",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68338,7 +69163,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L407",
+      "source_location": "L423",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68349,7 +69174,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L426",
+      "source_location": "L443",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68360,7 +69185,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L446",
+      "source_location": "L464",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68371,7 +69196,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L486",
+      "source_location": "L504",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68382,18 +69207,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L536",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "backend_app_services_hourly_engine_execute_hourly_step",
-      "target": "backend_app_services_treasury_adapter_get_information_cutoff",
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L646",
+      "source_location": "L554",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68404,7 +69218,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L675",
+      "source_location": "L693",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68415,7 +69229,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L678",
+      "source_location": "L697",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68426,7 +69240,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L700",
+      "source_location": "L720",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68437,7 +69251,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L745",
+      "source_location": "L772",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68448,7 +69262,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L875",
+      "source_location": "L906",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68459,7 +69273,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L877",
+      "source_location": "L908",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68470,7 +69284,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L884",
+      "source_location": "L918",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68481,7 +69295,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L952",
+      "source_location": "L992",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68492,7 +69306,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L1026",
+      "source_location": "L1076",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68514,7 +69328,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/market_execution.py",
-      "source_location": "L73",
+      "source_location": "L81",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68525,7 +69339,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/market_execution.py",
-      "source_location": "L105",
+      "source_location": "L114",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68536,7 +69350,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/market_execution.py",
-      "source_location": "L126",
+      "source_location": "L135",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68547,7 +69361,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/market_execution.py",
-      "source_location": "L127",
+      "source_location": "L136",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68558,7 +69372,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/market_execution.py",
-      "source_location": "L164",
+      "source_location": "L173",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68569,7 +69383,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/market_execution.py",
-      "source_location": "L176",
+      "source_location": "L185",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68580,7 +69394,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/market_execution.py",
-      "source_location": "L198",
+      "source_location": "L210",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68591,7 +69405,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/market_execution.py",
-      "source_location": "L201",
+      "source_location": "L213",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68602,7 +69416,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/market_execution.py",
-      "source_location": "L203",
+      "source_location": "L215",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68613,7 +69427,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/market_execution.py",
-      "source_location": "L221",
+      "source_location": "L233",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68624,7 +69438,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/market_execution.py",
-      "source_location": "L229",
+      "source_location": "L241",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68888,7 +69702,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/run_service.py",
-      "source_location": "L606",
+      "source_location": "L607",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68899,7 +69713,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/run_service.py",
-      "source_location": "L616",
+      "source_location": "L617",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68910,7 +69724,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/run_service.py",
-      "source_location": "L621",
+      "source_location": "L622",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68932,7 +69746,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L119",
+      "source_location": "L120",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68943,7 +69757,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L131",
+      "source_location": "L132",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68954,7 +69768,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L140",
+      "source_location": "L141",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68965,7 +69779,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L168",
+      "source_location": "L169",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68976,7 +69790,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L173",
+      "source_location": "L175",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68987,7 +69801,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L184",
+      "source_location": "L186",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -68998,7 +69812,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L219",
+      "source_location": "L221",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -69009,7 +69823,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L221",
+      "source_location": "L224",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -69020,7 +69834,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L231",
+      "source_location": "L236",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -69031,7 +69845,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L282",
+      "source_location": "L290",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -69042,7 +69856,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L319",
+      "source_location": "L327",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -69053,7 +69867,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L326",
+      "source_location": "L334",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -69064,7 +69878,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L364",
+      "source_location": "L372",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -69075,7 +69889,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L386",
+      "source_location": "L394",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -69086,7 +69900,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L394",
+      "source_location": "L402",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -69097,7 +69911,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L402",
+      "source_location": "L410",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -69108,7 +69922,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L470",
+      "source_location": "L501",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -69119,7 +69933,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L480",
+      "source_location": "L511",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -69130,7 +69944,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L511",
+      "source_location": "L543",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -69141,7 +69955,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L521",
+      "source_location": "L558",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -69152,7 +69966,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L536",
+      "source_location": "L573",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -69163,7 +69977,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L547",
+      "source_location": "L584",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -69174,7 +69988,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L556",
+      "source_location": "L593",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -69185,7 +69999,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L576",
+      "source_location": "L619",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -69196,7 +70010,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L586",
+      "source_location": "L629",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -69207,7 +70021,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L601",
+      "source_location": "L644",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -69218,7 +70032,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L612",
+      "source_location": "L655",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -69229,7 +70043,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L627",
+      "source_location": "L672",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -69240,7 +70054,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L650",
+      "source_location": "L695",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -69251,7 +70065,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L661",
+      "source_location": "L707",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -69262,7 +70076,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L667",
+      "source_location": "L713",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -69949,13 +70763,24 @@
       "_origin": "ast"
     },
     {
+      "source": "tests_integration_test_market_data_availability_test_delayed_closing_market_mark_uses_last_published_quote",
+      "target": "tests_integration_test_market_order_execution_order",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L127",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
       "source": "tests_integration_test_market_order_execution_order",
       "target": "treasury_intelligence_portfolio_recommendedorder",
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L33",
+      "source_location": "L35",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -69966,7 +70791,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L38",
+      "source_location": "L40",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -69977,7 +70802,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tests/integration/test_strategy_dispatch_and_causality.py",
-      "source_location": "L311",
+      "source_location": "L312",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -72985,13 +73810,13 @@
       "_origin": "ast"
     },
     {
-      "source": "backend_app_services_accounting_repo_interest_cents",
+      "source": "backend_app_services_accounting_repo_hourly_rates",
       "target": "backend_app_persistence_models_organizerobservation",
       "relation": "uses",
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/accounting.py",
-      "source_location": "L43",
+      "source_location": "L53",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73002,7 +73827,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/accounting.py",
-      "source_location": "L60",
+      "source_location": "L89",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73013,7 +73838,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L708",
+      "source_location": "L729",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73024,7 +73849,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L867",
+      "source_location": "L897",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73035,7 +73860,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L868",
+      "source_location": "L898",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73046,7 +73871,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L198",
+      "source_location": "L208",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73057,7 +73882,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L179",
+      "source_location": "L189",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73068,7 +73893,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L426",
+      "source_location": "L443",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73079,7 +73904,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L133",
+      "source_location": "L135",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73090,7 +73915,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L440",
+      "source_location": "L457",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73101,7 +73926,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L486",
+      "source_location": "L504",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73112,7 +73937,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L952",
+      "source_location": "L992",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73123,7 +73948,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L745",
+      "source_location": "L772",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73134,7 +73959,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L89",
+      "source_location": "L91",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73145,7 +73970,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L119",
+      "source_location": "L121",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73156,7 +73981,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/hourly_engine.py",
-      "source_location": "L1026",
+      "source_location": "L1076",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73178,7 +74003,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/market_execution.py",
-      "source_location": "L83",
+      "source_location": "L91",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73189,7 +74014,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/market_execution.py",
-      "source_location": "L196",
+      "source_location": "L207",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73200,7 +74025,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/market_execution.py",
-      "source_location": "L83",
+      "source_location": "L91",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73211,7 +74036,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/market_execution.py",
-      "source_location": "L79",
+      "source_location": "L87",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73222,7 +74047,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/market_execution.py",
-      "source_location": "L229",
+      "source_location": "L241",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73233,7 +74058,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/market_execution.py",
-      "source_location": "L164",
+      "source_location": "L173",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73244,7 +74069,18 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/market_execution.py",
-      "source_location": "L221",
+      "source_location": "L233",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_app_services_market_execution_execute_market_order",
+      "target": "backend_app_persistence_models_organizerobservation",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "backend/app/services/market_execution.py",
+      "source_location": "L73",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73266,7 +74102,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/market_execution.py",
-      "source_location": "L73",
+      "source_location": "L81",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73277,7 +74113,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/market_execution.py",
-      "source_location": "L56",
+      "source_location": "L57",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73530,7 +74366,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/run_service.py",
-      "source_location": "L606",
+      "source_location": "L607",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73563,7 +74399,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/run_service.py",
-      "source_location": "L621",
+      "source_location": "L622",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73706,7 +74542,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L110",
+      "source_location": "L111",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73717,7 +74553,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L110",
+      "source_location": "L111",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73728,7 +74564,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L110",
+      "source_location": "L111",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73744,13 +74580,24 @@
       "_origin": "ast"
     },
     {
+      "source": "backend_app_services_treasury_adapter_get_published_observation",
+      "target": "backend_app_persistence_models_organizerobservation",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "backend/app/services/treasury_adapter.py",
+      "source_location": "L433",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
       "source": "backend_app_services_treasury_adapter_get_hourly_forecasts_from_db",
       "target": "backend_app_persistence_models_organizerobservation",
       "relation": "uses",
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L454",
+      "source_location": "L485",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73761,7 +74608,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L495",
+      "source_location": "L526",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73772,7 +74619,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L562",
+      "source_location": "L599",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73783,7 +74630,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L110",
+      "source_location": "L111",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73794,7 +74641,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L110",
+      "source_location": "L111",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73816,7 +74663,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L497",
+      "source_location": "L528",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73827,7 +74674,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L564",
+      "source_location": "L601",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73838,7 +74685,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L547",
+      "source_location": "L584",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73849,7 +74696,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L612",
+      "source_location": "L655",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73860,7 +74707,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L499",
+      "source_location": "L531",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73871,7 +74718,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L536",
+      "source_location": "L573",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73882,7 +74729,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L601",
+      "source_location": "L644",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73893,7 +74740,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L217",
+      "source_location": "L219",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73904,7 +74751,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L131",
+      "source_location": "L132",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73915,7 +74762,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L269",
+      "source_location": "L274",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73937,7 +74784,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L494",
+      "source_location": "L525",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73948,7 +74795,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L561",
+      "source_location": "L598",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73959,7 +74806,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L445",
+      "source_location": "L476",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73970,7 +74817,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L496",
+      "source_location": "L527",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73981,7 +74828,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L563",
+      "source_location": "L600",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -73992,7 +74839,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L394",
+      "source_location": "L402",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -74003,7 +74850,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L386",
+      "source_location": "L394",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -74014,7 +74861,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L318",
+      "source_location": "L326",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -74025,7 +74872,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L110",
+      "source_location": "L111",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -74036,7 +74883,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L493",
+      "source_location": "L524",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -74047,7 +74894,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L560",
+      "source_location": "L597",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -74058,7 +74905,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L364",
+      "source_location": "L372",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -74069,7 +74916,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L140",
+      "source_location": "L141",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -74080,7 +74927,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L158",
+      "source_location": "L159",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -74091,7 +74938,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L661",
+      "source_location": "L707",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -74102,7 +74949,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L567",
+      "source_location": "L605",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -74113,7 +74960,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L650",
+      "source_location": "L695",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -74124,7 +74971,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "backend/app/services/treasury_adapter.py",
-      "source_location": "L627",
+      "source_location": "L672",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -76989,6 +77836,94 @@
       "_origin": "ast"
     },
     {
+      "source": "tests_integration_test_delayed_repo_accrual_test_delayed_rates_settle_at_eight_once_without_later_true_up",
+      "target": "backend_app_persistence_models_cashaccount",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "tests/integration/test_delayed_repo_accrual.py",
+      "source_location": "L52",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_delayed_repo_accrual_test_delayed_rates_settle_at_eight_once_without_later_true_up",
+      "target": "backend_app_persistence_models_investmentmovement",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "tests/integration/test_delayed_repo_accrual.py",
+      "source_location": "L47",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_delayed_repo_accrual_test_delayed_rates_settle_at_eight_once_without_later_true_up",
+      "target": "backend_app_persistence_models_organizerobservation",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "tests/integration/test_delayed_repo_accrual.py",
+      "source_location": "L17",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_delayed_repo_accrual_test_delayed_rates_settle_at_eight_once_without_later_true_up",
+      "target": "backend_app_persistence_models_portfoliovaluation",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "tests/integration/test_delayed_repo_accrual.py",
+      "source_location": "L54",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_delayed_repo_accrual_test_delayed_rates_settle_at_eight_once_without_later_true_up",
+      "target": "backend_app_persistence_models_repoposition",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "tests/integration/test_delayed_repo_accrual.py",
+      "source_location": "L36",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_delayed_repo_accrual_test_delayed_rates_settle_at_eight_once_without_later_true_up",
+      "target": "backend_app_persistence_models_simulationrun",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "tests/integration/test_delayed_repo_accrual.py",
+      "source_location": "L21",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_delayed_repo_accrual_test_delayed_rates_settle_at_eight_once_without_later_true_up",
+      "target": "backend_app_persistence_models_treasurydecision",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "tests/integration/test_delayed_repo_accrual.py",
+      "source_location": "L57",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_delayed_repo_accrual_test_delayed_rates_settle_at_eight_once_without_later_true_up",
+      "target": "backend_app_v1_contracts_createrunrequest",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "tests/integration/test_delayed_repo_accrual.py",
+      "source_location": "L19",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
       "source": "tests_integration_test_four_tier_runtime_dataset",
       "target": "backend_app_data_organizer_organizerdatasetsource",
       "relation": "uses",
@@ -77165,13 +78100,189 @@
       "_origin": "ast"
     },
     {
+      "source": "tests_integration_test_market_data_availability_test_canonical_decisions_use_only_closed_market_hours",
+      "target": "backend_app_persistence_models_organizerobservation",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L31",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_publication_boundary_for_training_and_market_quotes",
+      "target": "backend_app_persistence_models_organizerobservation",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L78",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_risk_rejects_unpublished_market_inputs",
+      "target": "backend_app_persistence_models_organizerobservation",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L107",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_delayed_closing_market_mark_uses_last_published_quote",
+      "target": "backend_app_persistence_models_organizerobservation",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L119",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_publication_boundary_for_training_and_market_quotes",
+      "target": "backend_app_persistence_models_simulationrun",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L82",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_risk_rejects_unpublished_market_inputs",
+      "target": "backend_app_persistence_models_simulationrun",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L109",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_delayed_closing_market_mark_uses_last_published_quote",
+      "target": "backend_app_persistence_models_simulationrun",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L123",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_canonical_decisions_use_only_closed_market_hours",
+      "target": "backend_app_v1_contracts_createrunrequest",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L33",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_first_source_hour_has_no_published_market_quote",
+      "target": "backend_app_v1_contracts_createrunrequest",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L67",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_publication_boundary_for_training_and_market_quotes",
+      "target": "backend_app_v1_contracts_createrunrequest",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L80",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_risk_rejects_unpublished_market_inputs",
+      "target": "backend_app_v1_contracts_createrunrequest",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L108",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_delayed_closing_market_mark_uses_last_published_quote",
+      "target": "backend_app_v1_contracts_createrunrequest",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L121",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_publication_boundary_for_training_and_market_quotes",
+      "target": "treasury_intelligence_liquidity_risk_calibratedforecastallowance",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L98",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_delayed_closing_market_mark_uses_last_published_quote",
+      "target": "backend_app_persistence_models_bondposition",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L133",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_delayed_closing_market_mark_uses_last_published_quote",
+      "target": "backend_app_persistence_models_cashaccount",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L125",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_delayed_closing_market_mark_uses_last_published_quote",
+      "target": "backend_app_persistence_models_portfoliovaluation",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L137",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
       "source": "tests_integration_test_market_order_execution_test_purchase_and_partial_sale_conserve_basis_and_account_for_fees",
       "target": "backend_app_persistence_models_bondposition",
       "relation": "uses",
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L55",
+      "source_location": "L57",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -77182,7 +78293,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L108",
+      "source_location": "L110",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -77193,7 +78304,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L143",
+      "source_location": "L145",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -77204,7 +78315,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L25",
+      "source_location": "L27",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -77215,7 +78326,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L55",
+      "source_location": "L57",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -77226,7 +78337,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L143",
+      "source_location": "L145",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -77237,7 +78348,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L64",
+      "source_location": "L66",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -77248,7 +78359,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L112",
+      "source_location": "L114",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -77259,7 +78370,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L74",
+      "source_location": "L76",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -77270,7 +78381,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L86",
+      "source_location": "L88",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -77281,7 +78392,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L26",
+      "source_location": "L23",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -77292,7 +78403,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L59",
+      "source_location": "L61",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -77303,7 +78414,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L145",
+      "source_location": "L147",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -77314,7 +78425,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L115",
+      "source_location": "L117",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -77325,7 +78436,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L157",
+      "source_location": "L159",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -77336,7 +78447,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L24",
+      "source_location": "L26",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -77347,7 +78458,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L23",
+      "source_location": "L24",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -77358,7 +78469,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L38",
+      "source_location": "L40",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -77369,7 +78480,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L33",
+      "source_location": "L35",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -77380,7 +78491,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L153",
+      "source_location": "L155",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -77391,7 +78502,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L140",
+      "source_location": "L142",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -77622,7 +78733,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/integration/test_strategy_dispatch_and_causality.py",
-      "source_location": "L358",
+      "source_location": "L359",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -77666,7 +78777,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/integration/test_strategy_dispatch_and_causality.py",
-      "source_location": "L374",
+      "source_location": "L375",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -77710,7 +78821,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/integration/test_strategy_dispatch_and_causality.py",
-      "source_location": "L311",
+      "source_location": "L312",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -81261,6 +82372,30 @@
       "_origin": "ast"
     },
     {
+      "source": "tests_integration_test_delayed_repo_accrual_test_delayed_rates_settle_at_eight_once_without_later_true_up",
+      "target": "backend_app_services_run_service_create_simulation_run",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/integration/test_delayed_repo_accrual.py",
+      "source_location": "L19",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_delayed_repo_accrual_test_delayed_rates_settle_at_eight_once_without_later_true_up",
+      "target": "backend_app_services_hourly_engine_execute_hourly_step",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/integration/test_delayed_repo_accrual.py",
+      "source_location": "L35",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
       "source": "tests_integration_test_four_tier_runtime_pg_engine",
       "target": "backend_app_persistence_migrations_apply_migrations",
       "relation": "calls",
@@ -81345,6 +82480,210 @@
       "_origin": "ast"
     },
     {
+      "source": "tests_integration_test_market_data_availability_test_canonical_decisions_use_only_closed_market_hours",
+      "target": "backend_app_services_run_service_create_simulation_run",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L33",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_canonical_decisions_use_only_closed_market_hours",
+      "target": "backend_app_services_hourly_engine_execute_hourly_step",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L35",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_first_source_hour_has_no_published_market_quote",
+      "target": "backend_app_services_run_service_create_simulation_run",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L67",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_first_source_hour_has_no_published_market_quote",
+      "target": "backend_app_services_hourly_engine_execute_hourly_step",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L68",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_publication_boundary_for_training_and_market_quotes",
+      "target": "backend_app_services_run_service_create_simulation_run",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L80",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_publication_boundary_for_training_and_market_quotes",
+      "target": "backend_app_services_treasury_adapter_hydrate_decision_portfolio",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L83",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_publication_boundary_for_training_and_market_quotes",
+      "target": "backend_app_services_treasury_adapter_get_hourly_forecasts_from_db",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L88",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_publication_boundary_for_training_and_market_quotes",
+      "target": "backend_app_services_treasury_adapter_get_information_cutoff",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L91",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_publication_boundary_for_training_and_market_quotes",
+      "target": "backend_app_services_treasury_adapter_build_four_tier_policy",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L97",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_publication_boundary_for_training_and_market_quotes",
+      "target": "backend_app_services_treasury_adapter_recommend_four_tier_allocation_decision",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L102",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_risk_rejects_unpublished_market_inputs",
+      "target": "backend_app_services_run_service_create_simulation_run",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L108",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_risk_rejects_unpublished_market_inputs",
+      "target": "backend_app_services_treasury_adapter_hydrate_portfolio_state",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L110",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_risk_rejects_unpublished_market_inputs",
+      "target": "backend_app_services_treasury_adapter_evaluate_liquidity_risk",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L112",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_risk_rejects_unpublished_market_inputs",
+      "target": "backend_app_services_treasury_adapter_build_four_tier_policy",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L112",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_delayed_closing_market_mark_uses_last_published_quote",
+      "target": "backend_app_services_run_service_create_simulation_run",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L121",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_delayed_closing_market_mark_uses_last_published_quote",
+      "target": "backend_app_services_market_execution_execute_market_order",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L129",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_market_data_availability_test_delayed_closing_market_mark_uses_last_published_quote",
+      "target": "backend_app_services_hourly_engine_execute_hourly_step",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/integration/test_market_data_availability.py",
+      "source_location": "L132",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
       "source": "tests_integration_test_market_order_execution_market_state",
       "target": "backend_app_services_run_service_create_simulation_run",
       "relation": "calls",
@@ -81352,7 +82691,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tests/integration/test_market_order_execution.py",
-      "source_location": "L23",
+      "source_location": "L24",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -81526,19 +82865,7 @@
     },
     {
       "source": "tests_integration_test_strategy_dispatch_and_causality_test_calibration_artifacts_after_cutoff_rejected",
-      "target": "backend_app_services_treasury_adapter_hydrate_portfolio_state",
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "tests/integration/test_strategy_dispatch_and_causality.py",
-      "source_location": "L306",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "tests_integration_test_strategy_dispatch_and_causality_test_calibration_artifacts_after_cutoff_rejected",
-      "target": "backend_app_services_treasury_adapter_build_four_tier_policy",
+      "target": "backend_app_services_treasury_adapter_hydrate_decision_portfolio",
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
@@ -81550,7 +82877,7 @@
     },
     {
       "source": "tests_integration_test_strategy_dispatch_and_causality_test_calibration_artifacts_after_cutoff_rejected",
-      "target": "backend_app_services_treasury_adapter_get_information_cutoff",
+      "target": "backend_app_services_treasury_adapter_build_four_tier_policy",
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
@@ -81562,13 +82889,25 @@
     },
     {
       "source": "tests_integration_test_strategy_dispatch_and_causality_test_calibration_artifacts_after_cutoff_rejected",
+      "target": "backend_app_services_treasury_adapter_get_information_cutoff",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/integration/test_strategy_dispatch_and_causality.py",
+      "source_location": "L309",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_strategy_dispatch_and_causality_test_calibration_artifacts_after_cutoff_rejected",
       "target": "backend_app_services_treasury_adapter_evaluate_liquidity_risk",
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tests/integration/test_strategy_dispatch_and_causality.py",
-      "source_location": "L320",
+      "source_location": "L321",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -81580,7 +82919,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tests/integration/test_strategy_dispatch_and_causality.py",
-      "source_location": "L351",
+      "source_location": "L352",
       "weight": 1.0,
       "_origin": "ast"
     },

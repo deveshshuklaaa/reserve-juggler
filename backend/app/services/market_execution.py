@@ -9,7 +9,7 @@ from uuid import uuid4, uuid5
 
 from sqlalchemy import select
 
-from app.persistence.models import BondPosition, EquityPosition, InvestmentMovement, LedgerEntry, PositionValuation
+from app.persistence.models import BondPosition, EquityPosition, InvestmentMovement, LedgerEntry, OrganizerObservation, PositionValuation
 from app.services.accounting import market_cost_basis
 from treasury_intelligence.instrument_economics import (
     calculate_bond_economics, calculate_equity_economics, percentage_cost_cents, usd_to_ledger_cents,
@@ -45,7 +45,8 @@ def record_market_valuation(session, run, position, observation, realized_delta=
     session.flush()
 
 
-def execute_market_order(session, run, cash, instruction, observation, step, minimum_cash_cents=0):
+def execute_market_order(session, run, cash, instruction, observation, step,
+                         minimum_cash_cents=0, publication_delay_seconds=0):
     """Fill a canonical market order atomically in the caller's transaction.
 
     One USD per index-point per unit matches the existing canonical adapter.
@@ -57,6 +58,8 @@ def execute_market_order(session, run, cash, instruction, observation, step, min
     except (ValueError, TypeError, AttributeError) as error:
         raise TradeRejected(f"Invalid canonical recommendation: {error}") from error
     o = instruction
+    if type(publication_delay_seconds) is not int or not 0 <= publication_delay_seconds <= 2147483647:
+        raise TradeRejected("Invalid publication delay")
     if o.action not in {"BUY_BONDS", "SELL_BONDS", "BUY_EQUITIES", "SELL_EQUITIES"}:
         raise TradeRejected("Not a market trade")
     if (o.run_id != run.id or cash.run_id != run.id or o.dataset_id != run.dataset_id
@@ -65,6 +68,11 @@ def execute_market_order(session, run, cash, instruction, observation, step, min
             or o.source_observation_timestamp is None
             or o.source_observation_timestamp > observation.timestamp):
         raise TradeRejected("Run, source, or decision-time mismatch")
+    if o.source_observation_timestamp + timedelta(hours=1, seconds=publication_delay_seconds) > o.as_of:
+        raise TradeRejected("Recommendation references an unpublished market quote")
+    quote = session.get(OrganizerObservation, (run.dataset_id, o.source_observation_timestamp))
+    if quote is None:
+        raise TradeRejected("Recommendation references a missing source quote")
     if (o.earliest_execution_at is not None and
             (o.earliest_execution_at > observation.timestamp or o.expected_settlement_at > observation.timestamp)):
         raise TradeRejected("Deferred market settlement is not implemented")
@@ -81,9 +89,10 @@ def execute_market_order(session, run, cash, instruction, observation, step, min
         raise TradeRejected("Recommendation already executed")
     bond = o.tier == 2
     model = BondPosition if bond else EquityPosition
-    price = observation.tier2_bond_price_index if bond else observation.tier3_stock_index_price
-    haircut = (observation.tier2_bond_liquidation_haircut_pct if bond
-               else observation.tier3_stock_liquidation_haircut_pct)
+    # Explicit available-index fill convention, not an unavailable same-hour mark.
+    price = quote.tier2_bond_price_index if bond else quote.tier3_stock_index_price
+    haircut = (quote.tier2_bond_liquidation_haircut_pct if bond
+               else quote.tier3_stock_liquidation_haircut_pct)
     fee = costs.transaction_cost_cents
     buy = o.action.startswith("BUY_")
     with localcontext() as context:
@@ -105,13 +114,13 @@ def execute_market_order(session, run, cash, instruction, observation, step, min
                 current_market_price_index=price, current_market_value_cents=usd_to_ledger_cents(quantity * price),
                 realized_pnl_cents=0, liquidation_haircut_pct=haircut,
                 liquidation_cost_cents=0, liquidation_proceeds_cents=0,
-                market_observation_timestamp=observation.timestamp, status="OPEN")
+                market_observation_timestamp=quote.timestamp, status="OPEN")
             position.unrealized_pnl_cents = position.current_market_value_cents - principal
             if bond:
-                position.supplied_yield_pct = observation.tier2_bond_yield_pct
-                position.modified_duration = observation.tier2_bond_mod_duration
+                position.supplied_yield_pct = quote.tier2_bond_yield_pct
+                position.modified_duration = quote.tier2_bond_mod_duration
             else:
-                position.supplied_volatility_pct = observation.tier3_stock_volatility_pct
+                position.supplied_volatility_pct = quote.tier3_stock_volatility_pct
             delta = -principal
         else:
             position = session.get(model, o.position_id)
@@ -149,7 +158,7 @@ def execute_market_order(session, run, cash, instruction, observation, step, min
             position.realized_pnl_cents = (position.realized_pnl_cents or 0) + realized
             position.liquidation_cost_cents = (position.liquidation_cost_cents or 0) + cost
             position.liquidation_proceeds_cents = (position.liquidation_proceeds_cents or 0) + delta
-            position.market_observation_timestamp = observation.timestamp
+            position.market_observation_timestamp = quote.timestamp
         source = dict(run_id=run.id, source_type=run.source_type, dataset_id=run.dataset_id,
                       source_observation_timestamp=observation.timestamp)
         ledger_ids = []
@@ -183,6 +192,8 @@ def execute_market_order(session, run, cash, instruction, observation, step, min
         return dict(receipt_version="runtime-execution-v1",
             run_id=str(run.id), step=step, order_id=str(o.id), recommendation_reference=str(o.id), action=o.action,
             position_id=position.id, requested_amount_cents=o.amount_cents,
+            quote_observation_timestamp=quote.timestamp.isoformat(),
+            quote_available_at=(quote.timestamp + timedelta(hours=1, seconds=publication_delay_seconds)).isoformat(),
             executed_amount_cents=principal if buy else gross, status="EXECUTED", reason="Validated full fill",
             quantity=str(quantity), price_index=str(price), principal_cents=principal, gross_cents=gross,
             cash_delta_cents=delta-fee, transaction_cost_cents=fee, liquidation_cost_cents=cost,
@@ -190,19 +201,20 @@ def execute_market_order(session, run, cash, instruction, observation, step, min
             ledger_entry_ids=ledger_ids, movement_id=str(movement.id))
 
 
-def emergency_liquidate(session, run, cash, position, observation, step):
+def emergency_liquidate(session, run, cash, position, observation, step, market_observation=None):
     if position.run_id != run.id or position.status != "OPEN" or position.acquired_at > observation.timestamp:
         raise ValueError("Emergency liquidation requires an owned, open, already-acquired position")
     bond = isinstance(position, BondPosition)
+    market = market_observation or observation
     if bond:
         quote = calculate_bond_economics(position.quantity, position.acquisition_price_index,
-            observation.tier2_bond_price_index, quoted_yield_pct=observation.tier2_bond_yield_pct,
-            liquidation_haircut_pct=observation.tier2_bond_liquidation_haircut_pct,
+            market.tier2_bond_price_index, quoted_yield_pct=market.tier2_bond_yield_pct,
+            liquidation_haircut_pct=market.tier2_bond_liquidation_haircut_pct,
             cost_basis_cents=market_cost_basis(session, position))
     else:
         quote = calculate_equity_economics(position.quantity, position.acquisition_price_index,
-            observation.tier3_stock_index_price, annual_volatility_pct=observation.tier3_stock_volatility_pct,
-            emergency_sale=True, slippage_pct=observation.tier3_stock_liquidation_haircut_pct,
+            market.tier3_stock_index_price, annual_volatility_pct=market.tier3_stock_volatility_pct,
+            emergency_sale=True, slippage_pct=market.tier3_stock_liquidation_haircut_pct,
             cost_basis_cents=market_cost_basis(session, position))
     before = cash.balance_cents
     cash.balance_cents += quote.net_liquidation_proceeds_cents
@@ -211,7 +223,7 @@ def emergency_liquidate(session, run, cash, position, observation, step):
     position.status = "CLOSED"
     position.current_market_price_index = quote.current_price_index
     position.current_market_value_cents = 0
-    position.market_observation_timestamp = observation.timestamp
+    position.market_observation_timestamp = market.timestamp
     position.unrealized_pnl_cents = 0
     position.realized_pnl_cents = (position.realized_pnl_cents or 0) + gross_pnl
     position.liquidation_cost_cents = (position.liquidation_cost_cents or 0) + quote.liquidation_cost_cents

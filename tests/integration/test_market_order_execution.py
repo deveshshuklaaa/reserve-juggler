@@ -20,7 +20,9 @@ from treasury_intelligence.portfolio import CostBreakdown, RecommendedOrder
 
 @pytest.fixture
 def market_state(session):
-    created = create_simulation_run(session, CreateRunRequest())
+    first = session.scalar(select(OrganizerObservation).order_by(OrganizerObservation.timestamp))
+    created = create_simulation_run(session, CreateRunRequest(),
+        source_start_timestamp=first.timestamp + timedelta(hours=1))
     run = session.get(SimulationRun, created.run_id)
     cash = session.scalar(select(CashAccount).where(CashAccount.run_id == run.id))
     row = session.scalar(select(OrganizerObservation).where(
@@ -32,7 +34,7 @@ def market_state(session):
 def order(run, row, action, *, quantity="2", amount=2_000_000, position_id=None, fee=0):
     return RecommendedOrder(id=uuid4(), run_id=run.id, time_basis="UNSPECIFIED",
         source_type=run.source_type, dataset_id=run.dataset_id,
-        source_observation_timestamp=row.timestamp, as_of=row.timestamp,
+        source_observation_timestamp=row.timestamp-timedelta(hours=1), as_of=row.timestamp,
         action=action, tier=2 if "BONDS" in action else 3,
         position_id=position_id, amount_cents=amount, quantity=Decimal(quantity),
         estimated_cost_cents=fee, expected_costs=CostBreakdown(transaction_cost_cents=fee),

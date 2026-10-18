@@ -48,6 +48,7 @@ class TreasuryPolicy(ContractModel):
     allow_emergency_equity_liquidation: bool = Field(default=False, strict=True)
     allow_overdraft: bool = Field(default=True, strict=True)
     max_overdraft_cents: int = Field(default=5000000000, strict=True, ge=0, le=9007199254740991)
+    publication_delay_seconds: int = Field(default=0, strict=True, ge=0, le=2147483647)
 
     @model_validator(mode="after")
     def overdraft_policy(self):
@@ -135,6 +136,7 @@ class PolicyPatch(ContractModel):
     allow_emergency_equity_liquidation: bool | None = Field(default=None, strict=True)
     allow_overdraft: bool | None = Field(default=None, strict=True)
     max_overdraft_cents: int | None = Field(default=None, strict=True, ge=0, le=9007199254740991)
+    publication_delay_seconds: int | None = Field(default=None, strict=True, ge=0, le=2147483647)
 
     @model_validator(mode="before")
     @classmethod
@@ -250,8 +252,8 @@ class Tier1Snapshot(ContractModel):
     id: str = "REPO-1"
     name: str = "Overnight Repo"
     principal_cents: Cents
-    repo_apy_bps: BasisPoints
-    repo_apy_decimal: str
+    repo_apy_bps: BasisPoints | None
+    repo_apy_decimal: str | None
     accrued_interest_cents: Cents
     realized_interest_cents: Cents
     status: Literal["LOCKED", "MATURED", "REDEEMED"]
@@ -273,11 +275,11 @@ class Tier2Snapshot(ContractModel):
     notional_cents: Cents
     quantity: float
     acquisition_price: str
-    current_price: str
+    current_price: str | None
     market_value_cents: Cents
-    ytm_bps: BasisPoints
-    ytm_decimal: str
-    modified_duration: float
+    ytm_bps: BasisPoints | None
+    ytm_decimal: str | None
+    modified_duration: float | None
     liquidation_haircut_bps: BasisPoints
     haircut_cents: Cents
     realized_pnl_cents: int = Field(strict=True)
@@ -292,11 +294,11 @@ class Tier3Snapshot(ContractModel):
     name: str = "Growth Equities"
     quantity: float
     acquisition_price: str
-    current_price: str
+    current_price: str | None
     market_value_cents: Cents
     cost_basis_cents: Cents
-    volatility_bps: BasisPoints
-    volatility_decimal: str
+    volatility_bps: BasisPoints | None
+    volatility_decimal: str | None
     emergency_slippage_bps: BasisPoints
     slippage_cents: Cents
     realized_pnl_cents: int = Field(strict=True)
@@ -307,7 +309,7 @@ class Tier3Snapshot(ContractModel):
 
 class OverdraftSnapshot(ContractModel):
     borrowing_outstanding_cents: Cents
-    financing_rate_bps: BasisPoints
+    financing_rate_bps: BasisPoints | None
     financing_cost_cents: Cents
     liability_status: Literal["ACTIVE", "CLEARED"]
     is_active: bool
@@ -328,6 +330,9 @@ class AggregatesSnapshot(ContractModel):
 
 class FourTierPortfolioSnapshot(ContractModel):
     timestamp: str | None = None
+    market_data_available: bool = True
+    market_observation_timestamp: str | None = None
+    publication_delay_seconds: int = 0
     tier0: Tier0Snapshot
     tier1: Tier1Snapshot
     tier2: Tier2Snapshot

@@ -303,7 +303,8 @@ def test_calibration_artifacts_after_cutoff_rejected(session, dataset):
         .order_by(DbOrganizerObservation.timestamp.asc())
         .limit(1)
     )
-    portfolio, _, _, _, _, _ = hydrate_portfolio_state(session, run, obs)
+    from app.services.treasury_adapter import hydrate_decision_portfolio
+    portfolio, *_, published = hydrate_decision_portfolio(session, run, obs)
     policy = build_four_tier_policy(run.policy_json)
     cutoff = get_information_cutoff(portfolio.as_of)
 
@@ -320,7 +321,7 @@ def test_calibration_artifacts_after_cutoff_rejected(session, dataset):
         evaluate_liquidity_risk(
             portfolio,
             policy,
-            observation=obs,
+            observation=published,
             calibrated_allowance=future_calibration,
         )
 
@@ -335,7 +336,7 @@ def test_calibration_artifacts_after_cutoff_rejected(session, dataset):
     res = evaluate_liquidity_risk(
         portfolio,
         policy,
-        observation=obs,
+        observation=published,
         calibrated_allowance=valid_calibration,
     )
     assert res.reserve.required_reserve_cents >= policy.base_buffer_cents
