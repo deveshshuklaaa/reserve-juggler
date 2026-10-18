@@ -2,19 +2,21 @@
 from datetime import timedelta
 from decimal import Decimal, ROUND_HALF_UP, localcontext
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 from app.persistence.models import BondPosition, EquityPosition, InvestmentMovement, LedgerEntry, OrganizerObservation, OverdraftMovement, RepoPosition
 from treasury_intelligence.instrument_economics import usd_to_ledger_cents
 
 
 def financial_performance(session, run, net_asset_value_cents):
     """Read-only aggregate of actual books; borrowed principal is never income."""
-    repo_income = sum(value or 0 for value in session.scalars(select(RepoPosition.realized_interest_cents).where(
+    # PostgreSQL SUM keeps integer-cent arithmetic exact and avoids reloading
+    # every historical ledger object on every simulated hour.
+    repo_income = int(session.scalar(select(func.coalesce(func.sum(RepoPosition.realized_interest_cents), 0)).where(
         RepoPosition.run_id == run.id)))
-    realized_market = sum(value or 0 for model in (BondPosition, EquityPosition)
-        for value in session.scalars(select(model.realized_pnl_cents).where(model.run_id == run.id)))
-    customer_delta = sum(entry.balance_after_cents-entry.balance_before_cents
-        for entry in session.scalars(select(LedgerEntry).where(
+    realized_market = sum(int(session.scalar(select(func.coalesce(func.sum(model.realized_pnl_cents), 0)).where(
+        model.run_id == run.id))) for model in (BondPosition, EquityPosition))
+    customer_delta = int(session.scalar(select(func.coalesce(func.sum(
+        LedgerEntry.balance_after_cents - LedgerEntry.balance_before_cents), 0)).where(
             LedgerEntry.run_id == run.id,
             LedgerEntry.entry_type.in_(["CUSTOMER_DEPOSIT_INFLOW", "CUSTOMER_WITHDRAWAL_OUTFLOW"]))))
     return repo_income+realized_market, net_asset_value_cents-run.initial_cash_cents-customer_delta
@@ -105,11 +107,14 @@ def repo_interest_cents(session, position, as_of, publication_delay_seconds=0):
 
 def paid_financing_costs(session, run_id, before=None):
     """Cumulative paid expense by loan, distinct from principal repayment."""
-    statement = select(OverdraftMovement).where(
-        OverdraftMovement.run_id == run_id, OverdraftMovement.kind == "REPAYMENT")
+    statement = select(
+        OverdraftMovement.liability_id,
+        func.coalesce(func.sum(OverdraftMovement.financing_cost_cents), 0),
+    ).where(
+        OverdraftMovement.run_id == run_id,
+        OverdraftMovement.kind == "REPAYMENT",
+    )
     if before is not None:
         statement = statement.where(OverdraftMovement.occurred_at < before)
-    result = {}
-    for row in session.scalars(statement):
-        result[row.liability_id] = result.get(row.liability_id, 0) + row.financing_cost_cents
-    return result
+    statement = statement.group_by(OverdraftMovement.liability_id)
+    return {liability_id: int(cents) for liability_id, cents in session.execute(statement)}

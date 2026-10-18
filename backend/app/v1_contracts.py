@@ -123,7 +123,7 @@ class DatasetImported(ContractModel):
 
 class AdvanceRequest(ContractModel):
     expected_step: Step
-    steps: PositiveSteps = 1
+    steps: int = Field(default=1, strict=True, ge=1, le=168)
 
 
 class ScenarioRequest(ContractModel):
@@ -427,9 +427,16 @@ class BacktestRequest(ContractModel):
         min_length=1,
     )
     retain_runs: bool = False
-    days: int | None = None
+    days: int | None = Field(default=None, strict=True)
     scenario: Scenario | None = None
     seed: int | None = None
+
+    @field_validator('days')
+    @classmethod
+    def supported_days(cls, value):
+        if value is not None and value not in (7, 14, 30):
+            raise ValueError('Comparison days must be 7, 14 or 30.')
+        return value
 
     @model_validator(mode="before")
     @classmethod

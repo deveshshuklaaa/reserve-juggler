@@ -9,6 +9,7 @@ export function SimulationProvider({ children, api = treasuryApi }) {
   const [data, setData] = useState(emptyData);
   const [busy, setBusy] = useState(false);
   const [playing, setPlaying] = useState(false);
+  const [playbackBatchSize, setPlaybackBatchSize] = useState(api.mode === 'real' ? 24 : 1);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [comparison, setComparison] = useState(null);
@@ -97,10 +98,13 @@ export function SimulationProvider({ children, api = treasuryApi }) {
   const openImport = useCallback(() => { playRef.current = false; setPlaying(false); setImportOpen(true); }, []);
   const closeImport = useCallback(() => setImportOpen(false), []);
 
-  const advance = useCallback(() => perform((current, signal) => {
+  const advanceSteps = useCallback((batchSize) => perform((current, signal) => {
     if (current.status === 'COMPLETED') return current;
-    return api.advanceRun(current.run_id, { expected_step: current.step }, { signal });
+    const steps = api.mode === 'real'
+      ? Math.min(batchSize, Math.max(1, (current.duration_steps ?? current.step + 1) - current.step)) : 1;
+    return api.advanceRun(current.run_id, { expected_step: current.step, ...(api.mode === 'real' ? {steps} : {}) }, { signal });
   }), [api, perform]);
+  const advance = useCallback(() => advanceSteps(1), [advanceSteps]);
 
   const refresh = useCallback(() => perform(async () => true), [perform]);
   const pause = useCallback(() => { playRef.current = false; setPlaying(false); }, []);
@@ -115,12 +119,12 @@ export function SimulationProvider({ children, api = treasuryApi }) {
     let timer; let cancelled = false;
     const tick = async () => {
       if (cancelled || !playRef.current) return;
-      if (!lock.current) await advance();
-      if (!cancelled && playRef.current && active.current?.status !== 'COMPLETED') timer = setTimeout(tick, 1500);
+      if (!lock.current) await advanceSteps(playbackBatchSize);
+      if (!cancelled && playRef.current && active.current?.status !== 'COMPLETED') timer = setTimeout(tick, api.mode === 'real' ? 0 : 1500);
     };
-    timer = setTimeout(tick, 400);
+    timer = setTimeout(tick, api.mode === 'real' ? 0 : 400);
     return () => { cancelled = true; clearTimeout(timer); };
-  }, [playing, advance]);
+  }, [playing, advanceSteps, playbackBatchSize, api.mode]);
 
   const applyScenario = useCallback(async (body) => {
     pause(); const before = active.current ? structuredClone(active.current) : null;
@@ -144,6 +148,7 @@ export function SimulationProvider({ children, api = treasuryApi }) {
   }, [api, perform]);
 
   return <SimulationContext.Provider value={{ ...data, busy, playing, error, notice, comparison, beforeShock, scheduled,
+    playbackBatchSize, setPlaybackBatchSize,
     mode: api.mode, status: busy && !data.snapshot ? 'STARTING' : error ? 'ERROR' : !data.snapshot ? 'IDLE' : data.snapshot.status === 'COMPLETED' ? 'COMPLETED' : playing ? 'RUNNING' : 'PAUSED',
     createRun, resetRun, retryInitialization, initializationFailed: Boolean(error && attemptedStart.current), importCashflows, importOpen, openImport, closeImport, advance, play, pause, refresh, applyScenario, updatePolicy, runComparison, refreshComparison,
   }}>{children}</SimulationContext.Provider>;

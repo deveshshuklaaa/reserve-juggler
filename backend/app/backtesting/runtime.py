@@ -42,10 +42,13 @@ class RuntimeReceiptUnavailable(EngineContractError):
 
 class PersistedHourlyRun:
     def __init__(self, session: Session, spec: RunSpec, owns_session: bool = False):
+        from app.services.treasury_adapter import forecast_history_scope
         self.session = session
         self.spec = spec
         self.owns_session = owns_session
         self.closed = False
+        self._forecast_scope = forecast_history_scope(session)
+        self._forecast_scope.__enter__()
         self.initial_state = EngineState(
             checking_cents=spec.initial_capital_cents,
             tier1_value_cents=0,
@@ -83,6 +86,7 @@ class PersistedHourlyRun:
     def close(self) -> None:
         if not self.closed:
             self.closed = True
+            self._forecast_scope.__exit__(None, None, None)
             if self.owns_session:
                 self.session.close()
 
@@ -268,7 +272,7 @@ def read_hour_receipt(session: Session, run_id: UUID, step: int) -> HourReceipt:
         decision.expected_inflow_cents > 0
         or expected_paid_outflow > 0
         or len(movements) > 0
-        or len(loans) > 0
+        or any(m.cash_delta_cents != 0 for m in loans)
     )
     if (expected_cash_legs and not ledgers) or any(row.step != step or row.entry_type not in KNOWN_LEDGER_KINDS for row in ledgers):
         raise RuntimeReceiptUnavailable("Missing or unrecognized hourly cash-ledger evidence")

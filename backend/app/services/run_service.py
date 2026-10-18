@@ -36,6 +36,7 @@ from app.services.accounting import aggregate_acquisition_price, financial_perfo
 from treasury_intelligence.instrument_economics import percentage_cost_cents
 from app.services.hourly_engine import StepConflictError, execute_hourly_step
 from app.services.treasury_adapter import (
+    forecast_history_scope,
     build_four_tier_policy,
     get_hourly_forecasts_from_db,
     hydrate_portfolio_state,
@@ -423,10 +424,16 @@ def advance_simulation_run(
     request: AdvanceRequest,
 ) -> SimulationSnapshot:
     """Advances the simulation by the requested steps."""
-    for _ in range(request.steps):
-        execute_hourly_step(session, run_id, expected_step=request.expected_step)
-        # Advance expected_step for subsequent steps if steps > 1
-        request.expected_step += 1
+    run = session.scalar(select(DbSimulationRun).where(DbSimulationRun.id == run_id).with_for_update())
+    if run is None:
+        raise KeyError(run_id)
+    if run.current_step != request.expected_step:
+        raise StepConflictError(expected_step=request.expected_step, current_step=run.current_step)
+    if request.steps > run.duration_steps - run.current_step:
+        raise ValueError('Requested steps exceed the remaining simulation window.')
+    with forecast_history_scope(session):
+        for index in range(request.steps):
+            execute_hourly_step(session, run_id, expected_step=request.expected_step + index)
 
     return get_simulation_snapshot(session, run_id)
 

@@ -16,7 +16,9 @@
   .workspace-mode .global-header-inner { gap: 12px; }.workspace-overview-link { font-size: 10px; }.workspace-mode .header-status { display: none; }
   .workspace-mode .page-content { padding: 22px 18px 36px; }.workspace-mode .page-heading h1 { font-size: 32px; }.workspace-mode .page-heading { gap: 10px; margin-bottom: 18px; }
   .workspace-mode .control-bar-inner { padding: 9px 18px; flex-direction: row; align-items: center; gap: 8px; }.workspace-mode .simulation-clock { gap: 5px 9px; font-size: 10px; }.workspace-mode .simulation-clock strong { font-size: 10px; }.workspace-mode .clock-details { display: none; }.workspace-mode .step-label { font-size: 9px; }
-  .workspace-mode .toolbar-actions { flex-wrap: nowrap; gap: 4px; }.workspace-mode .toolbar-actions .button { padding: 7px 9px; min-height: 34px; font-size: 11px; }.workspace-mode .toolbar-actions .hide-small { display: none; }
+  .workspace-mode .control-bar-inner { flex-wrap: wrap; }
+  .workspace-mode .toolbar-actions { flex-wrap: wrap; gap: 4px; }.workspace-mode .toolbar-actions .button { padding: 7px 9px; min-height: 34px; font-size: 11px; }.workspace-mode .toolbar-actions .hide-small { display: none; }
+  .workspace-mode .toolbar-actions select { max-width: 145px; min-width: 0; }
   .landing-mode .header-status { display: none; }.landing-mode .global-header-inner { gap: 9px; }.landing-upload-button { margin-left: auto; padding: 9px 12px; font-size: 11px; }.landing-mode .brand-edition { display: none; }.landing-mode .brand { font-size: 15px; gap: 6px; }.landing-mode .brand-symbol { width: 24px; height: 24px; }
 }
 @media (prefers-reduced-motion: reduce) { .workspace-mode * { scroll-behavior: auto; } }

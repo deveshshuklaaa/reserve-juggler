@@ -79,6 +79,9 @@ export function Layout() {
         <div className="control-bar"><div className="control-bar-inner">
           <div className="simulation-clock"><span className={`status-dot ${sim.playing ? 'dot-green' : ''}`} /><strong>{sim.status === 'RUNNING' ? 'Simulation running' : `Simulation ${sim.status.toLowerCase()}`}</strong><span className="clock-details">{sim.mode === 'real' ? `${formatSourceTimestamp(sim.snapshot.source_timestamp)} - UNSPECIFIED` : `${utc(sim.snapshot.timestamp, true)} UTC`}</span><span className="step-label">Step {sim.snapshot.step} / {sim.snapshot.duration_steps ?? '—'}</span></div>
           <div className="toolbar-actions">
+            {sim.mode === 'real' && <select className="compact-select" aria-label="Playback speed" value={sim.playbackBatchSize} disabled={sim.busy || sim.playing} onChange={(event) => sim.setPlaybackBatchSize(Number(event.target.value))}>
+              <option value={1}>1 hour</option><option value={24}>Fast · 1 day</option><option value={168}>Turbo · 1 week</option>
+            </select>}
             <Button variant={sim.playing ? 'primary' : 'secondary'} onClick={sim.playing ? sim.pause : sim.play} disabled={(!sim.playing && sim.busy) || sim.status === 'COMPLETED'} aria-label={sim.playing ? 'Pause simulation' : 'Play simulation'}>{sim.playing ? <Pause size={14} /> : <Play size={14} />}{sim.playing ? 'Pause' : 'Play'}</Button>
             <Button onClick={sim.advance} disabled={sim.busy || sim.playing || sim.status === 'COMPLETED'} aria-label="Advance one step"><SkipForward size={14} />Step</Button>
             <Button variant="quiet" onClick={sim.resetRun} disabled={sim.busy} aria-label="Reset simulation"><RotateCcw size={14} /><span className="hide-small">Reset</span></Button>

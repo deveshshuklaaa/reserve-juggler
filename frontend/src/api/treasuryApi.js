@@ -229,7 +229,7 @@ export function createRealApi(baseUrl = '') {
       }
       return data;
     },
-    advanceRun: (id, body, options) => post(path(id, 'advance'), body, options),
+    advanceRun: (id, body, options) => post(path(id, 'advance'), body, {timeout_ms: body.steps > 1 ? 120000 : 15000, ...options}),
     applyScenario: (id, body, options) => post(path(id, 'scenario'), body, options),
     updatePolicy: async (id, body, options) => {
       const payload = serializePolicy(body);

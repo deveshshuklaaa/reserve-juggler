@@ -13,8 +13,9 @@ Financial invariants:
 """
 
 from datetime import datetime, timedelta
+from contextlib import contextmanager
 from decimal import Decimal
-from typing import Any, Tuple
+from typing import Any, Tuple, NamedTuple
 from uuid import UUID, uuid4
 
 from sqlalchemy import select
@@ -466,6 +467,33 @@ def get_information_cutoff(as_of: datetime, publication_delay_seconds: int = 0) 
     return as_of - timedelta(hours=1, seconds=publication_delay_seconds)
 
 
+class _ForecastObservation(NamedTuple):
+    timestamp: datetime
+    deposits_usd: Decimal
+    withdrawals_usd: Decimal
+    net_flow_usd: Decimal
+
+
+@contextmanager
+def forecast_history_scope(session):
+    """Reuse already-published immutable rows only within one batch/strategy run.
+
+    Never cache between HTTP requests or beyond a failed/rolled-back batch.
+    The forecast still receives the entire causal prefix and uses its original
+    uncertainty calculation; no history is shortened or approximated.
+    """
+    key = '_rj_forecast_history'
+    previous = session.info.get(key)
+    if previous is not None:
+        yield
+        return
+    session.info[key] = {}
+    try:
+        yield
+    finally:
+        session.info.pop(key, None)
+
+
 def get_hourly_forecasts_from_db(
     session: Session,
     dataset_id: str,
@@ -479,17 +507,20 @@ def get_hourly_forecasts_from_db(
     """
     cutoff = get_information_cutoff(as_of, publication_delay_seconds)
 
-    # Causal filter: strictly prior to decision timestamp
-    history = list(
-        session.scalars(
-            select(DbOrganizerObservation)
-            .where(
-                DbOrganizerObservation.dataset_id == dataset_id,
-                DbOrganizerObservation.timestamp <= cutoff,
-            )
-            .order_by(DbOrganizerObservation.timestamp.asc())
-        ).all()
-    )
+    cache = session.info.get('_rj_forecast_history')
+    cached = cache.get(dataset_id) if cache is not None else None
+    history = cached[1] if cached is not None and cached[0] <= cutoff else []
+    query = select(
+        DbOrganizerObservation.timestamp, DbOrganizerObservation.deposits_usd,
+        DbOrganizerObservation.withdrawals_usd, DbOrganizerObservation.net_flow_usd,
+    ).where(DbOrganizerObservation.dataset_id == dataset_id,
+            DbOrganizerObservation.timestamp <= cutoff)
+    if cached is not None and cached[0] <= cutoff:
+        query = query.where(DbOrganizerObservation.timestamp > cached[0])
+    history.extend(_ForecastObservation(*row) for row in session.execute(
+        query.order_by(DbOrganizerObservation.timestamp.asc())))
+    if cache is not None:
+        cache[dataset_id] = (cutoff, history)
 
     # Reject any future observations
     for obs in history:

@@ -84,13 +84,16 @@ def advance(id: UUID, request: AdvanceRequest, db: Session = Depends(get_db)):
         snap = advance_simulation_run(db, id, request)
         db.commit()
         return snap
-    except (KeyError, ValueError):
+    except KeyError:
         db.rollback()
         raise HTTPException(status_code=404, detail={
             "error_code": "NOT_FOUND",
             "message": f"Simulation run {id} not found.",
             "details": {},
         })
+    except ValueError as exc:
+        db.rollback()
+        raise HTTPException(422, detail={"error_code": "INVALID_ADVANCE", "message": str(exc), "details": {}}) from exc
     except StepConflictError as exc:
         db.rollback()
         raise HTTPException(status_code=409, detail={
@@ -216,7 +219,10 @@ def backtest(id: UUID, request: BacktestRequest, db: Session = Depends(get_db)):
     elif run.duration_steps in (168, 336, 720):
         days = run.duration_steps // 24
     else:
-        days = 7
+        raise HTTPException(422, detail={
+            "error_code": "INVALID_COMPARISON_WINDOW",
+            "message": "Choose an explicit 7-, 14- or 30-day comparison window.", "details": {},
+        })
 
     import json
     from app.backtesting.contracts import BacktestRequest as InternalBacktestRequest, ScenarioSpec, canonical_config

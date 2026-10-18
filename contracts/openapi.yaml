@@ -867,7 +867,8 @@ components:
           title: Expected Step
         steps:
           type: integer
-          exclusiveMinimum: 0.0
+          maximum: 168.0
+          minimum: 1.0
           title: Steps
           default: 1
       additionalProperties: false
