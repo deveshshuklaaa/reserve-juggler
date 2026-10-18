@@ -6900,6 +6900,31 @@
       "_origin": "ast"
     },
     {
+      "id": "tests_integration_test_funded_backtest_routes",
+      "label": "test_funded_backtest_routes.py",
+      "file_type": "code",
+      "source_file": "tests/integration/test_funded_backtest_routes.py",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_integration_test_funded_backtest_routes_test_funded_subset_repeat_and_detailed_report_use_real_shared_execution",
+      "label": "test_funded_subset_repeat_and_detailed_report_use_real_shared_execution()",
+      "file_type": "code",
+      "source_file": "tests/integration/test_funded_backtest_routes.py",
+      "source_location": "L14",
+      "_callable": true,
+      "_origin": "ast"
+    },
+    {
+      "id": "tests_integration_test_funded_backtest_routes_rationale_1",
+      "label": "Route/lifecycle diagnostics with real funds; not three-strategy release…",
+      "file_type": "rationale",
+      "source_file": "tests/integration/test_funded_backtest_routes.py",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
       "id": "tests_integration_test_market_data_availability",
       "label": "test_market_data_availability.py",
       "file_type": "code",
@@ -17261,6 +17286,15 @@
       "node_kind": "heading",
       "source_file": "docs/RUNTIME_RELEASE_CHECKPOINT.md",
       "source_location": "L256",
+      "_origin": "ast"
+    },
+    {
+      "id": "docs_runtime_release_checkpoint_final_local_verification_and_agent_2_handoff",
+      "label": "Final local verification and Agent 2 handoff",
+      "file_type": "document",
+      "node_kind": "heading",
+      "source_file": "docs/RUNTIME_RELEASE_CHECKPOINT.md",
+      "source_location": "L294",
       "_origin": "ast"
     },
     {
@@ -36277,6 +36311,125 @@
       "confidence": "EXTRACTED",
       "source_file": "tests/integration/test_four_tier_runtime.py",
       "source_location": "L328",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_funded_backtest_routes",
+      "target": "fastapi_testclient",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_funded_backtest_routes.py",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_funded_backtest_routes",
+      "target": "sqlalchemy",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_funded_backtest_routes.py",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_funded_backtest_routes",
+      "target": "tests_integration_test_four_tier_runtime",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_funded_backtest_routes.py",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_funded_backtest_routes",
+      "target": "backend_app_database",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_funded_backtest_routes.py",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_funded_backtest_routes",
+      "target": "backend_app_main",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_funded_backtest_routes.py",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_funded_backtest_routes",
+      "target": "backend_app_persistence_models",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_funded_backtest_routes.py",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_funded_backtest_routes",
+      "target": "backend_app_services_hourly_engine",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_funded_backtest_routes.py",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_funded_backtest_routes",
+      "target": "backend_app_services_run_service",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_funded_backtest_routes.py",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_funded_backtest_routes",
+      "target": "backend_app_v1_contracts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_funded_backtest_routes.py",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_funded_backtest_routes",
+      "target": "tests_integration_test_funded_backtest_routes_test_funded_subset_repeat_and_detailed_report_use_real_shared_execution",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_funded_backtest_routes.py",
+      "source_location": "L14",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_funded_backtest_routes_rationale_1",
+      "target": "tests_integration_test_funded_backtest_routes",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_funded_backtest_routes.py",
+      "source_location": "L1",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -60719,6 +60872,16 @@
       "_origin": "ast"
     },
     {
+      "source": "docs_runtime_release_checkpoint_core_runtime_release_checkpoints",
+      "target": "docs_runtime_release_checkpoint_final_local_verification_and_agent_2_handoff",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docs/RUNTIME_RELEASE_CHECKPOINT.md",
+      "source_location": "L294",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
       "source": "docs_decision_engine",
       "target": "docs_decision_engine_1_overview_objective",
       "relation": "contains",
@@ -65568,6 +65731,50 @@
       "confidence": "EXTRACTED",
       "source_file": "tests/integration/test_delayed_repo_accrual.py",
       "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_funded_backtest_routes",
+      "target": "tests_integration_test_four_tier_runtime_dataset",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_funded_backtest_routes.py",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_funded_backtest_routes",
+      "target": "tests_integration_test_four_tier_runtime_pg_engine",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_funded_backtest_routes.py",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_funded_backtest_routes",
+      "target": "tests_integration_test_four_tier_runtime_pg_url",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_funded_backtest_routes.py",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_funded_backtest_routes",
+      "target": "tests_integration_test_four_tier_runtime_session",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/integration/test_funded_backtest_routes.py",
+      "source_location": "L5",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -78739,6 +78946,39 @@
       "_origin": "ast"
     },
     {
+      "source": "tests_integration_test_funded_backtest_routes_test_funded_subset_repeat_and_detailed_report_use_real_shared_execution",
+      "target": "backend_app_persistence_models_cashaccount",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "tests/integration/test_funded_backtest_routes.py",
+      "source_location": "L19",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_funded_backtest_routes_test_funded_subset_repeat_and_detailed_report_use_real_shared_execution",
+      "target": "backend_app_persistence_models_simulationrun",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "tests/integration/test_funded_backtest_routes.py",
+      "source_location": "L17",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_funded_backtest_routes_test_funded_subset_repeat_and_detailed_report_use_real_shared_execution",
+      "target": "backend_app_v1_contracts_createrunrequest",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "tests/integration/test_funded_backtest_routes.py",
+      "source_location": "L15",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
       "source": "tests_integration_test_market_data_availability_test_canonical_decisions_use_only_closed_market_hours",
       "target": "backend_app_persistence_models_organizerobservation",
       "relation": "uses",
@@ -83313,6 +83553,42 @@
       "confidence_score": 1.0,
       "source_file": "tests/integration/test_four_tier_runtime.py",
       "source_location": "L309",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_funded_backtest_routes_test_funded_subset_repeat_and_detailed_report_use_real_shared_execution",
+      "target": "backend_app_services_run_service_create_simulation_run",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/integration/test_funded_backtest_routes.py",
+      "source_location": "L15",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_funded_backtest_routes_test_funded_subset_repeat_and_detailed_report_use_real_shared_execution",
+      "target": "backend_app_services_hourly_engine_execute_hourly_step",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/integration/test_funded_backtest_routes.py",
+      "source_location": "L18",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "tests_integration_test_funded_backtest_routes_test_funded_subset_repeat_and_detailed_report_use_real_shared_execution",
+      "target": "backend_app_database_get_db",
+      "relation": "indirect_call",
+      "context": "argument",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "tests/integration/test_funded_backtest_routes.py",
+      "source_location": "L45",
       "weight": 1.0,
       "_origin": "ast"
     },

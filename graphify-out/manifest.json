@@ -804,9 +804,9 @@
     "semantic_hash": ""
   },
   "docs/RUNTIME_RELEASE_CHECKPOINT.md": {
-    "mtime": 1792282492.6347525,
-    "seen": 1792282499.891022,
-    "ast_hash": "47162ae0a9020c85ec0a9b01df0b83f5",
+    "mtime": 1792282889.7856283,
+    "seen": 1792282897.324373,
+    "ast_hash": "7592ce096ce20b41bdbe8e65f523bb76",
     "semantic_hash": ""
   },
   "tests/integration/test_payout_execution.py": {
@@ -831,6 +831,12 @@
     "mtime": 1792282374.2820528,
     "seen": 1792282499.8750224,
     "ast_hash": "a4b9ddc04e7dedd278691be065a40883",
+    "semantic_hash": ""
+  },
+  "tests/integration/test_funded_backtest_routes.py": {
+    "mtime": 1792282723.5984757,
+    "seen": 1792282897.3033714,
+    "ast_hash": "5ef11c1050f419bad2f8865e8ef8e72b",
     "semantic_hash": ""
   }
 }
