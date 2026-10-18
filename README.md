@@ -1,166 +1,201 @@
-﻿# Reserve Juggler — The Idle Cash Problem
+# Reserve Juggler — The Idle Cash Problem
 
 [![CI](https://github.com/deveshshuklaaa/reserve-juggler/actions/workflows/ci.yml/badge.svg)](https://github.com/deveshshuklaaa/reserve-juggler/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Hackathon: HackForge 2026](https://img.shields.io/badge/HackForge-2026-blueviolet.svg)](https://hackforge2026.dev)
 
-A quantitative treasury decision engine that continuously processes a synthetic transaction stream, forecasts near-term liquidity requirements, estimates forecast uncertainty, calculates a recommended liquid reserve, and determines automated capital allocations.
+A HackForge 2026 treasury simulation prototype for balancing customer liquidity needs against investment returns. Reserve Juggler replays hourly cash flows, forecasts liquidity requirements, recommends allocations, and records execution through a shared PostgreSQL-backed accounting engine.
 
----
+The integrated application includes a React dashboard, FastAPI backend, four-tier portfolio, CSV import, stress scenarios and historical strategy comparisons. It simulates money movement; it does not connect to customer accounts or banking rails.
 
-## 1. Project Overview
+## Four-tier treasury model
 
-Submission demo: see [real-backend setup and hotfix caveats](docs/SUBMISSION_HOTFIX.md).
-The integrated prototype replays the official four-tier organizer dataset at
-native hourly resolution. Older synthetic/vault examples below are compatibility
-examples, not the authoritative historical execution model.
+| Tier | Instrument | Liquidity and valuation |
+| --- | --- | --- |
+| 0 | Cash buffer | Immediately available; 0% APY. |
+| 1 | Overnight repo | Dataset APY; 17:00 entry and contractual 08:00 next-morning maturity; 0.5% early-break cost. |
+| 2 | 2Y sovereign bonds | Dataset price-index valuation, yield and modified duration; 2% liquidation haircut. |
+| 3 | Growth equities | Dataset market-index valuation and volatility; 15% emergency liquidation slippage. Returns are not guaranteed interest. |
 
-- **Project**: Reserve Juggler
-- **Hackathon**: HackForge 2026 (24-Hour Hackathon)
-- **Problem Statement**: THE RESERVE JUGGLER — The Idle Cash Problem
+Emergency overdraft is a separate liability with dataset-driven financing costs, not investment income. Cash availability, investment value, fees, market P&L, debt and net asset value are distinct accounting quantities.
 
-### The Problem
-Modern digital banks and fintech platforms struggle to strike a defensible balance between immediate liquidity requirements and yield optimization. Holding excess cash in non-interest-bearing checking accounts guarantees zero shortfall risk but forfeits significant yield (the "idle cash penalty"). Conversely, over-allocating capital to yield vaults exposes the institution to costly intraday overdraft penalties, operational fire drills, or emergency liquidation fees during unexpected transaction spikes.
+## Data and decision timing
 
-### The Solution
-**Reserve Juggler** is an uncertainty-aware quantitative treasury decision engine. It continuously evaluates high-frequency transaction aggregates, projects expected cash flow net drains over rolling forecast horizons, constructs probabilistic safety buffers, and deterministically allocates capital between checking and yield vaults.
+- The bundled authoritative source is [treasury_4tier_dataset.csv](treasury_4tier_dataset.csv): **8,760 hourly observations and 16 columns**.
+- Source financial values use precision-preserving Decimal representations. Execution and report monetary amounts use integer cents.
+- Supplied `net_flow_usd` is preserved. Reconciliation differences are reported, not silently corrected; customer execution uses deposits and withdrawals.
+- There is no fabricated 15-minute historical data. One simulation step processes one source hour.
+- Source timestamps remain naive with `time_basis=UNSPECIFIED`; do not interpret them as UTC.
+- At decision time `T`, an observation timestamped `t` is eligible only if `t + 1 hour + publication_delay <= T`. Publication delay defaults to zero and is configurable.
+- Repo clock events remain at 17:00 and 08:00. Delayed rates use the last eligible APY for each earning hour, without automatic retrospective interest true-ups.
 
----
+The runtime integrates the canonical `recommend_four_tier_allocation()` boundary. Recommendations are separate from actual ledger-backed fills and may be constrained by liquidity and policy.
 
-## 2. Core Pipeline Architecture
-
-```text
-Transaction Simulator
-        ↓
-Transaction Ingestion
-        ↓
-Real-Time Aggregator
-        ↓
-Forecasting Engine
-        ↓
-Reserve / Risk Engine
-        ↓
-Treasury Decision Engine
-        ↓
-Checking Account / Yield Vault Simulation
-        ↓
-Decision Explanation + Audit Log
-        ↓
-Frontend Dashboard
-```
+## Architecture
 
 ```text
-Transactions → Aggregation → Forecast → Uncertainty → Required Reserve → Treasury Decision → Simulated Execution → Financial Metrics
+Bundled organizer CSV / validated upload
+                  ↓
+Persisted dataset + hourly observations
+                  ↓
+Publication-eligible history → Forecast / risk / allocation
+                  ↓
+Shared hourly execution engine
+                  ↓
+Cash + repo + bonds + equities + overdraft
+                  ↓
+Receipts / ledger / valuations → API → Dashboard and reports
 ```
 
----
+Historical comparisons run `STATIC`, `REACTIVE` and `RESERVE_JUGGLER` with independent state and matching source windows, initial capital, scenario, seed and policy. Supported windows are **7, 14 and 30 days** (168, 336 and 720 hourly steps).
 
-## 3. Decision Matrix
+Scenarios: `NORMAL`, `HIGH_WITHDRAWAL`, `LOW_DEPOSIT`, `SETTLEMENT_DELAY` and `LIQUIDITY_SHOCK`. Scenario overlays do not modify the source CSV.
 
-At each evaluation cycle, the decision engine computes the recommended liquid reserve $R_{req}$ and deployable cash $\Delta = C - R_{req}$:
+## Quick start — real backend
 
-- **`HOLD`**: Checking balance is inside the optimal risk-neutral equilibrium corridor ($|C - R_{req}| \le \text{band}$). No capital movement is required.
-- **`SWEEP`**: Checking balance significantly exceeds the reserve requirement ($C > R_{req} + \text{threshold}$). Excess deployable liquidity is swept to the yield vault.
-- **`WITHDRAW`**: Checking balance falls below safety threshold ($C < R_{req}$) and the vault holds sufficient liquidity to replenish checking.
-- **`LIQUIDITY_WARNING`**: Total consolidated liquid capital ($C + V$) cannot cover the required reserve corridor under extreme stress. Immediate operator notification and emergency protocol triggered.
+Requirements: Python 3.10+, Node.js 20+, Docker Compose and a running Docker Linux engine. The commands below use PowerShell from the repository root.
 
-Detailed formulas and parameter rules are documented in [`docs/decision-engine.md`](docs/decision-engine.md).
+### 1. Start PostgreSQL and install backend dependencies
 
----
-
-## 4. Important Limitation
-
-> **Important Limitation**: This repository is a hackathon prototype operating exclusively on synthetic transaction data and simulated banking balances. It does not connect to real customer accounts, real money movement rails, or production banking infrastructure.
-
----
-
-## 5. Repository Structure
-
-```text
-reserve-juggler/
-│
-├── frontend/             # React 19 + Vite modern dark-mode dashboard
-│
-├── backend/              # FastAPI core REST API & Treasury decision service
-│   └── app/
-│       ├── routers/      # Health, Treasury, Transactions, Simulation
-│       └── treasury/     # Quant reserve formulas & decision rules
-│
-├── forecasting/          # Time-series flow forecasting & uncertainty estimation
-│
-├── simulation/           # Synthetic transaction generators & stress scenarios
-│
-├── database/             # PostgreSQL schemas & seed data
-│   ├── migrations/       # 001_initial_schema.sql
-│   └── seeds/            # 001_seed_data.sql
-│
-├── contracts/            # OpenAPI 3.0.3 specification (Single source of truth)
-│
-├── tests/                # Test suites
-│   ├── backend/          # API & decision engine tests
-│   ├── forecasting/      # Forecaster unit tests
-│   ├── simulation/       # Synthetic stream generator tests
-│   └── integration/      # End-to-end treasury pipeline tests
-│
-├── docs/                 # Architectural & mathematical documentation
-│
-├── scripts/              # Automation & health diagnostic scripts
-│
-├── .github/workflows/    # Continuous Integration pipeline
-│
-├── docker-compose.yml    # Multi-container local orchestration
-├── .env.example          # Environment variable template
-├── .gitignore            # Git exclusion rules
-├── README.md             # Project documentation
-└── CONTRIBUTING.md       # Team workflow & branch strategy
-```
-
----
-
-## 6. Quick Start
-
-### Prerequisites
-- Docker & Docker Compose
-- Python 3.10+ (for local development)
-- Node.js 20+ (for frontend development)
-- PowerShell (Windows) or Bash
-
-### 1. Configure Environment
 ```powershell
 Copy-Item .env.example .env
+docker compose up -d db
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r backend/requirements.txt
+$env:PYTHONPATH = 'backend;.'
 ```
 
-### 2. Start Full Stack via Docker
-```powershell
-docker compose up -d --build
+Copy environment templates only on first setup; preserve any existing local configuration. Wait for PostgreSQL to be ready before continuing. The default development connection in `.env` is:
+
+```text
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/reserve_juggler
+ORGANIZER_DATASET_PATH=treasury_4tier_dataset.csv
 ```
 
-### 3. Verify Health Check
-```powershell
-.\scripts\health-check.ps1
-```
+Change these for your environment. Use a dedicated database for tests and verification; never point test fixtures at a database containing runs you need to keep. Do not commit `.env` files or credentials.
 
-- **Frontend Dashboard**: http://localhost:3000
-- **Backend API Docs**: http://localhost:8000/docs
-- **OpenAPI Contract**: [`contracts/openapi.yaml`](contracts/openapi.yaml)
-
----
-
-## 7. Testing
-
-Run all test suites locally:
+### 2. Apply migrations and register the bundled dataset
 
 ```powershell
-# Backend & Decision Engine tests
-python -m pytest tests/backend tests/forecasting tests/simulation tests/integration -v
+python -m app.persistence.migrations
+python -c "from sqlalchemy.orm import Session; from app.database import engine; from app.persistence.repositories import DatasetRepository; from app.data.organizer import OrganizerDatasetSource; s=Session(engine); DatasetRepository(s).store(OrganizerDatasetSource().load()); s.commit(); s.close()"
 ```
 
----
+Run migrations explicitly; application startup is not a replacement for the SQL migration process. The dataset loader reads the bundled CSV without rewriting it.
 
-## 8. Team Collaboration & Workstreams
+### 3. Start FastAPI
 
-- **Workstream A**: Transaction Simulation + Forecasting Engine (`simulation/`, `forecasting/`)
-- **Workstream B**: Database + Treasury/Risk Engine (`backend/`, `database/`)
-- **Workstream C**: Frontend Dashboard + Contract Integration (`frontend/`)
+```powershell
+python -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000
+```
 
-See [`CONTRIBUTING.md`](CONTRIBUTING.md) for branch policies and developer guidelines.
+Optional fitted-ML forecasting requires `scikit-learn`, installed separately with `python -m pip install scikit-learn`. The default live runtime uses the seasonal forecast. Fitted models must have publication-eligible training **and calibration** provenance; older artifacts without that provenance need refitting. Only load trusted model artifacts.
+
+### 4. Start the frontend in another terminal
+
+```powershell
+Set-Location frontend
+Copy-Item .env.example .env.local
+npm ci
+npm run dev -- --host 127.0.0.1 --port 3000
+```
+
+The frontend template uses:
+
+```text
+VITE_USE_MOCKS=false
+VITE_API_BASE_URL=http://localhost:8000
+```
+
+- Dashboard: [http://localhost:3000/command-center](http://localhost:3000/command-center)
+- Health: [http://localhost:8000/health](http://localhost:8000/health)
+- Interactive API docs: [http://localhost:8000/docs](http://localhost:8000/docs)
+- Runtime OpenAPI: [http://localhost:8000/api/v1/openapi.json](http://localhost:8000/api/v1/openapi.json)
+
+Use Docker for PostgreSQL and the host-run services above for this prototype. The existing backend Dockerfile does not package the current quantitative modules, migrations or organizer CSV; full-stack `docker compose up --build` is not the documented end-to-end setup.
+
+## Demo workflow and CSV imports
+
+1. Create a simulation using the bundled dataset, or choose **Upload CSV** to preview a compatible file.
+2. Choose **Start CSV simulation** to upload its original bytes, validate them on the server, persist the dataset and create a run bound to its identity.
+3. Step one hour or use playback: **Fast** batches 24 hours; **Turbo** batches 168. Every hour still executes individually. Pause takes effect after the in-flight batch.
+4. Inspect Portfolio, Forecasts and Activity; export the snapshot or comparison.
+5. Use Strategy Arena for a supported 7-, 14- or 30-day comparison. Shorter datasets can simulate but cannot run a seven-day comparison.
+
+**Upload limits:** UTF-8, at most **2 MiB**, **2–5,000** populated hourly rows, exact organizer headings, continuous hourly timestamps and exact-cent customer flows. Fully empty trailing records are ignored. The full 8,760-row bundled source is loaded through the backend loader, not the bounded upload endpoint. The separate three-column mock CSV format is not accepted for live execution.
+
+Identical uploaded bytes reuse their SHA-256 dataset identity. Runs remain in PostgreSQL, but browser workspace selection is in memory; reloading and reuploading starts a fresh run rather than restoring the previous selection.
+
+See [CSV workflow and validation](docs/CSV_IMPORT_WORKFLOW.md) for details.
+
+## API overview
+
+New application routes use **`/api/v1`**; health remains `/health`. Legacy compatibility routes are not the authoritative historical API.
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| POST | `/api/v1/datasets` | Import raw `text/csv` bytes and return dataset identity/validation. |
+| POST | `/api/v1/runs` | Create a run; optional `dataset_id` selects an uploaded dataset. |
+| GET | `/api/v1/runs/{id}/snapshot` | Current state, four-tier projection and source metadata. |
+| POST | `/api/v1/runs/{id}/advance` | Execute 1–168 hours atomically with `expected_step`. |
+| POST | `/api/v1/runs/{id}/scenario` | Apply a scenario overlay. |
+| PATCH | `/api/v1/runs/{id}/policy` | Update run policy. |
+| GET | `/api/v1/runs/{id}/forecast` | Forecast projection. |
+| GET | `/api/v1/runs/{id}/decisions` | Decision records. |
+| GET | `/api/v1/runs/{id}/transactions` | Transaction records. |
+| POST | `/api/v1/runs/{id}/backtest` | Compare a requested strategy subset over a supported window. |
+| GET | `/api/v1/runs/{id}/report` | Execution-based metrics and accounting details. |
+
+Backtests accept only integer `days` of 7, 14 or 30. If omitted, the parent must have exactly 168, 336 or 720 steps; unsupported implicit durations return 422. Public strategy labels are `STATIC_RESERVE`, `REACTIVE_RESERVE` and `RESERVE_JUGGLER`; requests also normalize `STATIC` and `REACTIVE` aliases.
+
+Comparisons default to ephemeral child runs. `retain_runs: true` persists children and returns `child_run_ids`; use a fresh parent for each retained comparison. Repeating retention on the same parent is not an idempotent replay. Unavailable model evaluation is `null`, not a fabricated score.
+
+See the [OpenAPI contract](contracts/openapi.yaml), [engine contract](docs/member1/ENGINE_CONTRACT.md) and [backtest service contract](docs/BACKTEST_SERVICE_CONTRACT.md) for exact structures.
+
+## Repository guide
+
+| Path | Responsibility |
+| --- | --- |
+| `backend/app/data/` | Immutable organizer reader and diagnostics. |
+| `backend/app/persistence/` | ORM models, repositories and migration runner. |
+| `backend/app/services/` | Shared hourly execution, accounting, market execution, dataset import and engine adapter. |
+| `backend/app/backtesting/` | Isolated strategy orchestration, receipt reading and reports. |
+| `backend/app/routers/` | FastAPI endpoints. |
+| `treasury_intelligence/` | Canonical quantitative contracts, forecasting, risk and optimizer. |
+| `frontend/` | React 19 + Vite dashboard and API client. |
+| `database/migrations/` | SQL schema migrations. |
+| `contracts/` | Checked-in OpenAPI specification. |
+| `tests/` | Backend, quantitative, persistence, backtesting and integration tests. |
+| `simulation/`, `forecasting/` | Legacy synthetic/compatibility components. |
+| `graphify-out/` | Derived project knowledge graph; source, tests and contracts remain authoritative. |
+
+## Development checks
+
+From an activated backend environment at the repository root:
+
+```powershell
+$env:PYTHONPATH = 'backend;.'
+python -m pytest tests/treasury_intelligence tests/backend tests/backtesting -v
+# Full Python suite, with dedicated PostgreSQL test databases configured:
+python -m pytest tests -v
+```
+
+PostgreSQL fixtures use suite-specific settings such as `PERSISTENCE_TEST_DATABASE_URL` and `BACKTEST_TEST_DATABASE_URL`; consult the relevant fixtures before running them. Missing optional dependencies or integration settings can skip tests, so a passing count alone is not full financial acceptance.
+
+Frontend checks, from `frontend/`:
+
+```powershell
+npm test
+npm run build
+```
+
+## Prototype status and limitations
+
+- Historical comparisons and strategy rankings remain **provisional pending RJ-M1-16 sign-off**. Do not claim certified superiority or guaranteed returns.
+- Negative net benefit, reserve deficits, borrowing and unpaid payouts are valid outcomes and must remain visible. Overdraft draws are not income; unpaid customer obligations are not successful payouts or automatically retried.
+- Default tier limits do not naturally exercise bond/equity purchases. A working repo-based demo does not establish multi-asset strategy superiority.
+- Live `/history` currently returns a current snapshot, not a complete historical series; comparison reports contain sampled executed checking history.
+- The live projection does not expose all optimizer/calibrated-model/Monte Carlo detail. Unavailable evaluation must remain explicitly unavailable.
+- There is no retained-comparison retrieval endpoint; export the returned comparison or inspect retained child reports.
+- Evidence documents describe the revisions and environments in which their checks ran; their historical results are not a fresh certification of every later merge.
+
+Further reading: [submission setup and hotfix caveats](docs/SUBMISSION_HOTFIX.md), [organizer data rules](docs/organizer-data.md), [prototype handoff](docs/PROTOTYPE_RELEASE_HANDOFF.md), [recorded demo evidence](docs/FINAL_DEMO_HANDOFF.md) and [contribution workflow](CONTRIBUTING.md).
