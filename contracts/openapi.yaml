@@ -1573,7 +1573,7 @@ components:
         runtime_commit_verified_by_reporter:
           type: string
           title: Runtime Commit Verified By Reporter
-          default: 43c275c3efaf7ed986d92d732c55583f096ccadf
+          default: 1d943eeb652775ef0aecb8cf73bd781293722d36
         execution_provenance:
           type: string
           const: NOT_RECORDED_BY_RUNTIME
@@ -1906,7 +1906,9 @@ components:
           type: number
           title: Quantity
         acquisition_price:
-          type: string
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Acquisition Price
         current_price:
           anyOf:
@@ -1995,7 +1997,9 @@ components:
           type: number
           title: Quantity
         acquisition_price:
-          type: string
+          anyOf:
+          - type: string
+          - type: 'null'
           title: Acquisition Price
         current_price:
           anyOf:

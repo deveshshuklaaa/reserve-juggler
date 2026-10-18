@@ -3,8 +3,27 @@ from datetime import timedelta
 from decimal import Decimal, ROUND_HALF_UP, localcontext
 
 from sqlalchemy import select
-from app.persistence.models import BondPosition, InvestmentMovement, OrganizerObservation, OverdraftMovement
+from app.persistence.models import BondPosition, EquityPosition, InvestmentMovement, LedgerEntry, OrganizerObservation, OverdraftMovement, RepoPosition
 from treasury_intelligence.instrument_economics import usd_to_ledger_cents
+
+
+def financial_performance(session, run, net_asset_value_cents):
+    """Read-only aggregate of actual books; borrowed principal is never income."""
+    repo_income = sum(value or 0 for value in session.scalars(select(RepoPosition.realized_interest_cents).where(
+        RepoPosition.run_id == run.id)))
+    realized_market = sum(value or 0 for model in (BondPosition, EquityPosition)
+        for value in session.scalars(select(model.realized_pnl_cents).where(model.run_id == run.id)))
+    customer_delta = sum(entry.balance_after_cents-entry.balance_before_cents
+        for entry in session.scalars(select(LedgerEntry).where(
+            LedgerEntry.run_id == run.id,
+            LedgerEntry.entry_type.in_(["CUSTOMER_DEPOSIT_INFLOW", "CUSTOMER_WITHDRAWAL_OUTFLOW"]))))
+    return repo_income+realized_market, net_asset_value_cents-run.initial_cash_cents-customer_delta
+
+
+def aggregate_acquisition_price(positions):
+    """A mixed-lot portfolio has no single acquisition index; never invent one."""
+    prices = {p.acquisition_price_index for p in positions if p.status == "OPEN"}
+    return str(next(iter(prices))) if len(prices) == 1 else None
 
 
 def market_cost_basis(session, position):

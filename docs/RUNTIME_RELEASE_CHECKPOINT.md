@@ -252,3 +252,149 @@ The publication convention itself is now confirmed, not an open question.
 Exact final availability checkpoint focused rerun: 34 passed in 26.63 seconds,
 including the published entry-fee changes. Graphify verified 22 PostgreSQL
 tables and indexed 2117 nodes / 6198 relationships.
+
+## Snapshot projection follow-up
+
+Five fail-first projection cases cover initial unavailable quotes, next-hour
+quote leakage, missing financing expense in NAV, non-cumulative repo accrual,
+and omitted partial-sale P&L/benefit. All pass after the projection correction.
+The held-repo fixture explicitly zeros source flows in its rollback-only
+database so that it really exercises multiple earned hours rather than an
+already redeemed position. The organizer file is never changed.
+
+GET snapshot now uses the same available canonical portfolio and exact
+remaining cost basis as execution. Gross assets include accrued repo interest;
+liabilities include principal plus unpaid financing expense. Fee-only debt
+remains ACTIVE until settled. The latest persisted reserve target is used.
+Public forecast metadata no longer claims evaluated-gb-v1 for the actual
+hourly-seasonal-naive-v1 runtime.
+
+Shared read-only financial_performance derives economic benefit as
+`NAV - initial capital - actual settled customer cash delta`.
+This reconciles actual fees, market gains/losses, interest and financing expense
+without treating borrowing as income or unpaid requests as paid outflows.
+Gross realized return is separately reported before fees. It does not invent
+a second financial executor or replace Agent 2's detailed report accounting.
+
+An aggregate acquisition_price is now null for zero or mixed-price open lots;
+there is no single truthful acquisition index in those cases. One-price open
+lots expose their actual Decimal index string. Position receipts retain every
+lot's actual acquisition quote. Agent 2 must handle this nullable aggregate
+display field in addition to nullable unpublished market quotes.
+
+Focused snapshot/live-route PostgreSQL verification: 15 passed in 12.33 seconds.
+
+Additional Agent 2 gate: its runtime provider still pins RUNTIME_SHA and
+engine_version to 1ff1e655070d6b13e24c060d30c9782457d01598. It must pin the
+new core checkpoint when adapting receipts. A healthy response from that old
+provider is not evidence of the new runtime's provenance or full historical
+acceptance. This file is the handoff because no verified messaging destination
+was provided; no Agent 2 implementation or branch is changed.
+
+## Final local verification and Agent 2 handoff
+
+Branch: codex/runtime-api-acceptance. Core checkpoints, in order:
+
+- c3d04335fbfc4dddfc2f6f0702e1c3d3bf3201d0: canonical market fills.
+- e3c5b125d65ac7046c82aec04fde60d244f103e0: capped financing / unpaid payouts.
+- 43c275c3efaf7ed986d92d732c55583f096ccadf: confirmed publication / delayed repo.
+- 1d943eeb652775ef0aecb8cf73bd781293722d36: truthful snapshot projections.
+
+Exact core revision tested by the complete suite:
+**1d943eeb652775ef0aecb8cf73bd781293722d36**.
+No later implementation change is included in the verification handoff;
+the final follow-up adds diagnostic tests, this evidence and Graphify only.
+
+```powershell
+$env:PYTHONDONTWRITEBYTECODE='1'
+$env:BACKTEST_TEST_DATABASE_URL='postgresql+psycopg2://postgres:postgres@127.0.0.1:5432/reserve_juggler_m2_test'
+& 'D:\Hackathon\projects\reserve-juggler\.venv\Scripts\python.exe' -u tests/backtesting/run_postgres_suite.py tests -q -p no:cacheprovider --tb=short -rs
+```
+
+**Actual complete result: 805 passed, 6 failed, 9 skipped in 132.80 seconds;
+exit 1. No expected failures. This is NOT a passing full integration result.**
+All Member 1 / persistence tests passed. Skips: seven gated historical strategy/
+scenario acceptance cases and two external Downloads-dataset checks.
+
+Preserved failures (Agent 2-owned tests; no assertions removed or weakened):
+
+1. test_public_backtest_retains_fields_and_honors_requested_subset:
+   old receipt reader rejects unpaid payout; POST returns 422.
+2. test_backtest_repeat_is_ephemeral_and_preserves_parent: same receipt gap.
+3. test_real_shock_has_shortfall_borrowing_and_financing_records:
+   assumes breach equals borrowing. Actual shortfall 5,018,279,591 cents;
+   correctly capped borrowing 5,000,000,000 cents; 18,279,591 cents unpaid.
+4. test_shock_receipt_and_atomic_execution: old receipt reader rejects the
+   correctly partial payout before it can validate the new payout evidence.
+5. test_shock_has_complete_payout_and_financing_nav_receipts:
+   assumes all requested cents settled. Actual paid 5,667,018,494 versus
+   requested 5,685,298,085 cents; the difference is the same unpaid amount.
+6. test_backtest_and_report_routes_succeed[POST-backtest-body0]:
+   old receipt reader rejects unpaid payouts in the historical window.
+
+The older reader's precise error is:
+`Requested customer flow lacks complete settled-payout ledger legs`.
+These are four unsupported-receipt cases and two incompatible full-funding
+assertions, not grounds to restore unlimited borrowing or call unpaid requests
+successful. They remain ordinary failures until Agent 2 implements and verifies
+the new receipt contract.
+
+Full captured output:
+`C:\Users\DEVESH SHUKLA\AppData\Local\Temp\reserve-juggler-final-runtime-f937b0b8016348ceabf4a8bdfa45dee0\complete-postgres-suite.log`.
+
+Additional real-PostgreSQL diagnostic:
+
+```powershell
+& 'D:\Hackathon\projects\reserve-juggler\.venv\Scripts\python.exe' -u tests/backtesting/run_postgres_suite.py tests/integration/test_funded_backtest_routes.py -q -p no:cacheprovider --tb=short
+```
+
+**1 passed in 35.29 seconds.** With explicit 100,000,000,000-cent starting
+capital, actual shared execution completes a seven-day STATIC-only endpoint
+evaluation twice; both POSTs return 200, honor the one-strategy subset, return
+identical financial results and bounded sampled history, preserve the parent
+ledger/step and leave no child runs. GET report returns the required accounting,
+history, scenario settings, provenance field and null model evaluation. Monetary
+metrics are JavaScript-safe integer cents. This is a route/lifecycle diagnostic,
+not three-strategy historical-comparison acceptance or a calibrated evaluation.
+It does not modify the failing default-capital/unpaid-payout fixtures.
+Its output is in funded-route-verification.log beside the complete suite log.
+
+Changed implementation: backend/app/services/accounting.py, hourly_engine.py,
+market_execution.py, treasury_adapter.py, run_service.py; backend/app/v1_contracts.py;
+contracts/openapi.yaml. Runtime-owned tests: test_market_order_execution.py,
+test_payout_execution.py, test_market_data_availability.py,
+test_delayed_repo_accrual.py, test_snapshot_accounting.py,
+test_funded_backtest_routes.py; existing test_strategy_dispatch_and_causality.py
+uses the available decision view for its calibration input. Documentation is
+this file; Graphify updates its existing graph.json/manifest.json.
+No Member 1 implementation, persistence schema/migration, frontend or
+backend/app/backtesting implementation is modified.
+
+Integration-owner acceptance still required:
+
+- Adapt Agent 2's receipt reader/report totals to INVESTMENT/partial LIQUIDATION,
+  separate transaction-fee ledgers, and requested/paid/unpaid payout evidence;
+  verify financial identities and failed-payout/unpaid counters.
+- Update its runtime SHA/version from 1ff1e65 to the tested core revision above.
+- Verify nullable unpublished-quote and aggregate acquisition-price projections
+  with frontend integration, without interpreting null as zero yield/price.
+- Specify resolution/retry and any separate customer-payable balance sheet for
+  unpaid payment instructions; the current receipt is durable, not automatically
+  resubmitted or mislabeled as overdraft principal.
+- Complete canonical repo-redemption/explicit borrowing/repayment recommendation
+  actions if required by accepted strategy scope (unsupported orders are rejected),
+  calibrated reward/risk assumptions, deferred market settlement, all seven
+  historical acceptance cases, and RJ-M1-16 owner sign-off.
+
+The shared checkout was observed externally fast-forwarding feat/backtesting-engine
+to e3c5b12 then 43c275c with uncommitted Agent 2 receipt changes. This agent did not
+switch, reset, merge, stage, copy or overwrite that checkout/branch. Those
+uncommitted changes are not part of these test results. A committed exact
+Agent 2 SHA must be supplied before integrated verification can be claimed.
+
+Organizer SHA-256 remains
+`2e7c1d2e5b678e9975250211e7e0017022049c510e1dd90cd7f29e931837b0c5`.
+Graphify schema synchronization verified 22 PostgreSQL tables. SQL AST support
+is unavailable; the read-only schema verifier was used, without dependency
+installation or new migrations. Main remains untouched. Nothing was pushed.
+**Historical comparisons remain blocked.**

@@ -18,7 +18,7 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from app.services.accounting import market_cost_basis, paid_financing_costs, repo_hourly_rates, repo_interest_cents
+from app.services.accounting import aggregate_acquisition_price, financial_performance, market_cost_basis, paid_financing_costs, repo_hourly_rates, repo_interest_cents
 from app.services.market_execution import emergency_liquidate, execute_market_order, record_market_valuation, TradeRejected
 from treasury_intelligence.instrument_economics import usd_to_ledger_cents, percentage_cost_cents
 
@@ -965,6 +965,7 @@ def execute_hourly_step(
 
     gross_assets = cash_acc.balance_cents + tier1_principal + tier1_accrued + tier2_mkt_val + tier3_mkt_val
     net_value = gross_assets - total_liabilities
+    realized_returns, net_benefit = financial_performance(session, run, net_value)
 
     # Haircut and slippage
     tier2_haircut_pct = closing_observation.tier2_bond_liquidation_haircut_pct if closing_observation else Decimal("2")
@@ -1127,7 +1128,8 @@ def execute_hourly_step(
             "repo_apy_bps": repo_apy_bps,
             "repo_apy_decimal": str(closing_observation.tier1_repo_rate_apy) if closing_observation else None,
             "accrued_interest_cents": tier1_accrued,
-            "realized_interest_cents": 0,
+            "realized_interest_cents": sum(p.realized_interest_cents or 0 for p in session.scalars(
+                select(DbRepoPosition).where(DbRepoPosition.run_id == run.id))),
             "status": "LOCKED" if tier1_principal > 0 else "MATURED",
             "entry_window_open": (observation.timestamp.hour == 17),
             "early_redemption_allowed": policy_obj.allow_early_repo_redemption,
@@ -1145,7 +1147,7 @@ def execute_hourly_step(
             "name": "Sovereign Bonds",
             "notional_cents": tier2_notional,
             "quantity": float(sum(b.quantity for b in db_bonds if b.status == "OPEN")),
-            "acquisition_price": "100.0000",
+            "acquisition_price": aggregate_acquisition_price(db_bonds),
             "current_price": str(closing_observation.tier2_bond_price_index) if closing_observation else None,
             "market_value_cents": tier2_mkt_val,
             "ytm_bps": int(closing_observation.tier2_bond_yield_pct * 100) if closing_observation else None,
@@ -1163,7 +1165,7 @@ def execute_hourly_step(
             "id": "EQ-IDX-1",
             "name": "Growth Equities",
             "quantity": float(sum(eq.quantity for eq in db_equities if eq.status == "OPEN")),
-            "acquisition_price": "450.0000",
+            "acquisition_price": aggregate_acquisition_price(db_equities),
             "current_price": str(closing_observation.tier3_stock_index_price) if closing_observation else None,
             "market_value_cents": tier3_mkt_val,
             "cost_basis_cents": tier3_cost_basis,
@@ -1188,9 +1190,9 @@ def execute_hourly_step(
             "total_liabilities_cents": total_liabilities,
             "net_portfolio_value_cents": net_value,
             "total_immediate_liquidity_cents": total_immediate_liquidity,
-            "total_realized_returns_cents": 0,
+            "total_realized_returns_cents": realized_returns,
             "total_unrealized_returns_cents": tier1_accrued + tier2_unrealized + tier3_unrealized,
-            "net_financial_benefit_cents": -od_fees,
+            "net_financial_benefit_cents": net_benefit,
             "checking_cents": cash_acc.balance_cents,
             "required_reserve_cents": req_reserve,
             "deployable_surplus_cents": deployable_surplus_cents,

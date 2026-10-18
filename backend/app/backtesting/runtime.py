@@ -20,7 +20,7 @@ from .contracts import EngineState, HourReceipt
 from .protocol import DecisionFrame, EngineCapabilities, ExecutionFrame, HourlyRun, RunSpec
 from .service import EngineContractError, SharedEngineUnavailable, observation_digest
 
-RUNTIME_SHA = "43c275c3efaf7ed986d92d732c55583f096ccadf"
+RUNTIME_SHA = "1d943eeb652775ef0aecb8cf73bd781293722d36"
 RUNTIME_BLOCKERS = (
     "Historical-comparison release gates remain unaccepted; configured sessions enable diagnostic execution only.",
     "Complete 7/14/30-day scenario acceptance and Member 1 availability/optimizer sign-off remain pending.",
@@ -95,7 +95,7 @@ class SharedRuntimeFactory:
     closed (and uncommitted work rolled back) at run close.
     """
     capabilities = EngineCapabilities(
-        engine_version="hourly-runtime-43c275c", integration_sha=RUNTIME_SHA,
+        engine_version="hourly-runtime-1d943ee", integration_sha=RUNTIME_SHA,
         execution_kind="SHARED", strategies=(), scenarios=(),
     )
     blocking_reasons = RUNTIME_BLOCKERS
@@ -105,7 +105,7 @@ class SharedRuntimeFactory:
         self.session_factory = session_factory
         if session is not None or session_factory is not None:
             self.capabilities = EngineCapabilities(
-                engine_version="hourly-runtime-43c275c", integration_sha=RUNTIME_SHA,
+                engine_version="hourly-runtime-1d943ee", integration_sha=RUNTIME_SHA,
                 execution_kind="SHARED", strategies=("STATIC", "REACTIVE", "RESERVE_JUGGLER"),
                 scenarios=("NORMAL", "HIGH_WITHDRAWAL", "LOW_DEPOSIT", "SETTLEMENT_DELAY", "LIQUIDITY_SHOCK"),
             )
