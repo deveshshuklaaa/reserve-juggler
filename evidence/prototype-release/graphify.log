@@ -1,0 +1,9 @@
+Re-extracting code files in . (no LLM needed)...
+[graphify watch] 11 file(s) not classified (no supported extension or shebang), skipped: .env.example, .git, .gitattributes, .gitignore, Dockerfile, index.css (+5 more)
+  AST extraction: 41/41 uncached files (100%) [16 workers]
+  warning: 4 .sql file(s) contributed nothing to the graph because a dependency is missing: tree_sitter_sql not installed. Install it with: pip install "graphifyy[sql]" (#1745)
+  warning: 1 file(s) had syntax errors and may be partially extracted: frontend/src/components/RJQuantumPrism.jsx (first error at line 20, 1 symbol(s) extracted)
+[graphify watch] Rebuilt (no clustering): 2748 nodes, 7790 edges
+[graphify watch] graph.json updated in graphify-out
+Code graph updated. For doc/paper/image changes run /graphify --update in your AI assistant.
+Tip: set GEMINI_API_KEY or GOOGLE_API_KEY to use Gemini for semantic extraction.

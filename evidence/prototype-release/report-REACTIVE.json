@@ -1,0 +1,450 @@
+{
+  "run_id": "369a28c1-3431-57d3-9198-ff317ed583bd",
+  "scenario": "NORMAL",
+  "seed": 42,
+  "started_at": "2026-10-18T02:41:34.078604Z",
+  "ended_at": "2026-10-18T02:43:29.104227Z",
+  "metrics": {
+    "realized_interest_cents": 1141311,
+    "accrued_interest_cents": 0,
+    "average_checking_cents": 1626240014,
+    "average_vault_cents": 1384331674,
+    "redemption_penalties_cents": 0,
+    "emergency_borrowing_cost_cents": 3032614,
+    "emergency_events": 32,
+    "reserve_breaches": 32,
+    "failed_payouts": 3,
+    "unpaid_cents": 896138999,
+    "net_benefit_cents": -1891303
+  },
+  "history": [
+    {
+      "timestamp": "2026-01-01T00:00:00",
+      "checking_cents": 1980720409
+    },
+    {
+      "timestamp": "2026-01-01T01:00:00",
+      "checking_cents": 2079830155
+    },
+    {
+      "timestamp": "2026-01-01T03:00:00",
+      "checking_cents": 2279285640
+    },
+    {
+      "timestamp": "2026-01-01T05:00:00",
+      "checking_cents": 2434177127
+    },
+    {
+      "timestamp": "2026-01-01T06:00:00",
+      "checking_cents": 3213870018
+    },
+    {
+      "timestamp": "2026-01-01T08:00:00",
+      "checking_cents": 6085699001
+    },
+    {
+      "timestamp": "2026-01-01T10:00:00",
+      "checking_cents": 8613034039
+    },
+    {
+      "timestamp": "2026-01-01T11:00:00",
+      "checking_cents": 10786087889
+    },
+    {
+      "timestamp": "2026-01-01T13:00:00",
+      "checking_cents": 12790203959
+    },
+    {
+      "timestamp": "2026-01-01T15:00:00",
+      "checking_cents": 13103077403
+    },
+    {
+      "timestamp": "2026-01-01T16:00:00",
+      "checking_cents": 13245535717
+    },
+    {
+      "timestamp": "2026-01-01T18:00:00",
+      "checking_cents": 1596813243
+    },
+    {
+      "timestamp": "2026-01-01T20:00:00",
+      "checking_cents": 1159817196
+    },
+    {
+      "timestamp": "2026-01-01T21:00:00",
+      "checking_cents": 1136970054
+    },
+    {
+      "timestamp": "2026-01-01T23:00:00",
+      "checking_cents": 1163614569
+    },
+    {
+      "timestamp": "2026-01-02T01:00:00",
+      "checking_cents": 975931092
+    },
+    {
+      "timestamp": "2026-01-02T02:00:00",
+      "checking_cents": 1032175349
+    },
+    {
+      "timestamp": "2026-01-02T04:00:00",
+      "checking_cents": 1001545250
+    },
+    {
+      "timestamp": "2026-01-02T06:00:00",
+      "checking_cents": 1134346432
+    },
+    {
+      "timestamp": "2026-01-02T08:00:00",
+      "checking_cents": 12467477905
+    },
+    {
+      "timestamp": "2026-01-02T09:00:00",
+      "checking_cents": 12043565016
+    },
+    {
+      "timestamp": "2026-01-02T11:00:00",
+      "checking_cents": 10849644079
+    },
+    {
+      "timestamp": "2026-01-02T13:00:00",
+      "checking_cents": 9969965210
+    },
+    {
+      "timestamp": "2026-01-02T14:00:00",
+      "checking_cents": 9329928580
+    },
+    {
+      "timestamp": "2026-01-02T16:00:00",
+      "checking_cents": 7275384431
+    },
+    {
+      "timestamp": "2026-01-02T18:00:00",
+      "checking_cents": 2340838374
+    },
+    {
+      "timestamp": "2026-01-02T19:00:00",
+      "checking_cents": 2242733405
+    },
+    {
+      "timestamp": "2026-01-02T21:00:00",
+      "checking_cents": 1829923698
+    },
+    {
+      "timestamp": "2026-01-02T23:00:00",
+      "checking_cents": 1565949650
+    },
+    {
+      "timestamp": "2026-01-03T00:00:00",
+      "checking_cents": 1201889711
+    },
+    {
+      "timestamp": "2026-01-03T02:00:00",
+      "checking_cents": 882196775
+    },
+    {
+      "timestamp": "2026-01-03T04:00:00",
+      "checking_cents": 673255431
+    },
+    {
+      "timestamp": "2026-01-03T05:00:00",
+      "checking_cents": 532652785
+    },
+    {
+      "timestamp": "2026-01-03T07:00:00",
+      "checking_cents": 292302644
+    },
+    {
+      "timestamp": "2026-01-03T09:00:00",
+      "checking_cents": 3573402001
+    },
+    {
+      "timestamp": "2026-01-03T11:00:00",
+      "checking_cents": 1872654944
+    },
+    {
+      "timestamp": "2026-01-03T12:00:00",
+      "checking_cents": 1130152539
+    },
+    {
+      "timestamp": "2026-01-03T14:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-03T16:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-03T17:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-03T19:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-03T21:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-03T22:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-04T00:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-04T02:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-04T03:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-04T05:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-04T07:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-04T08:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-04T10:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-04T12:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-04T14:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-04T15:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-04T17:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-04T19:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-04T20:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-04T22:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-05T00:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-05T01:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-05T03:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-05T05:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-05T06:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-05T08:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-05T10:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-05T11:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-05T13:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-05T15:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-05T17:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-05T18:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-05T20:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-05T22:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-05T23:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-06T01:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-06T03:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-06T04:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-06T06:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-06T08:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-06T09:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-06T11:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-06T13:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-06T14:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-06T16:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-06T18:00:00",
+      "checking_cents": 59978082
+    },
+    {
+      "timestamp": "2026-01-06T20:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-06T21:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-06T23:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-07T01:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-07T02:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-07T04:00:00",
+      "checking_cents": 0
+    },
+    {
+      "timestamp": "2026-01-07T06:00:00",
+      "checking_cents": 226159222
+    },
+    {
+      "timestamp": "2026-01-07T07:00:00",
+      "checking_cents": 288468639
+    },
+    {
+      "timestamp": "2026-01-07T09:00:00",
+      "checking_cents": 635592232
+    },
+    {
+      "timestamp": "2026-01-07T11:00:00",
+      "checking_cents": 981513425
+    },
+    {
+      "timestamp": "2026-01-07T12:00:00",
+      "checking_cents": 898998611
+    },
+    {
+      "timestamp": "2026-01-07T14:00:00",
+      "checking_cents": 1093723970
+    },
+    {
+      "timestamp": "2026-01-07T16:00:00",
+      "checking_cents": 764581468
+    },
+    {
+      "timestamp": "2026-01-07T17:00:00",
+      "checking_cents": 597200273
+    },
+    {
+      "timestamp": "2026-01-07T19:00:00",
+      "checking_cents": 429611885
+    },
+    {
+      "timestamp": "2026-01-07T21:00:00",
+      "checking_cents": 123788419
+    },
+    {
+      "timestamp": "2026-01-07T23:00:00",
+      "checking_cents": 290694628
+    }
+  ],
+  "accounting": {
+    "realized_interest_cents": 1141311,
+    "average_checking_cents": 1626240014,
+    "average_invested_cents": 1384331674,
+    "penalties_cents": 0,
+    "borrowing_costs_cents": 3032614,
+    "borrowing_outstanding_cents": 0,
+    "reserve_breaches": 32,
+    "emergency_events": 32,
+    "failed_payouts": 3,
+    "unpaid_payouts_cents": 896138999,
+    "sweeps": 2,
+    "net_benefit_cents": -1891303,
+    "contractual_penalties_cents": 0,
+    "liquidation_losses_cents": 0,
+    "transaction_costs_cents": 0,
+    "realized_market_pnl_cents": 0,
+    "accrued_interest_cents": 0,
+    "unrealized_market_pnl_cents": 0,
+    "unpaid_borrowing_costs_cents": 0,
+    "ending_net_asset_value_cents": 290694628,
+    "customer_cash_delta_cents": -1707414069,
+    "model_evaluation": null
+  },
+  "scenario_settings_json": "{\"initial_scenario\":\"NORMAL\",\"schedule\":[]}",
+  "runtime_commit_verified_by_reporter": "1d943eeb652775ef0aecb8cf73bd781293722d36",
+  "execution_provenance": "NOT_RECORDED_BY_RUNTIME",
+  "model_evaluation": null
+}

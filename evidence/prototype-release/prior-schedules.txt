@@ -1,0 +1,7 @@
+f9248234-f1fb-470d-805c-6c0e36863252|1|2026-01-01 00:00:00|NORMAL|[{"scenario": "LIQUIDITY_SHOCK", "parameters": {"shock_cents": 800000000, "duration_steps": 8}, "effective_step": 2}]
+de13e2d0-08c6-4b79-9586-6fee6364d5fc|1|2026-01-01 00:00:00|NORMAL|[{"scenario": "LIQUIDITY_SHOCK", "parameters": {"shock_cents": 800000000, "duration_steps": 8}, "effective_step": 2}]
+f479f9ac-d014-4566-bc79-b571dafa0c15|1|2026-01-01 00:00:00|NORMAL|[{"scenario": "HIGH_WITHDRAWAL", "parameters": {"stress_factor": 1.5}, "effective_step": 24}]
+97a686a0-7588-41bd-90c1-908313a3a653|1|2026-01-01 00:00:00|NORMAL|[{"scenario": "HIGH_WITHDRAWAL", "parameters": {"stress_factor": 1.5}, "effective_step": 24}]
+dfac5a9c-d04e-4ca1-bdc0-f52322cf97e8|1|2026-01-01 00:00:00|NORMAL|[{"scenario": "HIGH_WITHDRAWAL", "parameters": {"stress_factor": 1.5}, "effective_step": 24}]
+e251e8f9-15bb-4b45-b45c-561f24cfdc72|1|2026-01-01 00:00:00|NORMAL|[{"scenario": "LIQUIDITY_SHOCK", "parameters": {"shock_cents": 800000000, "duration_steps": 8}, "effective_step": 2}]
+4437f466-2c36-4a01-9ad4-d4d1f7a3d060|1|2026-01-01 00:00:00|NORMAL|[{"scenario": "HIGH_WITHDRAWAL", "parameters": {"stress_factor": 1.5}, "effective_step": 24}]

@@ -1,0 +1,16 @@
+
+> reserve-juggler-frontend@1.0.0 build
+> vite build
+
+vite v6.4.4 building for production...
+transforming...
+✓ 2202 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                            0.86 kB │ gzip:   0.46 kB
+dist/assets/backtest.worker-CRHIQoDb.js   18.16 kB
+dist/assets/index-BdusllWU.css            67.16 kB │ gzip:  14.13 kB
+dist/assets/icons-qZ_XYGz0.js             22.03 kB │ gzip:   6.20 kB
+dist/assets/index-BXTN6JKM.js            339.13 kB │ gzip: 105.24 kB
+dist/assets/charts-3R9fDcwN.js           422.66 kB │ gzip: 121.15 kB
+✓ built in 12.82s

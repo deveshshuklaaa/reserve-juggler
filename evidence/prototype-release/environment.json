@@ -1,0 +1,16 @@
+{
+  "tested_sha": "1273e44d8ab85a4f6ab1c2f7b4d91d021474d9c7",
+  "core_runtime_sha": "1d943eeb652775ef0aecb8cf73bd781293722d36",
+  "database": "reserve_juggler_m2_test_release_d5c756fa6f29",
+  "database_url": "postgresql+psycopg2://postgres:postgres@127.0.0.1:5432/reserve_juggler_m2_test_release_d5c756fa6f29",
+  "migrations": [
+    "001_initial_schema.sql",
+    "002_member2_contract.sql",
+    "003_four_tier_persistence.sql"
+  ],
+  "organizer_rows": 8760,
+  "organizer_sha256": "2e7c1d2e5b678e9975250211e7e0017022049c510e1dd90cd7f29e931837b0c5",
+  "app_command": "D:\\Hackathon\\projects\\reserve-juggler\\.venv\\Scripts\\python.exe -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8017",
+  "source_time_basis": "UNSPECIFIED",
+  "publication_delay_seconds": 0
+}

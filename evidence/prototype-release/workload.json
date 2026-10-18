@@ -1,0 +1,11 @@
+{
+  "start": "2026-01-01 00:00:00",
+  "end_exclusive": "2026-01-08 00:00:00",
+  "steps": 168,
+  "source_deposits_cents": 176756139579,
+  "source_withdrawals_cents": 179359692647,
+  "preserved_source_net_flow_usd": "-26035530.63",
+  "deposits_less_withdrawals_cents": -2603553068,
+  "source_rows_unchanged": true,
+  "usd_to_cents": "Exact source Decimal multiplied by 100 once; original source net_flow is not substituted"
+}

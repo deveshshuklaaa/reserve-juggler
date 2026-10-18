@@ -1,0 +1,37 @@
+
+> reserve-juggler-frontend@1.0.0 test
+> vitest run tests/api.test.js -t reads actual sweeps
+
+
+ RUN  v4.1.11 D:/Hackathon/projects/reserve-juggler-release-check/frontend
+
+ ❯ tests/api.test.js (13 tests | 1 failed | 12 skipped) 31ms
+     × reads actual sweeps and debt from detailed accounting and retains report history 25ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/api.test.js > API boundary > reads actual sweeps and debt from detailed accounting and retains report history
+AssertionError: expected +0 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 0
+
+ ❯ tests/api.test.js:41:42
+     39|       history: [{ timestamp: '2026-01-01T00:00:00', checking_cents: 45…
+     40|     const comparison = flattenBacktestMetrics({ results: [row] });
+     41|     expect(comparison.results[0].sweeps).toBe(2);
+       |                                          ^
+     42|     expect(comparison.results[0].borrowing_outstanding_cents).toBe(123…
+     43|     const report = flattenPerformanceReport(row);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 12 skipped (13)
+   Start at  08:18:28
+   Duration  3.34s (transform 273ms, setup 627ms, import 279ms, tests 31ms, environment 1.94s)
+
