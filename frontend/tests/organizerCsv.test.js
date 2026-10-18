@@ -104,7 +104,8 @@ describe('official organizer CSV preview', () => {
 
   it('reports malformed records and enforces file size and data-row limits', () => {
     expect(() => parseOrganizerCsv(`${csv()}\n`)).not.toThrow();
-    expect(() => parseOrganizerCsv(`${csv()}\n\n`)).toThrow(/Row 4/);
+    expect(parseOrganizerCsv(`${csv()}\n${',,,,,,,,,,,,,,,\n'.repeat(5075)}`).rows).toHaveLength(2);
+    expect(() => parseOrganizerCsv(`${csv()}\n,,,,,,,,,,,,,,,\n${csv().split('\n')[2]}`)).toThrow(/Row 4/);
     expect(() => parseOrganizerCsv('x'.repeat(2 * 1024 * 1024 + 1))).toThrow(/2 MB/);
     const records = `${ORGANIZER_HEADERS.join(',')}\n${`${ORGANIZER_HEADERS.map((field) => fixtureRow()[field]).join(',')}\n`.repeat(5001)}`;
     expect(() => parseOrganizerCsv(records)).toThrow(/5,000/);

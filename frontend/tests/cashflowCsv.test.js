@@ -109,6 +109,13 @@ describe('cash-flow CSV import', () => {
     expect(() => parseCashflowCsv(csv(...rows))).toThrow(/Row 5002:.*maximum of 5,000/);
   });
 
+  it('ignores only a fully empty suffix, including quoted and whitespace cells', () => {
+    expect(parseCashflowCsv(`${csv(...validRows)}\n${',,\n'.repeat(5075)}""," ",\r\n\n`).rows).toHaveLength(2);
+    expect(() => parseCashflowCsv(`${csv(...validRows)}\n,,\n2026-01-01T00:30:00Z,,0`)).toThrow(/Row 4/);
+    expect(() => parseCashflowCsv(`${csv(...validRows)}\n,1,`)).toThrow(/Row 4/);
+    expect(() => parseCashflowCsv(`${csv(...validRows)}\n"`)).toThrow(/quoted field is not closed/);
+  });
+
   it('rejects oversized text before parsing', () => {
     expect(() => parseCashflowCsv('x'.repeat(2 * 1024 * 1024 + 1))).toThrow(/2 MB/);
   });
