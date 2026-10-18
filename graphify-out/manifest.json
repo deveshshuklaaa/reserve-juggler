@@ -210,10 +210,10 @@
     "semantic_hash": "96118ef686d17963fc812ab58047d1a3"
   },
   "backend/app/v1_contracts.py": {
-    "mtime": 1792282315.4683058,
-    "seen": 1792285518.5662596,
-    "ast_hash": "2a910a8c689321789db8a5d721f6db9f",
-    "semantic_hash": "2a910a8c689321789db8a5d721f6db9f"
+    "mtime": 1792285737.1850493,
+    "seen": 1792285844.23024,
+    "ast_hash": "3bc8a1461dc3b4cabc23922b3285ae1e",
+    "semantic_hash": "3bc8a1461dc3b4cabc23922b3285ae1e"
   },
   "tests/backend/test_api_versioning.py": {
     "mtime": 1792281563.548739,
@@ -378,16 +378,16 @@
     "semantic_hash": "4b599519388b2278415b2563e0c43400"
   },
   "backend/app/services/hourly_engine.py": {
-    "mtime": 1792282315.466308,
-    "seen": 1792285518.5662596,
-    "ast_hash": "4e44fbf3bb7aa457f1ffd85f7a4a3dd1",
-    "semantic_hash": "4e44fbf3bb7aa457f1ffd85f7a4a3dd1"
+    "mtime": 1792285737.1814263,
+    "seen": 1792285844.224563,
+    "ast_hash": "7fe44dd66bd49577175706e5c78015b4",
+    "semantic_hash": "7fe44dd66bd49577175706e5c78015b4"
   },
   "backend/app/services/run_service.py": {
-    "mtime": 1792282315.467307,
-    "seen": 1792285518.5662596,
-    "ast_hash": "594dfdd78fc19c525135c51ecdd4291e",
-    "semantic_hash": "594dfdd78fc19c525135c51ecdd4291e"
+    "mtime": 1792285737.1834378,
+    "seen": 1792285844.226229,
+    "ast_hash": "0ce5cd8d05d94661bfc4c0b31caa4e74",
+    "semantic_hash": "0ce5cd8d05d94661bfc4c0b31caa4e74"
   },
   "backend/app/treasury/four_tier_adapter.py": {
     "mtime": 1792280086.7975757,
@@ -654,10 +654,10 @@
     "semantic_hash": "bb03df34cb738da57945b4cde04298a1"
   },
   "backend/app/backtesting/runtime.py": {
-    "mtime": 1792282421.5310757,
-    "seen": 1792285518.557487,
-    "ast_hash": "b2441acc0c25c03f445589ecd8891bb9",
-    "semantic_hash": "b2441acc0c25c03f445589ecd8891bb9"
+    "mtime": 1792285790.340192,
+    "seen": 1792285844.1993473,
+    "ast_hash": "eba654d5bdc95836ea8c03d69590f3f3",
+    "semantic_hash": "eba654d5bdc95836ea8c03d69590f3f3"
   },
   "backend/app/backtesting/service.py": {
     "mtime": 1792281563.5311263,
@@ -720,10 +720,10 @@
     "semantic_hash": "af5aa858a5d8e79fadb07089dd66f66b"
   },
   "backend/app/services/accounting.py": {
-    "mtime": 1792282315.465308,
-    "seen": 1792285518.5662596,
-    "ast_hash": "5256b85bb95963bfeced5ee91728f06d",
-    "semantic_hash": "5256b85bb95963bfeced5ee91728f06d"
+    "mtime": 1792285737.1780186,
+    "seen": 1792285844.224563,
+    "ast_hash": "ad9c5b114e5591e6600295a1c5e678f2",
+    "semantic_hash": "ad9c5b114e5591e6600295a1c5e678f2"
   },
   "backend/app/services/market_execution.py": {
     "mtime": 1792282315.466308,
@@ -838,5 +838,17 @@
     "seen": 1792285518.5722985,
     "ast_hash": "4873fb5f0bf9dab19be13cfcff01f9d3",
     "semantic_hash": "4873fb5f0bf9dab19be13cfcff01f9d3"
+  },
+  "tests/integration/test_funded_backtest_routes.py": {
+    "mtime": 1792285737.219968,
+    "seen": 1792285844.2695763,
+    "ast_hash": "840074f37a224be699bdc472b708d182",
+    "semantic_hash": "840074f37a224be699bdc472b708d182"
+  },
+  "tests/integration/test_snapshot_accounting.py": {
+    "mtime": 1792285737.2266853,
+    "seen": 1792285844.2747955,
+    "ast_hash": "f22a41d13a0d4ed09ee867519f8cfbf0",
+    "semantic_hash": "f22a41d13a0d4ed09ee867519f8cfbf0"
   }
 }
