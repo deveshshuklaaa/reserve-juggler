@@ -1573,7 +1573,7 @@ components:
         runtime_commit_verified_by_reporter:
           type: string
           title: Runtime Commit Verified By Reporter
-          default: 1ff1e655070d6b13e24c060d30c9782457d01598
+          default: 43c275c3efaf7ed986d92d732c55583f096ccadf
         execution_provenance:
           type: string
           const: NOT_RECORDED_BY_RUNTIME

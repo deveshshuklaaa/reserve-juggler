@@ -54,10 +54,10 @@ def runtime_session(runtime_database):
         outer.rollback()
 
 
-def create_run(session, *, initial=2_000_000_000, buffer=50_000_000, duration_steps=720):
+def create_run(session, *, initial=2_000_000_000, buffer=50_000_000, duration_steps=720, max_overdraft_cents=5_000_000_000):
     created = create_simulation_run(session, CreateRunRequest(
         initial_cash_cents=initial, duration_steps=duration_steps,
-        policy=TreasuryPolicy(operational_buffer_cents=buffer)))
+        policy=TreasuryPolicy(operational_buffer_cents=buffer, max_overdraft_cents=max_overdraft_cents)))
     return session.get(SimulationRun, created.run_id)
 
 
@@ -98,7 +98,7 @@ def test_real_repo_sweep_then_maturity_has_auditable_interest(runtime_session):
 
 def test_real_shock_has_shortfall_borrowing_and_financing_records(runtime_session):
     session = runtime_session
-    run = create_run(session, initial=1_000_000)
+    run = create_run(session, initial=1_000_000, max_overdraft_cents=10_000_000_000)
     apply_simulation_scenario(session, run.id, ScenarioRequest(
         scenario="LIQUIDITY_SHOCK", parameters={"amount_cents": 5_000_000_000}, effective_step=1))
     result = execute_hourly_step(session, run.id, expected_step=0)
@@ -242,7 +242,7 @@ def test_forecast_cutoff_is_invariant_to_current_and_future_source_flows(runtime
 def test_shock_has_complete_payout_and_financing_nav_receipts(runtime_session):
     """H2 positive verification: settled customer payouts, financing receipts, and NAV deduction."""
     session = runtime_session
-    run = create_run(session, initial=1_000_000)
+    run = create_run(session, initial=1_000_000, max_overdraft_cents=10_000_000_000)
     apply_simulation_scenario(session, run.id, ScenarioRequest(
         scenario="LIQUIDITY_SHOCK", parameters={"amount_cents": 5_000_000_000}, effective_step=1))
     execute_hourly_step(session, run.id, 0)
