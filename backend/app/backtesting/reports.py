@@ -141,8 +141,17 @@ class BacktestReportService:
             raise RuntimeReceiptUnavailable("Report requires the authoritative organizer historical source")
         if run.seed is None:
             raise RuntimeReceiptUnavailable("Run has no reproducible seed")
-        scenarios = canonical_config(json.dumps({"initial_scenario":run.scenario,
-                                     "schedule":(run.policy_json or {}).get("scenarios",[])}))
+        def _sanitize(obj):
+            if isinstance(obj, float):
+                return str(obj)
+            if isinstance(obj, dict):
+                return {k: _sanitize(v) for k, v in obj.items()}
+            if isinstance(obj, list):
+                return [_sanitize(v) for v in obj]
+            return obj
+
+        scenarios = canonical_config(json.dumps(_sanitize({"initial_scenario":run.scenario,
+                                     "schedule":(run.policy_json or {}).get("scenarios",[])})))
         summary = None
         if run.current_step:
             receipts = [read_hour_receipt(session, run.id, step) for step in range(1,run.current_step+1)]
