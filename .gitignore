@@ -1,4 +1,4 @@
-﻿# OS & IDE
+# OS & IDE
 .DS_Store
 Thumbs.db
 .vscode/
@@ -24,6 +24,7 @@ build/
 .pytest_cache/
 *.db
 *.sqlite
+*.pkl
 
 # Node & Frontend
 node_modules/
@@ -34,3 +35,9 @@ package-lock.json.backup
 # Docker & Logs
 *.log
 docker-compose.override.yml
+
+# Graphify cache & backups
+graphify-out/cache/
+graphify-out/.graphify_*
+graphify-out/20*/
+*.pdf

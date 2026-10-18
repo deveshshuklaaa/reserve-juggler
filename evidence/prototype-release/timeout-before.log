@@ -1,0 +1,45 @@
+
+> reserve-juggler-frontend@1.0.0 test
+> vitest run tests/api.test.js -t allows five minutes
+
+
+ RUN  v4.1.11 D:/Hackathon/projects/reserve-juggler-release-check/frontend
+
+ ❯ tests/api.test.js (12 tests | 1 failed | 11 skipped) 71ms
+     × allows five minutes for the real synchronous seven-day comparison 57ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/api.test.js > API boundary > allows five minutes for the real synchronous seven-day comparison
+AssertionError: expected "setTimeout" to be called with arguments: [ Any<Function>, 300000 ]
+
+Received:
+
+  1st setTimeout call:
+
+  [
+-   Any<Function>,
+-   300000,
++   [Function anonymous],
++   60000,
+  ]
+
+
+Number of calls: 1
+
+ ❯ tests/api.test.js:26:21
+     24|     try {
+     25|       await createRealApi('http://localhost:8017').runBacktest('id', {…
+     26|       expect(timer).toHaveBeenCalledWith(expect.any(Function), 300000);
+       |                     ^
+     27|     } finally {
+     28|       timer.mockRestore();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 skipped (12)
+   Start at  08:12:18
+   Duration  6.53s (transform 423ms, setup 1.32s, import 454ms, tests 71ms, environment 3.65s)
+

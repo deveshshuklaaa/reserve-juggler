@@ -1,0 +1,20 @@
+.cashflow-backdrop { position: fixed; inset: 0; z-index: 300; display: grid; place-items: center; padding: 32px; background: #15243755; backdrop-filter: blur(12px); }
+.cashflow-dialog { width: min(900px, 100%); max-height: calc(100dvh - 64px); overflow-y: auto; overscroll-behavior: contain; background: #fff; border: 1px solid #e3eaf1; border-radius: 26px; padding: 32px; box-shadow: 0 24px 100px #13243b30; outline: none; animation: csv-enter .3s ease-out; }
+.cashflow-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 25px; }
+.cashflow-heading h2 { font-size: clamp(28px, 4vw, 40px); line-height: 1.12; letter-spacing: -.045em; margin: 8px 0 12px; }
+.cashflow-heading p { color: #677585; font-size: 14px; margin: 0; }
+.cashflow-drop { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 30px 20px; border: 1.5px dashed #bccddd; border-radius: 18px; background: #f7faff; color: #425569; transition: background .2s, border-color .2s; }
+.cashflow-drop.is-dragging { border-color: #0071e3; background: #eaf4ff; }
+.cashflow-drop > span { color: #69798b; font-size: 12px; }
+.cashflow-template { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 20px 0; }
+.cashflow-template p { display: grid; gap: 6px; margin: 0; font-size: 13px; }
+.cashflow-template p span { color: #69798b; font-size: 11px; }
+.cashflow-dialog .alert { margin: 14px 0; }
+.cashflow-file { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; border-top: 1px solid #e3eaf1; padding: 24px 0 18px; color: #287767; }
+.cashflow-file strong { color: #243b50; overflow-wrap: anywhere; font-size: 14px; }.cashflow-file span { font-size: 11px; color: #748494; }
+.cashflow-summary { display: flex; flex-wrap: wrap; gap: 22px; padding: 18px; border-radius: 14px; background: #f6f8fb; }.cashflow-summary div { display: grid; gap: 7px; }.cashflow-summary span { font-size: 9px; letter-spacing: .08em; color: #6a7c8e; }.cashflow-summary strong { font-size: 20px; letter-spacing: -.03em; }
+.cashflow-range { font-size: 11px; color: #6a7c8e; overflow-wrap: anywhere; margin: 16px 0; }.cashflow-preview caption { text-align: left; padding: 0 0 12px; font-size: 11px; color: #6a7c8e; }.cashflow-preview td { font-variant-numeric: tabular-nums; font-size: 12px; }
+.cashflow-actions { display: flex; align-items: center; justify-content: space-between; gap: 20px; border-top: 1px solid #e3eaf1; padding-top: 20px; margin-top: 20px; }.cashflow-actions p { color: #69798b; font-size: 11px; max-width: 380px; margin: 0; }.cashflow-actions button { flex-shrink: 0; }
+@keyframes csv-enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@media (max-width: 600px) { .cashflow-backdrop { padding: 10px; }.cashflow-dialog { padding: 22px 18px; border-radius: 20px; max-height: calc(100dvh - 20px); }.cashflow-template,.cashflow-actions { align-items: flex-start; flex-direction: column; }.cashflow-actions button { width: 100%; }.cashflow-summary { gap: 18px 24px; }.cashflow-heading h2 { font-size: 30px; } }
+@media (prefers-reduced-motion: reduce) { .cashflow-dialog { animation: none; } }

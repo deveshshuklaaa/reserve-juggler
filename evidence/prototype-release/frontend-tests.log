@@ -1,0 +1,14 @@
+
+> reserve-juggler-frontend@1.0.0 test
+> vitest run --reporter=dot
+
+
+ RUN  v4.1.11 D:/Hackathon/projects/reserve-juggler-release-check/frontend
+
+·······································································
+
+ Test Files  5 passed (5)
+      Tests  71 passed (71)
+   Start at  08:19:02
+   Duration  11.81s (transform 909ms, setup 3.05s, import 1.69s, tests 5.82s, environment 8.98s)
+

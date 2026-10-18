@@ -1,0 +1,19 @@
+============================= test session starts =============================
+platform win32 -- Python 3.10.11, pytest-8.3.5, pluggy-1.6.0 -- D:\Hackathon\projects\reserve-juggler\.venv\Scripts\python.exe
+rootdir: D:\Hackathon\projects\reserve-juggler-release-check
+configfile: pytest.ini
+plugins: anyio-4.13.0, asyncio-0.26.0
+asyncio: mode=auto, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collecting ... collected 9 items
+
+tests/backtesting/test_execution_receipt_adapter.py::test_purchase_receipt_preserves_executed_details_and_reconciles[BONDS] PASSED [ 11%]
+tests/backtesting/test_execution_receipt_adapter.py::test_purchase_receipt_preserves_executed_details_and_reconciles[EQUITIES] PASSED [ 22%]
+tests/backtesting/test_execution_receipt_adapter.py::test_partial_sale_receipt_preserves_fill_and_basis_reconciliation[BONDS] PASSED [ 33%]
+tests/backtesting/test_execution_receipt_adapter.py::test_partial_sale_receipt_preserves_fill_and_basis_reconciliation[EQUITIES] PASSED [ 44%]
+tests/integration/test_payout_execution.py::test_payout_records_only_funded_legs_and_respects_cap[2000000-100000-True-1000000-EXECUTED] PASSED [ 55%]
+tests/integration/test_payout_execution.py::test_payout_records_only_funded_legs_and_respects_cap[400000-100000-True-500000-PARTIALLY_EXECUTED] PASSED [ 66%]
+tests/integration/test_payout_execution.py::test_payout_records_only_funded_legs_and_respects_cap[0-0-False-0-FAILED] PASSED [ 77%]
+tests/integration/test_payout_execution.py::test_payout_records_only_funded_legs_and_respects_cap[400000-0-False-400000-PARTIALLY_EXECUTED] PASSED [ 88%]
+tests/integration/test_snapshot_accounting.py::test_snapshot_nav_includes_financing_costs_and_matches_persisted_execution PASSED [100%]
+
+============================= 9 passed in 24.64s ==============================

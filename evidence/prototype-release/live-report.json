@@ -1,0 +1,54 @@
+{
+  "run_id": "278bf997-bda2-4d77-afd7-38abf223cdb4",
+  "scenario": "NORMAL",
+  "seed": 42,
+  "started_at": "2026-10-18T02:38:41.126496Z",
+  "ended_at": null,
+  "metrics": {
+    "realized_interest_cents": 0,
+    "accrued_interest_cents": 0,
+    "average_checking_cents": 1980720409,
+    "average_vault_cents": 0,
+    "redemption_penalties_cents": 0,
+    "emergency_borrowing_cost_cents": 0,
+    "emergency_events": 0,
+    "reserve_breaches": 0,
+    "failed_payouts": 0,
+    "unpaid_cents": 0,
+    "net_benefit_cents": 0
+  },
+  "history": [
+    {
+      "timestamp": "2026-01-01T00:00:00",
+      "checking_cents": 1980720409
+    }
+  ],
+  "accounting": {
+    "realized_interest_cents": 0,
+    "average_checking_cents": 1980720409,
+    "average_invested_cents": 0,
+    "penalties_cents": 0,
+    "borrowing_costs_cents": 0,
+    "borrowing_outstanding_cents": 0,
+    "reserve_breaches": 0,
+    "emergency_events": 0,
+    "failed_payouts": 0,
+    "unpaid_payouts_cents": 0,
+    "sweeps": 0,
+    "net_benefit_cents": 0,
+    "contractual_penalties_cents": 0,
+    "liquidation_losses_cents": 0,
+    "transaction_costs_cents": 0,
+    "realized_market_pnl_cents": 0,
+    "accrued_interest_cents": 0,
+    "unrealized_market_pnl_cents": 0,
+    "unpaid_borrowing_costs_cents": 0,
+    "ending_net_asset_value_cents": 1980720409,
+    "customer_cash_delta_cents": -19279591,
+    "model_evaluation": null
+  },
+  "scenario_settings_json": "{\"initial_scenario\":\"NORMAL\",\"schedule\":[{\"effective_step\":2,\"parameters\":{},\"scenario\":\"NORMAL\"}]}",
+  "runtime_commit_verified_by_reporter": "1d943eeb652775ef0aecb8cf73bd781293722d36",
+  "execution_provenance": "NOT_RECORDED_BY_RUNTIME",
+  "model_evaluation": null
+}

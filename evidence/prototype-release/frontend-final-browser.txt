@@ -1,0 +1,229 @@
+Browser tab: 2, Title: "Reserve Juggler — Intelligent Treasury Autopilot", URL: "http://127.0.0.1:3017/strategy-arena".
+1 AXWebArea Reserve Juggler — Intelligent Treasury Autopilot, URL: 127.0.0.1:3017/strategy-arena
+	2 container
+		3 link Description: Skip to content, Value: 127.0.0.1:3017/strategy-arena#main
+		4 link Description: Reserve Juggler home, Value: 127.0.0.1:3017/
+		5 container Description: Primary navigation, ID: primary-navigation
+			6 link Description: Command Center, Value: 127.0.0.1:3017/
+			7 link Description: Liquidity Shock Lab, Value: 127.0.0.1:3017/shock-lab
+			8 link Description: Strategy Arena, Value: 127.0.0.1:3017/strategy-arena
+		9 text FastAPI mode
+		10 button (collapsed) Description: Open navigation, Secondary Actions: Expand
+			11 image
+		29 text Simulation paused
+		30 text 18 Oct 2026, 02:54 UTC Step  0  /  —
+		31 button Play simulation
+			32 image
+			33 text Play
+		34 button Advance one step
+			35 image
+			36 text Step
+		37 button Reset simulation
+			38 image
+			39 text Reset
+		12 container main
+			13 text STRATEGY COMPARISON
+			14 heading Treasury Strategy Arena, Value: 1
+				15 text Treasury Strategy Arena
+			16 text Three approaches. The same cash flows. A measurable difference.
+			17 text Backend backtesting
+			40 container
+				41 heading Design a fair comparison, Value: 2
+					42 text Design a fair comparison
+				43 text Compare 3 strategies head-to-head under identical seeded cash flows and starting capital.
+				44 container
+					45 text Stress scenario
+					46 pop up button (collapsed, settable) Stress scenario, Value: Normal operations, Secondary Actions: Expand
+						47 menu
+							48 (selected) Normal operations
+							49 Withdrawal spike
+							50 Deposit drop
+							51 Settlement delay
+							52 Liquidity shock
+				53 container
+					54 text Simulation duration
+					55 pop up button (collapsed, settable) Simulation duration, Value: 7 days, Secondary Actions: Expand
+						56 menu
+							57 (selected) 7 days
+							58 14 days
+							59 30 days
+				60 container
+					61 text Random seed
+					62 stepper (settable, integer) Random seed, Value: 2026
+				63 button Run strategy comparison
+					64 image
+					65 text Run strategy comparison
+				66 container
+					67 checkbox (settable, integer) Description: Static reserve Maintains a fixed $14M cash reserve., Value: 1
+					68 text Static reserve Maintains a fixed $14M cash reserve.
+					69 image
+				70 container
+					71 checkbox (settable, integer) Description: Reactive reserve Responds to the most recent net outflow., Value: 1
+					72 text Reactive reserve Responds to the most recent net outflow.
+					73 image
+				74 container
+					75 checkbox (settable, integer) Description: Reserve Juggler Uses a mock forecast buffer and vault constraints., Value: 1
+					76 text Reserve Juggler Uses a mock forecast buffer and vault constraints.
+					77 image
+			89 text COMPARISON COMPLETE
+			90 heading 7-day treasury outcomes, Value: 2
+				91 text 7 -day treasury outcomes
+			92 container
+				93 text Seed  2026  ·  Normal operations  ·  3  strategies
+			94 button Export comparison
+				95 image
+				96 text Export comparison
+			97 image
+			98 text Reserve Juggler
+			99 text Highest net financial benefit
+			100 text  · Results depend on the selected criterion.
+			101 pop up button (collapsed, settable) Description: Ranking criterion, Value: Highest net benefit, Secondary Actions: Expand
+				102 menu
+					103 (selected) Highest net benefit
+					104 Fewest reserve breaches
+					105 Fewest failed payouts
+			106 container
+				107 heading The complete financial picture, Value: 2
+					108 text The complete financial picture
+				109 text All monetary figures in USD. A breach counts each interval below the reserve.
+				110 table
+					111 row
+						112 cell
+							113 text PERFORMANCE METRIC
+						114 cell
+							115 text STATIC RESERVE
+						116 cell
+							117 text REACTIVE RESERVE
+						118 cell
+							119 text RESERVE JUGGLER
+					120 row
+						121 cell
+							122 text Realized interest
+						123 cell
+							124 text $339.83
+						125 cell
+							126 text $473.00
+						127 cell
+							128 text $616.65
+					129 row
+						130 cell
+							131 text Average checking / idle cash
+						132 cell
+							133 text $4,143,190.96
+						134 cell
+							135 text $4,172,360.32
+						136 cell
+							137 text $3,988,852.52
+					138 row
+						139 cell
+							140 text Early redemption penalties
+						141 cell
+							142 text $151,209.54
+						143 cell
+							144 text $0.00
+						145 cell
+							146 text $0.00
+					147 row
+						148 cell
+							149 text Emergency borrowing costs
+						150 cell
+							151 text $36,801.22
+						152 cell
+							153 text $36,776.38
+						154 cell
+							155 text $36,776.36
+					156 row
+						157 cell
+							158 text Outstanding borrowing
+						159 cell
+							160 text $19,225,013.92
+						161 cell
+							162 text $19,073,671.21
+						163 cell
+							164 text $19,073,527.56
+					165 row
+						166 cell
+							167 text Reserve breaches
+						168 cell
+							169 text 52
+						170 cell
+							171 text 52
+						172 cell
+							173 text 52
+					174 row
+						175 cell
+							176 text Emergency funding events
+						177 cell
+							178 text 52
+						179 cell
+							180 text 52
+						181 cell
+							182 text 52
+					183 row
+						184 cell
+							185 text Failed payouts
+						186 cell
+							187 text 8
+						188 cell
+							189 text 8
+						190 cell
+							191 text 8
+					192 row
+						193 cell
+							194 text Vault sweeps
+						195 cell
+							196 text 3
+						197 cell
+							198 text 1
+						199 cell
+							200 text 1
+					201 row
+						202 cell
+							203 text Net financial benefit
+						204 cell
+							205 text -$187,670.93
+						206 cell
+							207 text -$36,303.38
+						208 cell
+							209 text -$36,159.71
+			210 container
+				211 heading Net financial benefit, Value: 2
+					212 text Net financial benefit
+				213 text Realized interest less penalties and borrowing costs
+				214 container Computed net benefit for each mock strategy. Negative values represent a net cost.
+				215 text Computed net benefit for each mock strategy. Negative values represent a net cost.
+			216 container
+				217 heading Yield & financial costs, Value: 2
+					218 text Yield & financial costs
+				219 text Earnings and the cost of liquidity
+				220 container Realized interest, early redemption penalties, and borrowing costs by strategy.
+				221 text Realized interest, early redemption penalties, and borrowing costs by strategy.
+			222 container
+				223 heading Liquidity risk, Value: 2
+					224 text Liquidity risk
+				225 text Recorded events throughout the comparison
+				226 container Counts of reserve-breach intervals and failed payout intervals.
+				227 text Counts of reserve-breach intervals and failed payout intervals.
+			228 container
+				229 heading Average idle cash, Value: 2
+					230 text Average idle cash
+				231 text Average checking across recorded simulation steps
+				232 container Average checking balance for each strategy.
+				233 text Average checking balance for each strategy.
+			234 container
+				235 heading Checking balance over time, Value: 2
+					236 text Checking balance over time
+				237 text Retrospective backtest history · sampled every four simulated hours
+				238 container Recorded checking balances from completed backtests, not live future values.
+				239 text Recorded checking balances from completed backtests, not live future values.
+				240 text Static reserve Reactive reserve Reserve Juggler
+			82 container
+				83 heading Forecasting performance, Value: 2
+					84 text Forecasting performance
+				85 text Baseline versus ML evaluation
+				86 heading Model evaluation not available, Value: 3
+					87 text Model evaluation not available
+				88 text Measured MAE, RMSE, sample count, evaluation period, and model version will appear when Member 1 supplies evaluation outputs. No ML improvement is claimed in mock mode.
+		28 text Reserve Juggler Intelligent Treasury Autopilot. HackForge 2026 Simulated data. No real funds. USD · UTC
+
+The focused UI element is 1 AXWebArea Reserve Juggler — Intelligent Treasury Autopilot, URL: 127.0.0.1:3017/strategy-arena

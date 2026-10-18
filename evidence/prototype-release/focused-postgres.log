@@ -1,0 +1,19 @@
+============================= test session starts =============================
+platform win32 -- Python 3.10.11, pytest-8.3.5, pluggy-1.6.0 -- D:\Hackathon\projects\reserve-juggler\.venv\Scripts\python.exe
+rootdir: D:\Hackathon\projects\reserve-juggler-release-check
+configfile: pytest.ini
+plugins: anyio-4.13.0, asyncio-0.26.0
+asyncio: mode=auto, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collecting ... collected 5 items
+
+tests/backtesting/test_runtime_acceptance.py::test_acceptance_h2_contractual_repo_maturity_at_eight_am_with_delay_invariance PASSED
+tests/backtesting/test_prototype_h2_records.py::test_eight_am_settlement_is_causal_unique_and_source_naive[0] POSTGRES_H2_EVIDENCE {"run_id": "7fb9f307-fbc7-45e9-b5aa-c1f9ec69889f", "publication_delay_seconds": 0, "entered_at": "2026-01-01T17:00:00", "scheduled_maturity_at": "2026-01-02T08:00:00", "maturity_event_at": "2026-01-02T08:00:00", "credit_event_at": "2026-01-02T08:00:00", "closing_valuation_at": "2026-01-02T09:00:00", "principal_cents": 99999000000, "interest_cents": 3424623, "settlement_cents": 100002424623, "decision_market_observed_at": "2026-01-02T07:00:00", "last_earning_rate_observed_at": "2026-01-02T07:00:00", "time_basis": "UNSPECIFIED", "snapshot_source_timestamp": "2026-01-02 09:00:00", "snapshot_operation_timestamp": "2026-10-18T02:38:30.252860+00:00", "net_asset_value_cents": 100003424623}
+NO_RETROACTIVE_TRUE_UP 0 PASS
+PASSED
+tests/backtesting/test_prototype_h2_records.py::test_eight_am_settlement_is_causal_unique_and_source_naive[3600] POSTGRES_H2_EVIDENCE {"run_id": "c3f4ad46-8a02-4037-939f-2b4ad9d6cfe1", "publication_delay_seconds": 3600, "entered_at": "2026-01-01T17:00:00", "scheduled_maturity_at": "2026-01-02T08:00:00", "maturity_event_at": "2026-01-02T08:00:00", "credit_event_at": "2026-01-02T08:00:00", "closing_valuation_at": "2026-01-02T09:00:00", "principal_cents": 99999000000, "interest_cents": 3253392, "settlement_cents": 100002253392, "decision_market_observed_at": "2026-01-02T06:00:00", "last_earning_rate_observed_at": "2026-01-02T06:00:00", "time_basis": "UNSPECIFIED", "snapshot_source_timestamp": "2026-01-02 09:00:00", "snapshot_operation_timestamp": "2026-10-18T02:38:33.645141+00:00", "net_asset_value_cents": 100003253392}
+NO_RETROACTIVE_TRUE_UP 3600 PASS
+PASSED
+tests/backtesting/test_runtime_acceptance.py::test_canonical_optimizer_targets_ignore_unavailable_current_and_future_flows PASSED
+tests/backtesting/test_runtime_persistence.py::test_forecast_cutoff_is_invariant_to_current_and_future_source_flows PASSED
+
+============================= 5 passed in 39.72s ==============================

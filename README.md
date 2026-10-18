@@ -10,6 +10,11 @@ A quantitative treasury decision engine that continuously processes a synthetic 
 
 ## 1. Project Overview
 
+Submission demo: see [real-backend setup and hotfix caveats](docs/SUBMISSION_HOTFIX.md).
+The integrated prototype replays the official four-tier organizer dataset at
+native hourly resolution. Older synthetic/vault examples below are compatibility
+examples, not the authoritative historical execution model.
+
 - **Project**: Reserve Juggler
 - **Hackathon**: HackForge 2026 (24-Hour Hackathon)
 - **Problem Statement**: THE RESERVE JUGGLER — The Idle Cash Problem

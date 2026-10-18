@@ -1,431 +1,2235 @@
-﻿openapi: 3.0.3
+openapi: 3.1.0
 info:
-  title: Reserve Juggler API Specification
-  description: >
-    Quantitative Treasury Decision Engine API contract for HackForge 2026.
-    Provides interfaces for transaction streaming, liquidity forecasting,
-    reserve optimization, and automated sweep/withdraw decisions.
-    
-    Real-time streaming channel:
-    WS /ws/treasury (Reserved for real-time live telemetry events)
+  title: Reserve Juggler API
+  description: Quantitative Treasury Decision Engine for HackForge 2026
   version: 1.0.0
-servers:
-  - url: http://localhost:8000
-    description: Local Backend Service
-
 paths:
   /health:
     get:
-      summary: Service health check
-      description: Returns health status of API, database connectivity, and decision engine status.
+      tags:
+      - Health
+      summary: Get Health
+      operationId: get_health_health_get
       responses:
         '200':
-          description: Service is healthy
+          description: Successful Response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthStatus'
-
-  /api/treasury/state:
-    get:
-      summary: Get full current treasury state
-      description: Returns consolidated state of accounts, latest reserve requirements, active forecast, and current recommendation.
-      responses:
-        '200':
-          description: Current treasury state snapshot
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TreasuryState'
-
-  /api/transactions/recent:
-    get:
-      summary: Get recent transactions
-      description: Fetches recent simulated transactions with optional limit.
-      parameters:
-        - name: limit
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 50
-      responses:
-        '200':
-          description: List of transactions
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Transaction'
-
-  /api/forecast/current:
-    get:
-      summary: Get current cash flow forecast
-      description: Returns near-term cash flow forecast, expected inflows/outflows, and uncertainty bounds.
-      responses:
-        '200':
-          description: Current forecast
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Forecast'
-
-  /api/liquidity/current:
-    get:
-      summary: Get current liquidity balances
-      description: Returns current checking balance, yield vault balance, required reserve, and deployable cash.
-      responses:
-        '200':
-          description: Liquidity balance breakdown
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LiquiditySnapshot'
-
-  /api/decisions/latest:
-    get:
-      summary: Get latest treasury decision
-      description: Returns most recent recommendation (HOLD, SWEEP, WITHDRAW, LIQUIDITY_WARNING) with rationale.
-      responses:
-        '200':
-          description: Latest decision
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Decision'
-
-  /api/decisions/history:
-    get:
-      summary: Get treasury decision history
-      description: Returns historical audit trail of treasury actions and calculations.
-      parameters:
-        - name: limit
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 20
-      responses:
-        '200':
-          description: List of past decisions
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Decision'
-
-  /api/simulation/start:
+  /api/v1/runs:
     post:
-      summary: Start a new simulation run
-      description: Initiates a synthetic transaction stream under a selected stress scenario.
+      tags:
+      - Simulation runs
+      summary: Create Run
+      operationId: create_run_api_v1_runs_post
       requestBody:
-        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SimulationStartRequest'
-      responses:
-        '202':
-          description: Simulation initiated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SimulationRun'
-
-  /api/simulation/scenario:
-    post:
-      summary: Switch or configure scenario parameters
-      description: Injects volatility, pay-day surges, or deposit run stress scenarios.
-      requestBody:
+              $ref: '#/components/schemas/CreateRunRequest'
         required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ScenarioConfigRequest'
       responses:
-        '200':
-          description: Scenario updated
+        '201':
+          description: Successful Response
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                  active_scenario:
-                    type: string
-
-  /api/simulation/{id}/results:
-    get:
-      summary: Get simulation run results
-      description: Returns metrics, total yield earned, reserve breach events, and emergency interventions for a run.
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Simulation results
+                $ref: '#/components/schemas/RunCreated'
+        '400':
+          description: Invalid parameters
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SimulationRun'
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: Simulation not found
-
-  /api/metrics:
-    get:
-      summary: Get financial performance metrics
-      description: Returns cumulative yield earned, opportunity cost avoided, reserve buffer adequacy, and breach statistics.
-      responses:
-        '200':
-          description: Performance metrics summary
+          description: Run not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TreasuryMetrics'
-
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflicting step or simulation state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Schema validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '501':
+          description: Contract defined; service not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/runs/{id}/snapshot:
+    get:
+      tags:
+      - Simulation runs
+      summary: Snapshot
+      operationId: snapshot_api_v1_runs__id__snapshot_get
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimulationSnapshot'
+        '400':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Run not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflicting step or simulation state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Schema validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '501':
+          description: Contract defined; service not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/runs/{id}/advance:
+    post:
+      tags:
+      - Simulation runs
+      summary: Advance
+      operationId: advance_api_v1_runs__id__advance_post
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdvanceRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimulationSnapshot'
+        '400':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Run not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflicting step or simulation state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Schema validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '501':
+          description: Contract defined; service not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/runs/{id}/scenario:
+    post:
+      tags:
+      - Simulation runs
+      summary: Scenario
+      operationId: scenario_api_v1_runs__id__scenario_post
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScenarioRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScenarioApplied'
+        '400':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Run not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflicting step or simulation state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Schema validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '501':
+          description: Contract defined; service not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/runs/{id}/policy:
+    patch:
+      tags:
+      - Simulation runs
+      summary: Policy
+      operationId: policy_api_v1_runs__id__policy_patch
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyPatch'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TreasuryPolicy'
+        '400':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Run not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflicting step or simulation state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Schema validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '501':
+          description: Contract defined; service not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/runs/{id}/history:
+    get:
+      tags:
+      - Simulation runs
+      summary: History
+      operationId: history_api_v1_runs__id__history_get
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Id
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 1000
+          minimum: 1
+          default: 100
+          title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HistoryResponse'
+        '400':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Run not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflicting step or simulation state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Schema validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '501':
+          description: Contract defined; service not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/runs/{id}/forecast:
+    get:
+      tags:
+      - Simulation runs
+      summary: Forecast
+      operationId: forecast_api_v1_runs__id__forecast_get
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Id
+      - name: horizon_minutes
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 1440
+          minimum: 15
+          default: 240
+          title: Horizon Minutes
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForecastResponse'
+        '400':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Run not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflicting step or simulation state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Schema validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '501':
+          description: Contract defined; service not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/runs/{id}/decisions:
+    get:
+      tags:
+      - Simulation runs
+      summary: Decisions
+      operationId: decisions_api_v1_runs__id__decisions_get
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Id
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 1000
+          minimum: 1
+          default: 100
+          title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DecisionsResponse'
+        '400':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Run not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflicting step or simulation state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Schema validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '501':
+          description: Contract defined; service not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/runs/{id}/transactions:
+    get:
+      tags:
+      - Simulation runs
+      summary: Transactions
+      operationId: transactions_api_v1_runs__id__transactions_get
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Id
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          default: 50
+          title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionsResponse'
+        '400':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Run not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflicting step or simulation state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Schema validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '501':
+          description: Contract defined; service not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/runs/{id}/backtest:
+    post:
+      tags:
+      - Simulation runs
+      summary: Backtest
+      operationId: backtest_api_v1_runs__id__backtest_post
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BacktestRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BacktestReport'
+        '400':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Run not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflicting step or simulation state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Schema validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '501':
+          description: Contract defined; service not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/runs/{id}/report:
+    get:
+      tags:
+      - Simulation runs
+      summary: Report
+      operationId: report_api_v1_runs__id__report_get
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunReport'
+        '400':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Run not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflicting step or simulation state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Schema validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '501':
+          description: Contract defined; service not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 components:
   schemas:
-    HealthStatus:
-      type: object
-      required:
-        - status
-        - timestamp
+    AccountingTotals:
       properties:
-        status:
-          type: string
-          example: healthy
-        database:
-          type: string
-          example: connected
-        timestamp:
-          type: string
-          format: date-time
-
-    Transaction:
-      type: object
-      required:
-        - id
-        - timestamp
-        - type
-        - amount
-        - source
-      properties:
-        id:
+        realized_interest_cents:
           type: integer
-          example: 1
-        timestamp:
+          maximum: 9007199254740991.0
+          minimum: -9007199254740991.0
+          title: Realized Interest Cents
+        average_checking_cents:
+          type: integer
+          maximum: 9007199254740991.0
+          minimum: 0.0
+          title: Average Checking Cents
+        average_invested_cents:
+          type: integer
+          maximum: 9007199254740991.0
+          minimum: 0.0
+          title: Average Invested Cents
+        penalties_cents:
+          type: integer
+          maximum: 9007199254740991.0
+          minimum: 0.0
+          title: Penalties Cents
+        borrowing_costs_cents:
+          type: integer
+          maximum: 9007199254740991.0
+          minimum: 0.0
+          title: Borrowing Costs Cents
+        borrowing_outstanding_cents:
+          type: integer
+          maximum: 9007199254740991.0
+          minimum: 0.0
+          title: Borrowing Outstanding Cents
+        reserve_breaches:
+          type: integer
+          maximum: 9007199254740991.0
+          minimum: 0.0
+          title: Reserve Breaches
+        emergency_events:
+          type: integer
+          maximum: 9007199254740991.0
+          minimum: 0.0
+          title: Emergency Events
+        failed_payouts:
+          type: integer
+          maximum: 9007199254740991.0
+          minimum: 0.0
+          title: Failed Payouts
+        unpaid_payouts_cents:
+          type: integer
+          maximum: 9007199254740991.0
+          minimum: 0.0
+          title: Unpaid Payouts Cents
+        sweeps:
+          type: integer
+          maximum: 9007199254740991.0
+          minimum: 0.0
+          title: Sweeps
+        net_benefit_cents:
+          type: integer
+          maximum: 9007199254740991.0
+          minimum: -9007199254740991.0
+          title: Net Benefit Cents
+        contractual_penalties_cents:
+          type: integer
+          maximum: 9007199254740991.0
+          minimum: 0.0
+          title: Contractual Penalties Cents
+        liquidation_losses_cents:
+          type: integer
+          maximum: 9007199254740991.0
+          minimum: 0.0
+          title: Liquidation Losses Cents
+        transaction_costs_cents:
+          type: integer
+          maximum: 9007199254740991.0
+          minimum: 0.0
+          title: Transaction Costs Cents
+        realized_market_pnl_cents:
+          type: integer
+          maximum: 9007199254740991.0
+          minimum: -9007199254740991.0
+          title: Realized Market Pnl Cents
+        accrued_interest_cents:
+          type: integer
+          maximum: 9007199254740991.0
+          minimum: -9007199254740991.0
+          title: Accrued Interest Cents
+        unrealized_market_pnl_cents:
+          type: integer
+          maximum: 9007199254740991.0
+          minimum: -9007199254740991.0
+          title: Unrealized Market Pnl Cents
+        unpaid_borrowing_costs_cents:
+          type: integer
+          maximum: 9007199254740991.0
+          minimum: 0.0
+          title: Unpaid Borrowing Costs Cents
+        ending_net_asset_value_cents:
+          type: integer
+          maximum: 9007199254740991.0
+          minimum: -9007199254740991.0
+          title: Ending Net Asset Value Cents
+        customer_cash_delta_cents:
+          type: integer
+          maximum: 9007199254740991.0
+          minimum: -9007199254740991.0
+          title: Customer Cash Delta Cents
+        model_evaluation:
+          type: 'null'
+          title: Model Evaluation
+      additionalProperties: false
+      type: object
+      required:
+      - realized_interest_cents
+      - average_checking_cents
+      - average_invested_cents
+      - penalties_cents
+      - borrowing_costs_cents
+      - borrowing_outstanding_cents
+      - reserve_breaches
+      - emergency_events
+      - failed_payouts
+      - unpaid_payouts_cents
+      - sweeps
+      - net_benefit_cents
+      - contractual_penalties_cents
+      - liquidation_losses_cents
+      - transaction_costs_cents
+      - realized_market_pnl_cents
+      - accrued_interest_cents
+      - unrealized_market_pnl_cents
+      - unpaid_borrowing_costs_cents
+      - ending_net_asset_value_cents
+      - customer_cash_delta_cents
+      title: AccountingTotals
+    AdvanceRequest:
+      properties:
+        expected_step:
+          type: integer
+          minimum: 0.0
+          title: Expected Step
+        steps:
+          type: integer
+          exclusiveMinimum: 0.0
+          title: Steps
+          default: 1
+      additionalProperties: false
+      type: object
+      required:
+      - expected_step
+      title: AdvanceRequest
+    AggregatesSnapshot:
+      properties:
+        gross_assets_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Gross Assets Cents
+        total_liabilities_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Total Liabilities Cents
+        net_portfolio_value_cents:
+          type: integer
+          title: Net Portfolio Value Cents
+        total_immediate_liquidity_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Total Immediate Liquidity Cents
+        total_realized_returns_cents:
+          type: integer
+          title: Total Realized Returns Cents
+        total_unrealized_returns_cents:
+          type: integer
+          title: Total Unrealized Returns Cents
+        net_financial_benefit_cents:
+          type: integer
+          title: Net Financial Benefit Cents
+        checking_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Checking Cents
+        required_reserve_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Required Reserve Cents
+        deployable_surplus_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Deployable Surplus Cents
+      additionalProperties: false
+      type: object
+      required:
+      - gross_assets_cents
+      - total_liabilities_cents
+      - net_portfolio_value_cents
+      - total_immediate_liquidity_cents
+      - total_realized_returns_cents
+      - total_unrealized_returns_cents
+      - net_financial_benefit_cents
+      - checking_cents
+      - required_reserve_cents
+      - deployable_surplus_cents
+      title: AggregatesSnapshot
+    BacktestReport:
+      properties:
+        run_id:
           type: string
-          format: date-time
-        type:
-          type: string
-          enum: [DEPOSIT, WITHDRAWAL, MERCHANT_SETTLEMENT]
-          example: DEPOSIT
-        amount:
-          type: number
-          format: double
-          example: 50000.00
-        source:
-          type: string
-          example: payroll_ach
+          format: uuid
+          title: Run Id
         scenario:
-          type: string
-          example: baseline
-
-    Forecast:
-      type: object
-      required:
-        - id
-        - timestamp
-        - horizon_minutes
-        - predicted_inflow
-        - predicted_outflow
-        - predicted_net_flow
-        - uncertainty
-        - model_version
-      properties:
-        id:
+          $ref: '#/components/schemas/Scenario'
+        seed:
           type: integer
-        timestamp:
-          type: string
-          format: date-time
-        horizon_minutes:
-          type: integer
-          example: 60
-        predicted_inflow:
-          type: number
-          example: 120000.00
-        predicted_outflow:
-          type: number
-          example: 85000.00
-        predicted_net_flow:
-          type: number
-          example: 35000.00
-        uncertainty:
-          type: number
-          example: 15000.00
-        model_version:
-          type: string
-          example: v0.1-quantile-baseline
-
-    LiquiditySnapshot:
-      type: object
-      required:
-        - timestamp
-        - checking_balance
-        - vault_balance
-        - required_reserve
-        - deployable_cash
-      properties:
-        id:
-          type: integer
-        timestamp:
-          type: string
-          format: date-time
-        checking_balance:
-          type: number
-          example: 750000.00
-        vault_balance:
-          type: number
-          example: 3250000.00
-        required_reserve:
-          type: number
-          example: 520000.00
-        deployable_cash:
-          type: number
-          example: 230000.00
-
-    Decision:
-      type: object
-      required:
-        - timestamp
-        - decision_type
-        - amount
-        - required_reserve
-        - forecast_value
-        - forecast_uncertainty
-        - safety_buffer
-        - reason
-      properties:
-        id:
-          type: integer
-        timestamp:
-          type: string
-          format: date-time
-        decision_type:
-          type: string
-          enum: [HOLD, SWEEP, WITHDRAW, LIQUIDITY_WARNING]
-          example: SWEEP
-        amount:
-          type: number
-          example: 200000.00
-        required_reserve:
-          type: number
-          example: 520000.00
-        forecast_value:
-          type: number
-          example: 35000.00
-        forecast_uncertainty:
-          type: number
-          example: 15000.00
-        safety_buffer:
-          type: number
-          example: 50000.00
-        reason:
-          type: string
-          example: Checking balance exceeds reserve target; sweeping deployable funds to yield vault.
-
-    TreasuryState:
-      type: object
-      required:
-        - liquidity
-        - latest_decision
-        - active_forecast
-      properties:
-        liquidity:
-          $ref: '#/components/schemas/LiquiditySnapshot'
-        latest_decision:
-          $ref: '#/components/schemas/Decision'
-        active_forecast:
-          $ref: '#/components/schemas/Forecast'
-        system_status:
-          type: string
-          example: operational
-
-    SimulationStartRequest:
-      type: object
-      required:
-        - scenario
-      properties:
-        scenario:
-          type: string
-          enum: [baseline, payroll_spike, deposit_run, high_volatility]
-          example: baseline
-        duration_minutes:
-          type: integer
-          default: 60
-
-    ScenarioConfigRequest:
-      type: object
-      required:
-        - scenario
-      properties:
-        scenario:
-          type: string
-          example: deposit_run
-        intensity:
-          type: number
-          example: 1.5
-
-    SimulationRun:
-      type: object
-      required:
-        - id
-        - scenario
-        - started_at
-      properties:
-        id:
-          type: integer
-        scenario:
-          type: string
+          title: Seed
         started_at:
           type: string
           format: date-time
+          title: Started At
         ended_at:
           type: string
           format: date-time
-        total_yield:
-          type: number
-          example: 412.50
-        reserve_breaches:
-          type: integer
-          example: 0
-        emergency_events:
-          type: integer
-          example: 0
-
-    TreasuryMetrics:
+          title: Ended At
+        results:
+          items:
+            $ref: '#/components/schemas/ReportStrategyResult'
+          type: array
+          title: Results
+        child_run_ids:
+          additionalProperties:
+            type: string
+          type: object
+          title: Child Run Ids
+          default: {}
+        execution_kind:
+          type: string
+          enum:
+          - SHARED
+          - TEST_DOUBLE
+          title: Execution Kind
+        engine_integration_sha:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Engine Integration Sha
+        conditions_sha256:
+          type: string
+          title: Conditions Sha256
+        scenario_settings_json:
+          type: string
+          title: Scenario Settings Json
+        model_evaluation:
+          type: 'null'
+          title: Model Evaluation
+      additionalProperties: false
       type: object
       required:
-        - total_yield_earned
-        - idle_cash_ratio
-        - reserve_breach_count
-        - current_apy
+      - run_id
+      - scenario
+      - seed
+      - started_at
+      - ended_at
+      - results
+      - execution_kind
+      - engine_integration_sha
+      - conditions_sha256
+      - scenario_settings_json
+      title: BacktestReport
+    BacktestRequest:
       properties:
-        total_yield_earned:
-          type: number
-          example: 1250.75
-        idle_cash_ratio:
-          type: number
-          example: 0.18
-        reserve_breach_count:
+        strategies:
+          items:
+            type: string
+            enum:
+            - STATIC_RESERVE
+            - REACTIVE_RESERVE
+            - RESERVE_JUGGLER
+          type: array
+          minItems: 1
+          title: Strategies
+        retain_runs:
+          type: boolean
+          title: Retain Runs
+          default: false
+        days:
+          anyOf:
+          - type: integer
+            enum:
+            - 7
+            - 14
+            - 30
+          - type: 'null'
+          title: Days
+        scenario:
+          anyOf:
+          - $ref: '#/components/schemas/Scenario'
+          - type: 'null'
+        seed:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Seed
+      additionalProperties: false
+      type: object
+      title: BacktestRequest
+    CreateRunRequest:
+      properties:
+        initial_cash_cents:
           type: integer
-          example: 0
-        current_apy:
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Initial Cash Cents
+          default: 2000000000
+        duration_steps:
+          type: integer
+          exclusiveMinimum: 0.0
+          title: Duration Steps
+          default: 288
+        seed:
+          type: integer
+          maximum: 2147483647.0
+          minimum: 0.0
+          title: Seed
+          default: 42
+        scenario:
+          $ref: '#/components/schemas/Scenario'
+          default: NORMAL
+        start_time:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Start Time
+        policy:
+          $ref: '#/components/schemas/TreasuryPolicy'
+      additionalProperties: false
+      type: object
+      title: CreateRunRequest
+    DecisionRecord:
+      properties:
+        action:
+          type: string
+          enum:
+          - HOLD
+          - SWEEP
+          - WITHDRAW
+          - LIQUIDITY_WARNING
+          title: Action
+        amount_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Amount Cents
+        pre_checking_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Pre Checking Cents
+        post_checking_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Post Checking Cents
+        executed:
+          type: boolean
+          title: Executed
+        explanation:
+          items:
+            type: string
+          type: array
+          title: Explanation
+      additionalProperties: false
+      type: object
+      required:
+      - action
+      - amount_cents
+      - pre_checking_cents
+      - post_checking_cents
+      - executed
+      - explanation
+      title: DecisionRecord
+    DecisionsResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/DecisionRecord'
+          type: array
+          title: Items
+      additionalProperties: false
+      type: object
+      required:
+      - items
+      title: DecisionsResponse
+    ErrorResponse:
+      properties:
+        error_code:
+          type: string
+          title: Error Code
+        message:
+          type: string
+          title: Message
+        details:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - items:
+              additionalProperties: true
+              type: object
+            type: array
+          title: Details
+      additionalProperties: false
+      type: object
+      required:
+      - error_code
+      - message
+      - details
+      title: ErrorResponse
+    ForecastPoint:
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          title: Timestamp
+        predicted_inflow_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Predicted Inflow Cents
+        predicted_outflow_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Predicted Outflow Cents
+        predicted_net_cents:
+          type: integer
+          title: Predicted Net Cents
+        lower_cents:
+          type: integer
+          title: Lower Cents
+        upper_cents:
+          type: integer
+          title: Upper Cents
+      additionalProperties: false
+      type: object
+      required:
+      - timestamp
+      - predicted_inflow_cents
+      - predicted_outflow_cents
+      - predicted_net_cents
+      - lower_cents
+      - upper_cents
+      title: ForecastPoint
+    ForecastResponse:
+      properties:
+        as_of:
+          type: string
+          format: date-time
+          title: As Of
+        horizon_minutes:
+          type: integer
+          exclusiveMinimum: 0.0
+          title: Horizon Minutes
+        model_version:
+          type: string
+          title: Model Version
+        points:
+          items:
+            $ref: '#/components/schemas/ForecastPoint'
+          type: array
+          title: Points
+        summary:
+          anyOf:
+          - $ref: '#/components/schemas/ForecastSummary'
+          - type: 'null'
+      additionalProperties: false
+      type: object
+      required:
+      - as_of
+      - horizon_minutes
+      - model_version
+      - points
+      title: ForecastResponse
+    ForecastSummary:
+      properties:
+        horizon_minutes:
+          type: integer
+          exclusiveMinimum: 0.0
+          title: Horizon Minutes
+          default: 1440
+        peak_shortfall_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Peak Shortfall Cents
+        uncertainty_buffer_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Uncertainty Buffer Cents
+        operational_buffer_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Operational Buffer Cents
+        model_version:
+          type: string
+          title: Model Version
+      additionalProperties: false
+      type: object
+      required:
+      - peak_shortfall_cents
+      - uncertainty_buffer_cents
+      - operational_buffer_cents
+      - model_version
+      title: ForecastSummary
+    FourTierPortfolioSnapshot:
+      properties:
+        timestamp:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Timestamp
+        market_data_available:
+          type: boolean
+          title: Market Data Available
+          default: true
+        market_observation_timestamp:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Market Observation Timestamp
+        publication_delay_seconds:
+          type: integer
+          title: Publication Delay Seconds
+          default: 0
+        tier0:
+          $ref: '#/components/schemas/Tier0Snapshot'
+        tier1:
+          $ref: '#/components/schemas/Tier1Snapshot'
+        tier2:
+          $ref: '#/components/schemas/Tier2Snapshot'
+        tier3:
+          $ref: '#/components/schemas/Tier3Snapshot'
+        overdraft:
+          $ref: '#/components/schemas/OverdraftSnapshot'
+        aggregates:
+          $ref: '#/components/schemas/AggregatesSnapshot'
+      additionalProperties: false
+      type: object
+      required:
+      - tier0
+      - tier1
+      - tier2
+      - tier3
+      - overdraft
+      - aggregates
+      title: FourTierPortfolioSnapshot
+    FrontendFinancialMetrics:
+      properties:
+        realized_interest_cents:
+          type: integer
+          maximum: 9007199254740991.0
+          minimum: 0.0
+          title: Realized Interest Cents
+        accrued_interest_cents:
+          type: integer
+          maximum: 9007199254740991.0
+          minimum: 0.0
+          title: Accrued Interest Cents
+        average_checking_cents:
+          type: integer
+          maximum: 9007199254740991.0
+          minimum: 0.0
+          title: Average Checking Cents
+        average_vault_cents:
+          type: integer
+          maximum: 9007199254740991.0
+          minimum: 0.0
+          title: Average Vault Cents
+        redemption_penalties_cents:
+          type: integer
+          maximum: 9007199254740991.0
+          minimum: 0.0
+          title: Redemption Penalties Cents
+        emergency_borrowing_cost_cents:
+          type: integer
+          maximum: 9007199254740991.0
+          minimum: 0.0
+          title: Emergency Borrowing Cost Cents
+        emergency_events:
+          type: integer
+          minimum: 0.0
+          title: Emergency Events
+        reserve_breaches:
+          type: integer
+          minimum: 0.0
+          title: Reserve Breaches
+        failed_payouts:
+          type: integer
+          minimum: 0.0
+          title: Failed Payouts
+        unpaid_cents:
+          type: integer
+          maximum: 9007199254740991.0
+          minimum: 0.0
+          title: Unpaid Cents
+        net_benefit_cents:
+          type: integer
+          maximum: 9007199254740991.0
+          minimum: -9007199254740991.0
+          title: Net Benefit Cents
+      additionalProperties: false
+      type: object
+      required:
+      - realized_interest_cents
+      - accrued_interest_cents
+      - average_checking_cents
+      - average_vault_cents
+      - redemption_penalties_cents
+      - emergency_borrowing_cost_cents
+      - emergency_events
+      - reserve_breaches
+      - failed_payouts
+      - unpaid_cents
+      - net_benefit_cents
+      title: FrontendFinancialMetrics
+    HealthStatus:
+      properties:
+        status:
+          type: string
+          title: Status
+        database:
+          type: string
+          title: Database
+        timestamp:
+          type: string
+          format: date-time
+          title: Timestamp
+      type: object
+      required:
+      - status
+      - database
+      - timestamp
+      title: HealthStatus
+    HistoryPoint:
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          title: Timestamp
+        checking_cents:
+          type: integer
+          maximum: 9007199254740991.0
+          minimum: 0.0
+          title: Checking Cents
+      additionalProperties: false
+      type: object
+      required:
+      - timestamp
+      - checking_cents
+      title: HistoryPoint
+    HistoryResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/SimulationSnapshot'
+          type: array
+          title: Items
+      additionalProperties: false
+      type: object
+      required:
+      - items
+      title: HistoryResponse
+    OverdraftSnapshot:
+      properties:
+        borrowing_outstanding_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Borrowing Outstanding Cents
+        financing_rate_bps:
+          anyOf:
+          - type: integer
+            maximum: 10000.0
+            minimum: 0.0
+          - type: 'null'
+          title: Financing Rate Bps
+        financing_cost_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Financing Cost Cents
+        liability_status:
+          type: string
+          enum:
+          - ACTIVE
+          - CLEARED
+          title: Liability Status
+        is_active:
+          type: boolean
+          title: Is Active
+      additionalProperties: false
+      type: object
+      required:
+      - borrowing_outstanding_cents
+      - financing_rate_bps
+      - financing_cost_cents
+      - liability_status
+      - is_active
+      title: OverdraftSnapshot
+    PolicyPatch:
+      properties:
+        risk_percentile:
+          anyOf:
+          - type: number
+            exclusiveMaximum: 1.0
+            exclusiveMinimum: 0.0
+          - type: 'null'
+          title: Risk Percentile
+        operational_buffer_cents:
+          anyOf:
+          - type: integer
+            maximum: 9.223372036854776e+18
+            minimum: 0.0
+          - type: 'null'
+          title: Operational Buffer Cents
+        minimum_sweep_cents:
+          anyOf:
+          - type: integer
+            maximum: 9.223372036854776e+18
+            minimum: 0.0
+          - type: 'null'
+          title: Minimum Sweep Cents
+        vault_yield_bps:
+          anyOf:
+          - type: integer
+            maximum: 10000.0
+            minimum: 0.0
+          - type: 'null'
+          title: Vault Yield Bps
+        vault_lock_steps:
+          anyOf:
+          - type: integer
+            exclusiveMinimum: 0.0
+          - type: 'null'
+          title: Vault Lock Steps
+        early_redemption_allowed:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Early Redemption Allowed
+        early_redemption_penalty_bps:
+          anyOf:
+          - type: integer
+            maximum: 10000.0
+            minimum: 0.0
+          - type: 'null'
+          title: Early Redemption Penalty Bps
+        allow_bond_liquidation:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Allow Bond Liquidation
+        allow_emergency_equity_liquidation:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Allow Emergency Equity Liquidation
+        allow_overdraft:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Allow Overdraft
+        max_overdraft_cents:
+          anyOf:
+          - type: integer
+            maximum: 9007199254740991.0
+            minimum: 0.0
+          - type: 'null'
+          title: Max Overdraft Cents
+        publication_delay_seconds:
+          anyOf:
+          - type: integer
+            maximum: 2147483647.0
+            minimum: 0.0
+          - type: 'null'
+          title: Publication Delay Seconds
+      additionalProperties: false
+      type: object
+      title: PolicyPatch
+    ReportStrategyResult:
+      properties:
+        strategy:
+          type: string
+          enum:
+          - STATIC_RESERVE
+          - REACTIVE_RESERVE
+          - RESERVE_JUGGLER
+          title: Strategy
+        metrics:
+          $ref: '#/components/schemas/FrontendFinancialMetrics'
+        history:
+          items:
+            $ref: '#/components/schemas/HistoryPoint'
+          type: array
+          title: History
+        accounting:
+          $ref: '#/components/schemas/AccountingTotals'
+        model_evaluation:
+          type: 'null'
+          title: Model Evaluation
+      additionalProperties: false
+      type: object
+      required:
+      - strategy
+      - metrics
+      - history
+      - accounting
+      title: ReportStrategyResult
+    RunCreated:
+      properties:
+        run_id:
+          type: string
+          format: uuid
+          title: Run Id
+        status:
+          type: string
+          const: READY
+          title: Status
+        current_step:
+          type: integer
+          minimum: 0.0
+          title: Current Step
+        checking_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Checking Cents
+        vault_locked_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Vault Locked Cents
+      additionalProperties: false
+      type: object
+      required:
+      - run_id
+      - status
+      - current_step
+      - checking_cents
+      - vault_locked_cents
+      title: RunCreated
+    RunReport:
+      properties:
+        run_id:
+          type: string
+          format: uuid
+          title: Run Id
+        scenario:
+          $ref: '#/components/schemas/Scenario'
+        seed:
+          type: integer
+          title: Seed
+        started_at:
+          type: string
+          format: date-time
+          title: Started At
+        ended_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Ended At
+        metrics:
+          anyOf:
+          - $ref: '#/components/schemas/FrontendFinancialMetrics'
+          - type: 'null'
+        history:
+          items:
+            $ref: '#/components/schemas/HistoryPoint'
+          type: array
+          title: History
+        accounting:
+          anyOf:
+          - $ref: '#/components/schemas/AccountingTotals'
+          - type: 'null'
+        scenario_settings_json:
+          type: string
+          title: Scenario Settings Json
+        runtime_commit_verified_by_reporter:
+          type: string
+          title: Runtime Commit Verified By Reporter
+          default: 1d943eeb652775ef0aecb8cf73bd781293722d36
+        execution_provenance:
+          type: string
+          const: NOT_RECORDED_BY_RUNTIME
+          title: Execution Provenance
+          default: NOT_RECORDED_BY_RUNTIME
+        model_evaluation:
+          type: 'null'
+          title: Model Evaluation
+      additionalProperties: false
+      type: object
+      required:
+      - run_id
+      - scenario
+      - seed
+      - started_at
+      - ended_at
+      - metrics
+      - history
+      - accounting
+      - scenario_settings_json
+      title: RunReport
+    Scenario:
+      type: string
+      enum:
+      - NORMAL
+      - HIGH_WITHDRAWAL
+      - LOW_DEPOSIT
+      - SETTLEMENT_DELAY
+      - LIQUIDITY_SHOCK
+      title: Scenario
+    ScenarioApplied:
+      properties:
+        run_id:
+          type: string
+          format: uuid
+          title: Run Id
+        scenario:
+          $ref: '#/components/schemas/Scenario'
+        effective_step:
+          type: integer
+          minimum: 0.0
+          title: Effective Step
+        parameters:
+          additionalProperties: true
+          type: object
+          title: Parameters
+      additionalProperties: false
+      type: object
+      required:
+      - run_id
+      - scenario
+      - effective_step
+      - parameters
+      title: ScenarioApplied
+    ScenarioRequest:
+      properties:
+        scenario:
+          $ref: '#/components/schemas/Scenario'
+        parameters:
+          additionalProperties: true
+          type: object
+          title: Parameters
+        effective_step:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: Effective Step
+      additionalProperties: false
+      type: object
+      required:
+      - scenario
+      title: ScenarioRequest
+    SimulationSnapshot:
+      properties:
+        run_id:
+          type: string
+          format: uuid
+          title: Run Id
+        step:
+          type: integer
+          minimum: 0.0
+          title: Step
+        timestamp:
+          type: string
+          format: date-time
+          title: Timestamp
+        checking_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Checking Cents
+        vault_locked_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Vault Locked Cents
+        vault_redeemable_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Vault Redeemable Cents
+        required_reserve_cents:
+          anyOf:
+          - type: integer
+            maximum: 9.223372036854776e+18
+            minimum: 0.0
+          - type: 'null'
+          title: Required Reserve Cents
+        forecast:
+          anyOf:
+          - $ref: '#/components/schemas/ForecastSummary'
+          - type: 'null'
+        decision:
+          anyOf:
+          - $ref: '#/components/schemas/DecisionRecord'
+          - type: 'null'
+        status:
+          type: string
+          title: Status
+          default: READY
+        policy:
+          anyOf:
+          - $ref: '#/components/schemas/TreasuryPolicy'
+          - type: 'null'
+        deployable_surplus_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Deployable Surplus Cents
+          default: 0
+        four_tier:
+          anyOf:
+          - $ref: '#/components/schemas/FourTierPortfolioSnapshot'
+          - type: 'null'
+      additionalProperties: false
+      type: object
+      required:
+      - run_id
+      - step
+      - timestamp
+      - checking_cents
+      - vault_locked_cents
+      - vault_redeemable_cents
+      - required_reserve_cents
+      - forecast
+      - decision
+      title: SimulationSnapshot
+    Tier0Snapshot:
+      properties:
+        tier:
+          type: integer
+          title: Tier
+          default: 0
+        name:
+          type: string
+          title: Name
+          default: Operating Cash Buffer
+        checking_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Checking Cents
+        required_reserve_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Required Reserve Cents
+        operational_buffer_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Operational Buffer Cents
+        deployable_surplus_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Deployable Surplus Cents
+        reserve_deficit_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Reserve Deficit Cents
+        immediate_liquidity_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Immediate Liquidity Cents
+        status:
+          type: string
+          enum:
+          - BALANCED
+          - SURPLUS
+          - DEFICIT
+          title: Status
+      additionalProperties: false
+      type: object
+      required:
+      - checking_cents
+      - required_reserve_cents
+      - operational_buffer_cents
+      - deployable_surplus_cents
+      - reserve_deficit_cents
+      - immediate_liquidity_cents
+      - status
+      title: Tier0Snapshot
+    Tier1Snapshot:
+      properties:
+        tier:
+          type: integer
+          title: Tier
+          default: 1
+        id:
+          type: string
+          title: Id
+          default: REPO-1
+        name:
+          type: string
+          title: Name
+          default: Overnight Repo
+        principal_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Principal Cents
+        repo_apy_bps:
+          anyOf:
+          - type: integer
+            maximum: 10000.0
+            minimum: 0.0
+          - type: 'null'
+          title: Repo Apy Bps
+        repo_apy_decimal:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Repo Apy Decimal
+        accrued_interest_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Accrued Interest Cents
+        realized_interest_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Realized Interest Cents
+        status:
+          type: string
+          enum:
+          - LOCKED
+          - MATURED
+          - REDEEMED
+          title: Status
+        entry_window_open:
+          type: boolean
+          title: Entry Window Open
+        early_redemption_allowed:
+          type: boolean
+          title: Early Redemption Allowed
+        early_break_fee_bps:
+          type: integer
+          maximum: 10000.0
+          minimum: 0.0
+          title: Early Break Fee Bps
+        break_fee_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Break Fee Cents
+        net_redeemable_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Net Redeemable Cents
+        immediate_liquidity_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Immediate Liquidity Cents
+        entry_time:
+          type: string
+          title: Entry Time
+          default: '17:00'
+        maturity_time:
+          type: string
+          title: Maturity Time
+          default: 08:00
+        maturity_timestamp:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Maturity Timestamp
+      additionalProperties: false
+      type: object
+      required:
+      - principal_cents
+      - repo_apy_bps
+      - repo_apy_decimal
+      - accrued_interest_cents
+      - realized_interest_cents
+      - status
+      - entry_window_open
+      - early_redemption_allowed
+      - early_break_fee_bps
+      - break_fee_cents
+      - net_redeemable_cents
+      - immediate_liquidity_cents
+      title: Tier1Snapshot
+    Tier2Snapshot:
+      properties:
+        tier:
+          type: integer
+          title: Tier
+          default: 2
+        id:
+          type: string
+          title: Id
+          default: BOND-SOV-1
+        name:
+          type: string
+          title: Name
+          default: Sovereign Bonds
+        notional_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Notional Cents
+        quantity:
           type: number
-          example: 0.0485
+          title: Quantity
+        acquisition_price:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Acquisition Price
+        current_price:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Current Price
+        market_value_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Market Value Cents
+        ytm_bps:
+          anyOf:
+          - type: integer
+            maximum: 10000.0
+            minimum: 0.0
+          - type: 'null'
+          title: Ytm Bps
+        ytm_decimal:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ytm Decimal
+        modified_duration:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Modified Duration
+        liquidation_haircut_bps:
+          type: integer
+          maximum: 10000.0
+          minimum: 0.0
+          title: Liquidation Haircut Bps
+        haircut_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Haircut Cents
+        realized_pnl_cents:
+          type: integer
+          title: Realized Pnl Cents
+        unrealized_pnl_cents:
+          type: integer
+          title: Unrealized Pnl Cents
+        available_liquidity_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Available Liquidity Cents
+        liquidity_status:
+          type: string
+          title: Liquidity Status
+          default: 2-DAY_SETTLEMENT_OR_HAIRCUT
+      additionalProperties: false
+      type: object
+      required:
+      - notional_cents
+      - quantity
+      - acquisition_price
+      - current_price
+      - market_value_cents
+      - ytm_bps
+      - ytm_decimal
+      - modified_duration
+      - liquidation_haircut_bps
+      - haircut_cents
+      - realized_pnl_cents
+      - unrealized_pnl_cents
+      - available_liquidity_cents
+      title: Tier2Snapshot
+    Tier3Snapshot:
+      properties:
+        tier:
+          type: integer
+          title: Tier
+          default: 3
+        id:
+          type: string
+          title: Id
+          default: EQ-IDX-1
+        name:
+          type: string
+          title: Name
+          default: Growth Equities
+        quantity:
+          type: number
+          title: Quantity
+        acquisition_price:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Acquisition Price
+        current_price:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Current Price
+        market_value_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Market Value Cents
+        cost_basis_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Cost Basis Cents
+        volatility_bps:
+          anyOf:
+          - type: integer
+            maximum: 10000.0
+            minimum: 0.0
+          - type: 'null'
+          title: Volatility Bps
+        volatility_decimal:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Volatility Decimal
+        emergency_slippage_bps:
+          type: integer
+          maximum: 10000.0
+          minimum: 0.0
+          title: Emergency Slippage Bps
+        slippage_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Slippage Cents
+        realized_pnl_cents:
+          type: integer
+          title: Realized Pnl Cents
+        unrealized_pnl_cents:
+          type: integer
+          title: Unrealized Pnl Cents
+        available_liquidity_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Available Liquidity Cents
+        liquidity_status:
+          type: string
+          title: Liquidity Status
+          default: MARKET_VOLATILITY_AND_SLIPPAGE
+      additionalProperties: false
+      type: object
+      required:
+      - quantity
+      - acquisition_price
+      - current_price
+      - market_value_cents
+      - cost_basis_cents
+      - volatility_bps
+      - volatility_decimal
+      - emergency_slippage_bps
+      - slippage_cents
+      - realized_pnl_cents
+      - unrealized_pnl_cents
+      - available_liquidity_cents
+      title: Tier3Snapshot
+    TransactionRecord:
+      properties:
+        transaction_id:
+          type: string
+          format: uuid
+          title: Transaction Id
+        run_id:
+          type: string
+          format: uuid
+          title: Run Id
+        timestamp:
+          type: string
+          format: date-time
+          title: Timestamp
+        step:
+          type: integer
+          minimum: 0.0
+          title: Step
+        type:
+          type: string
+          enum:
+          - DEPOSIT
+          - WITHDRAWAL
+          - MERCHANT_SETTLEMENT
+          title: Type
+        direction:
+          type: string
+          enum:
+          - INFLOW
+          - OUTFLOW
+          title: Direction
+        amount_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          exclusiveMinimum: 0.0
+          title: Amount Cents
+        source:
+          type: string
+          maxLength: 100
+          minLength: 1
+          title: Source
+        scenario:
+          $ref: '#/components/schemas/Scenario'
+      additionalProperties: false
+      type: object
+      required:
+      - transaction_id
+      - run_id
+      - timestamp
+      - step
+      - type
+      - direction
+      - amount_cents
+      - source
+      - scenario
+      title: TransactionRecord
+    TransactionsResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/TransactionRecord'
+          type: array
+          title: Items
+      additionalProperties: false
+      type: object
+      required:
+      - items
+      title: TransactionsResponse
+    TreasuryPolicy:
+      properties:
+        risk_percentile:
+          type: number
+          exclusiveMaximum: 1.0
+          exclusiveMinimum: 0.0
+          title: Risk Percentile
+          default: 0.95
+        operational_buffer_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Operational Buffer Cents
+          default: 50000000
+        minimum_sweep_cents:
+          type: integer
+          maximum: 9.223372036854776e+18
+          minimum: 0.0
+          title: Minimum Sweep Cents
+          default: 1000000
+        vault_yield_bps:
+          type: integer
+          maximum: 10000.0
+          minimum: 0.0
+          title: Vault Yield Bps
+          default: 500
+        vault_lock_steps:
+          type: integer
+          exclusiveMinimum: 0.0
+          title: Vault Lock Steps
+          default: 96
+        early_redemption_allowed:
+          type: boolean
+          title: Early Redemption Allowed
+          default: true
+        early_redemption_penalty_bps:
+          type: integer
+          maximum: 10000.0
+          minimum: 0.0
+          title: Early Redemption Penalty Bps
+          default: 200
+        allow_bond_liquidation:
+          type: boolean
+          title: Allow Bond Liquidation
+          default: false
+        allow_emergency_equity_liquidation:
+          type: boolean
+          title: Allow Emergency Equity Liquidation
+          default: false
+        allow_overdraft:
+          type: boolean
+          title: Allow Overdraft
+          default: true
+        max_overdraft_cents:
+          type: integer
+          maximum: 9007199254740991.0
+          minimum: 0.0
+          title: Max Overdraft Cents
+          default: 5000000000
+        publication_delay_seconds:
+          type: integer
+          maximum: 2147483647.0
+          minimum: 0.0
+          title: Publication Delay Seconds
+          default: 0
+      additionalProperties: false
+      type: object
+      title: TreasuryPolicy

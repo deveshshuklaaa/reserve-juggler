@@ -1,5 +1,6 @@
 ﻿import os
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pathlib import Path
 
 class Settings(BaseSettings):
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
@@ -9,6 +10,7 @@ class Settings(BaseSettings):
     )
     BACKEND_PORT: int = int(os.getenv("BACKEND_PORT", "8000"))
     BACKEND_HOST: str = os.getenv("BACKEND_HOST", "0.0.0.0")
+    ORGANIZER_DATASET_PATH: Path = Path("treasury_4tier_dataset.csv")
     
     BASE_SAFETY_BUFFER: float = float(os.getenv("BASE_SAFETY_BUFFER", "50000.00"))
     UNCERTAINTY_MULTIPLIER: float = float(os.getenv("UNCERTAINTY_MULTIPLIER", "1.96"))
