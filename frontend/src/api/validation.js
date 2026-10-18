@@ -3,9 +3,10 @@ const invalid = (message) => { throw new ApiError(message, { code: 'INVALID_RESP
 export function validateSnapshot(data) {
   if (!data || typeof data.run_id !== 'string' || !Number.isInteger(data.step) || data.step < 0) invalid('Snapshot is missing its run identity or step.');
   if (typeof data.timestamp !== 'string' || !/(Z|\+00:00)$/.test(data.timestamp) || !Number.isFinite(Date.parse(data.timestamp))) invalid('Snapshot timestamp must be ISO UTC.');
-  for (const key of ['checking_cents', 'vault_locked_cents', 'vault_redeemable_cents', 'required_reserve_cents']) {
+  for (const key of ['checking_cents', 'vault_locked_cents', 'vault_redeemable_cents']) {
     if (!Number.isSafeInteger(data[key]) || data[key] < 0) invalid(`Snapshot ${key} must be nonnegative integer cents.`);
   }
+  if (data.required_reserve_cents != null && (!Number.isSafeInteger(data.required_reserve_cents) || data.required_reserve_cents < 0)) invalid('Required reserve must be nonnegative integer cents or null.');
   for (const [key, value] of Object.entries(data)) {
     if (key.endsWith('_cents') && value != null && !Number.isSafeInteger(value)) invalid(`${key} must be integer cents.`);
   }
@@ -16,10 +17,20 @@ export function validateSnapshot(data) {
   return data;
 }
 export function validateItems(data) {
+  // Member 2's frozen v1 contract returns bare arrays; mocks use items envelopes.
+  if (Array.isArray(data)) return { items: data };
   if (!Array.isArray(data?.items)) invalid('Expected a collection with an items array.');
   return data;
 }
 export function validateForecast(data) {
+  if (data == null) return null;
+  // Member 2 currently specifies a summary only, without a chart series.
+  if (!('points' in data) && typeof data.model_version === 'string' && Number.isSafeInteger(data.peak_shortfall_cents)) {
+    for (const key of ['peak_shortfall_cents', 'uncertainty_buffer_cents', 'operational_buffer_cents']) {
+      if (!Number.isSafeInteger(data[key]) || data[key] < 0) invalid(`Forecast ${key} must use nonnegative integer cents.`);
+    }
+    return data;
+  }
   if (!Array.isArray(data?.points)) invalid('Expected forecast points.');
   for (const point of data.points) for (const key of ['predicted_net_cents', 'lower_cents', 'upper_cents']) {
     if (point[key] != null && !Number.isSafeInteger(point[key])) invalid(`Forecast ${key} must use integer cents.`);

@@ -28,6 +28,14 @@ export function createMockApi({ latency = 100 } = {}) {
       const id = `mock-${++counter}`; const run = createEngine(body, id); runs.set(id, run);
       return { run_id: id, status: 'PAUSED' };
     }, options, 2),
+    // The LIVE adapter explicitly rejects this local-only operation until the
+    // backend publishes and implements a cash-flow ingestion contract.
+    createRunFromCashflows: (dataset, options = {}) => respond(() => {
+      const { signal, ...config } = options;
+      const id = `mock-${++counter}`;
+      const run = createEngine({ ...config, cashflow_input: dataset }, id); runs.set(id, run);
+      return { run_id: id, status: 'PAUSED' };
+    }, options, 2),
     getSnapshot: (id, options) => respond(() => validateSnapshot(snapshot(get(id))), options),
     advanceRun: (id, body, options) => respond(() => advanceEngine(get(id), body.expected_step), options, 2),
     applyScenario: (id, body, options) => respond(() => scheduleScenario(get(id), body), options, 2),
@@ -38,7 +46,10 @@ export function createMockApi({ latency = 100 } = {}) {
     getTransactions: (id, options) => respond(() => validateItems({ items: get(id).transactions.slice().reverse().slice(0, 60) }), options),
     runBacktest: (id, body, options) => respond(async () => {
       const run = get(id);
-      const result = typeof Worker === 'undefined' ? backtest(body, run.policy) : await new Promise((resolve, reject) => {
+      const input = run.config.cashflow_input ? { ...body, cashflow_input: run.config.cashflow_input,
+        initial_checking_cents: run.config.initial_checking_cents, initial_vault_cents: run.config.initial_vault_cents,
+        seed: run.config.seed } : body;
+      const result = typeof Worker === 'undefined' ? backtest(input, run.policy) : await new Promise((resolve, reject) => {
         if (options?.signal?.aborted) return reject(new DOMException('Cancelled', 'AbortError'));
         const worker = new Worker(new URL('../mocks/backtest.worker.js', import.meta.url), { type: 'module' });
         const finish = () => { worker.terminate(); options?.signal?.removeEventListener('abort', abort); };
@@ -46,7 +57,7 @@ export function createMockApi({ latency = 100 } = {}) {
         worker.onmessage = ({ data }) => { finish(); data.error ? reject(new MockError(data.error)) : resolve(data.result); };
         worker.onerror = () => { finish(); reject(new Error('Mock backtest could not complete. Please retry.')); };
         options?.signal?.addEventListener('abort', abort, { once: true });
-        worker.postMessage({ input: body, policy: run.policy });
+        worker.postMessage({ input, policy: run.policy });
       });
       run.backtest = result; return result;
     }, options, 5),

@@ -1,91 +1,67 @@
 import { requestJson, ApiError } from './http';
 import { validateSnapshot, validateItems, validateForecast } from './validation';
 
-const STRATEGY_TO_BACKEND = {
-  STATIC: 'STATIC_RESERVE',
-  STATIC_RESERVE: 'STATIC_RESERVE',
-  REACTIVE: 'REACTIVE_RESERVE',
-  REACTIVE_RESERVE: 'REACTIVE_RESERVE',
-  RESERVE_JUGGLER: 'RESERVE_JUGGLER',
-};
+export { ApiError };
 
-const STRATEGY_TO_FRONTEND = {
-  STATIC_RESERVE: 'STATIC',
-  STATIC: 'STATIC',
-  REACTIVE_RESERVE: 'REACTIVE',
-  REACTIVE: 'REACTIVE',
-  RESERVE_JUGGLER: 'RESERVE_JUGGLER',
-};
-
-export function normalizeStrategyToBackend(strategy) {
-  return STRATEGY_TO_BACKEND[strategy] || strategy;
+export function normalizeStrategyToBackend(name) {
+  const map = {
+    STATIC: 'STATIC',
+    STATIC_RESERVE: 'STATIC',
+    REACTIVE: 'REACTIVE',
+    REACTIVE_RESERVE: 'REACTIVE',
+    RESERVE_JUGGLER: 'RESERVE_JUGGLER',
+  };
+  return map[name] || name;
 }
 
-export function normalizeStrategyToFrontend(strategy) {
-  return STRATEGY_TO_FRONTEND[strategy] || strategy;
+export function normalizeStrategyToFrontend(name) {
+  const map = {
+    STATIC: 'STATIC',
+    STATIC_RESERVE: 'STATIC',
+    REACTIVE: 'REACTIVE',
+    REACTIVE_RESERVE: 'REACTIVE',
+    RESERVE_JUGGLER: 'RESERVE_JUGGLER',
+  };
+  return map[name] || name;
 }
 
-export function normalizePolicy(policy) {
-  if (!policy || typeof policy !== 'object') return policy;
+export function normalizePolicy(policy = {}) {
   const p = { ...policy };
-
-  if (p.risk_percentile != null && typeof p.risk_percentile === 'number') {
-    if (p.risk_percentile <= 1 && p.risk_percentile > 0) {
-      p.risk_percentile = Math.round(p.risk_percentile * 100);
-    }
+  if (p.operational_buffer_cents == null && p.base_buffer_cents != null) {
+    p.operational_buffer_cents = p.base_buffer_cents;
   }
-
-  const minSweep = p.minimum_sweep_cents ?? p.min_sweep_cents;
-  if (minSweep != null) {
-    p.minimum_sweep_cents = minSweep;
-    p.min_sweep_cents = minSweep;
+  if (p.minimum_sweep_cents == null && p.min_transfer_cents != null) {
+    p.minimum_sweep_cents = p.min_transfer_cents;
   }
-
-  const vaultYield = p.vault_yield_bps ?? p.vault_rate_bps;
-  if (vaultYield != null) {
-    p.vault_yield_bps = vaultYield;
-    p.vault_rate_bps = vaultYield;
+  if (p.early_redemption_penalty_bps == null && p.early_break_fee_bps != null) {
+    p.early_redemption_penalty_bps = p.early_break_fee_bps;
   }
-
-  const lockSteps = p.vault_lock_steps ?? p.lock_steps;
-  if (lockSteps != null) {
-    p.vault_lock_steps = lockSteps;
-    p.lock_steps = lockSteps;
+  if (p.risk_percentile != null && p.risk_percentile <= 1) {
+    p.risk_percentile = Math.round(p.risk_percentile * 100);
   }
-
-  const allowEarly = p.early_redemption_allowed ?? p.allow_early_redemption;
-  if (allowEarly != null) {
-    p.early_redemption_allowed = Boolean(allowEarly);
-    p.allow_early_redemption = Boolean(allowEarly);
-  }
-
   return p;
 }
 
-export function serializePolicy(policy) {
-  if (!policy || typeof policy !== 'object') return policy;
+export function serializePolicy(policy = {}) {
   const out = {};
   if (policy.operational_buffer_cents != null) {
     out.operational_buffer_cents = policy.operational_buffer_cents;
+    out.base_buffer_cents = policy.operational_buffer_cents;
   }
-  const minSweep = policy.minimum_sweep_cents ?? policy.min_sweep_cents;
-  if (minSweep != null) {
-    out.minimum_sweep_cents = minSweep;
-  }
-  const vaultYield = policy.vault_yield_bps ?? policy.vault_rate_bps;
-  if (vaultYield != null) {
-    out.vault_yield_bps = vaultYield;
-  }
-  const lockSteps = policy.vault_lock_steps ?? policy.lock_steps;
-  if (lockSteps != null) {
-    out.vault_lock_steps = lockSteps;
-  }
-  const allowEarly = policy.early_redemption_allowed ?? policy.allow_early_redemption;
-  if (allowEarly != null) {
-    out.early_redemption_allowed = Boolean(allowEarly);
+  if (policy.minimum_sweep_cents != null) {
+    out.minimum_sweep_cents = policy.minimum_sweep_cents;
+    out.min_transfer_cents = policy.minimum_sweep_cents;
   }
   if (policy.early_redemption_penalty_bps != null) {
     out.early_redemption_penalty_bps = policy.early_redemption_penalty_bps;
+    out.early_break_fee_bps = policy.early_redemption_penalty_bps;
+  }
+  if (policy.early_redemption_allowed != null) {
+    out.early_redemption_allowed = Boolean(policy.early_redemption_allowed);
+    out.allow_early_repo_redemption = Boolean(policy.early_redemption_allowed);
+  }
+  if (policy.strategy) {
+    out.strategy = normalizeStrategyToBackend(policy.strategy);
   }
   if (policy.risk_percentile != null) {
     out.risk_percentile = policy.risk_percentile > 1
@@ -203,6 +179,9 @@ export function createRealApi(baseUrl = '') {
   const post = (url, body, options) => get(url, { ...options, method: 'POST', body });
   return {
     mode: 'real',
+    createRunFromCashflows: async () => {
+      throw new ApiError('Live CSV ingestion awaits Member 2’s upload contract. No file has been sent.', { code: 'NOT_IMPLEMENTED', status: 501 });
+    },
     health: (options) => get('/health', options),
     createRun: async (body, options) => {
       const sanitized = sanitizeCreateRun(body);

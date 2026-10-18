@@ -14,6 +14,9 @@ export function SimulationProvider({ children, api = treasuryApi }) {
   const [comparison, setComparison] = useState(null);
   const [beforeShock, setBeforeShock] = useState(null);
   const [scheduled, setScheduled] = useState(null);
+  const [importOpen, setImportOpen] = useState(false);
+  const lastStart = useRef(null);
+  const attemptedStart = useRef(null);
   const active = useRef(null);
   const controller = useRef(null);
   const version = useRef(0);
@@ -59,21 +62,35 @@ export function SimulationProvider({ children, api = treasuryApi }) {
     }
   }, [hydrate]);
 
-  const createRun = useCallback(async (config = DEFAULT_RUN) => {
+  const startSimulation = useCallback(async (create) => {
     if (lock.current) return;
     const token = ++version.current;
     controller.current?.abort();
     const request = new AbortController(); controller.current = request;
     lock.current = true; setBusy(true); playRef.current = false; setPlaying(false);
-    setError(''); setNotice(''); setData(emptyData); active.current = null;
-    setComparison(null); setBeforeShock(null); setScheduled(null);
+    setError(''); setNotice(''); attemptedStart.current = create;
     try {
       await api.health({ signal: request.signal });
-      const run = await api.createRun(config, { signal: request.signal });
-      await hydrate(run.run_id, request.signal, token);
+      const run = await create({ signal: request.signal });
+      const snapshot = await hydrate(run.run_id, request.signal, token);
+      if (snapshot) {
+        lastStart.current = create; attemptedStart.current = null; setImportOpen(false);
+        setComparison(null); setBeforeShock(null); setScheduled(null);
+      }
+      return snapshot;
     } catch (err) { if (err.name !== 'AbortError' && token === version.current) setError(err.message); }
     finally { if (token === version.current) { lock.current = false; setBusy(false); } }
   }, [api, hydrate]);
+
+  const createRun = useCallback((config = DEFAULT_RUN) => startSimulation((options) => api.createRun(config, options)), [api, startSimulation]);
+  const importCashflows = useCallback((dataset) => {
+    if (api.mode !== 'mock' || typeof api.createRunFromCashflows !== 'function') return Promise.reject(new Error('Live CSV ingestion is pending the backend upload contract. Your file stays on this device.'));
+    return startSimulation((options) => api.createRunFromCashflows(dataset, options));
+  }, [api, startSimulation]);
+  const resetRun = useCallback(() => lastStart.current ? startSimulation(lastStart.current) : createRun(), [startSimulation, createRun]);
+  const retryInitialization = useCallback(() => attemptedStart.current ? startSimulation(attemptedStart.current) : createRun(), [startSimulation, createRun]);
+  const openImport = useCallback(() => { playRef.current = false; setPlaying(false); setImportOpen(true); }, []);
+  const closeImport = useCallback(() => setImportOpen(false), []);
 
   const advance = useCallback(() => perform((current, signal) => {
     if (current.status === 'COMPLETED') return current;
@@ -123,7 +140,7 @@ export function SimulationProvider({ children, api = treasuryApi }) {
 
   return <SimulationContext.Provider value={{ ...data, busy, playing, error, notice, comparison, beforeShock, scheduled,
     mode: api.mode, status: busy && !data.snapshot ? 'STARTING' : error ? 'ERROR' : !data.snapshot ? 'IDLE' : data.snapshot.status === 'COMPLETED' ? 'COMPLETED' : playing ? 'RUNNING' : 'PAUSED',
-    createRun, advance, play, pause, refresh, applyScenario, updatePolicy, runComparison, refreshComparison,
+    createRun, resetRun, retryInitialization, initializationFailed: Boolean(error && attemptedStart.current), importCashflows, importOpen, openImport, closeImport, advance, play, pause, refresh, applyScenario, updatePolicy, runComparison, refreshComparison,
   }}>{children}</SimulationContext.Provider>;
 }
 

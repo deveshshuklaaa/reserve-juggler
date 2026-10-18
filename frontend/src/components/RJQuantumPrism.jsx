@@ -6,7 +6,7 @@ export default function RJQuantumPrism() {
   const prismRef = useRef(null);
 
   const handleMouseMove = (e) => {
-    if (!prismRef.current) return;
+    if (!prismRef.current || window.matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.classList.contains('treasury-motion-paused')) return;
     const rect = prismRef.current.getBoundingClientRect();
     const x = (e.clientX - rect.left) / rect.width - 0.5;
     const y = (e.clientY - rect.top) / rect.height - 0.5;
@@ -118,7 +118,7 @@ export default function RJQuantumPrism() {
           <div className="pod-body">
             <span className="pod-label">Instant Cash</span>
             <strong className="pod-val">$20.0M</strong>
-            <small className="pod-meta">Ready to use anytime</small>
+            <small className="pod-meta">Simulated starting balance</small>
           </div>
         </div>
 
@@ -127,9 +127,9 @@ export default function RJQuantumPrism() {
             <Shield size={15} />
           </div>
           <div className="pod-body">
-            <span className="pod-label">Safety Buffer</span>
-            <strong className="pod-val">99.4%</strong>
-            <small className="pod-meta">Emergency money protected</small>
+            <span className="pod-label">Liquidity</span>
+            <strong className="pod-val">In focus.</strong>
+            <small className="pod-meta">Available vs. restricted</small>
           </div>
         </div>
 
@@ -138,9 +138,9 @@ export default function RJQuantumPrism() {
             <TrendingUp size={15} />
           </div>
           <div className="pod-body">
-            <span className="pod-label">Annual Return</span>
-            <strong className="pod-val">5.20%</strong>
-            <small className="pod-meta">Earned automatically</small>
+            <span className="pod-label">Allocation</span>
+            <strong className="pod-val">4 tiers</strong>
+            <small className="pod-meta">Every trade-off, visible</small>
           </div>
         </div>
       </div>

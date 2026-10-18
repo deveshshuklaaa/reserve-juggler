@@ -24,6 +24,94 @@ async function start(user) {
 }
 
 describe('three-screen frontend workflow', () => {
+  it('preserves an existing run when CSV initialization fails and retries the same CSV', async () => {
+    const { user, api } = renderApp(); await start(user);
+    const generated = vi.spyOn(api, 'createRun');
+    const imported = vi.spyOn(api, 'createRunFromCashflows').mockRejectedValueOnce(new Error('CSV initialization interrupted.'));
+    await user.click(screen.getByRole('button', { name: 'Import cash flows' }));
+    await user.upload(screen.getByLabelText('Cash flow CSV file'), new File(['timestamp,inflow_cents,outflow_cents\n2026-10-17T08:00:00Z,100,0\n2026-10-17T08:15:00Z,100,0'], 'retry.csv', { type: 'text/csv' }));
+    await screen.findByText('retry.csv');
+    await user.click(screen.getByRole('button', { name: 'Start CSV simulation' }));
+    await screen.findByText(/The simulation could not start/);
+    await user.keyboard('{Escape}');
+    expect(screen.getAllByTitle('$20,000,000.00').length).toBeGreaterThan(0);
+    await user.click(screen.getByRole('button', { name: 'Retry initialization' }));
+    await screen.findByText('CSV replay');
+    expect(imported).toHaveBeenCalledTimes(2);
+    expect(imported.mock.calls[1][0].rows).toEqual(imported.mock.calls[0][0].rows);
+    expect(generated).not.toHaveBeenCalled();
+  });
+  it('previews a CSV then replays and compares its flows without a generated fallback', async () => {
+    const { user, api } = renderApp(undefined, '/strategy-arena');
+    const imported = vi.spyOn(api, 'createRunFromCashflows');
+    const generated = vi.spyOn(api, 'createRun');
+    await user.click(screen.getByRole('button', { name: 'Import cash flows' }));
+    const file = new File(['timestamp,inflow_cents,outflow_cents\n2026-10-17T08:00:00Z,12345,2345\n2026-10-17T08:15:00Z,20000,5000'], 'cashflows.csv', { type: 'text/csv' });
+    await user.upload(screen.getByLabelText('Cash flow CSV file'), file);
+    await screen.findByText('cashflows.csv');
+    expect(imported).not.toHaveBeenCalled();
+    expect(screen.getByRole('cell', { name: '$123.45' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Start CSV simulation' }));
+    await screen.findByText('CSV replay');
+    expect(imported).toHaveBeenCalledWith(expect.objectContaining({ rows: expect.arrayContaining([expect.objectContaining({ inflow_cents: 12345 })]) }), expect.any(Object));
+    expect(generated).not.toHaveBeenCalled();
+    expect(screen.getByRole('textbox', { name: 'Cash-flow source' })).toHaveValue('Imported CSV · original flows');
+    await user.click(screen.getByRole('button', { name: 'Run strategy comparison' }));
+    await screen.findByRole('heading', { name: 'Imported cash-flow outcomes' });
+    await user.click(screen.getByRole('button', { name: 'Reset simulation' }));
+    await waitFor(() => expect(imported).toHaveBeenCalledTimes(2));
+    await screen.findByRole('button', { name: 'Advance one step' });
+    expect(generated).not.toHaveBeenCalled();
+  });
+  it('takes a validated landing-page CSV straight into the command workspace', async () => {
+    const { user, api } = renderApp(); const generated = vi.spyOn(api, 'createRun');
+    expect(screen.getByRole('heading', { name: 'Treasury, in motion.' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Import cash flows' }));
+    await user.upload(screen.getByLabelText('Cash flow CSV file'), new File(['timestamp,inflow_cents,outflow_cents\n2026-10-17T08:00:00Z,100,0\n2026-10-17T08:15:00Z,100,0'], 'first-run.csv', { type: 'text/csv' }));
+    await screen.findByText('first-run.csv');
+    await user.click(screen.getByRole('button', { name: 'Start CSV simulation' }));
+    await screen.findByText('CSV replay');
+    expect(screen.getByRole('tab', { name: 'Overview' })).toHaveAttribute('aria-selected', 'true');
+    expect(within(screen.getByRole('navigation', { name: 'Workspace taskbar' })).getByRole('link', { name: 'Command Center', exact: true })).toHaveAttribute('aria-current', 'page');
+    expect(screen.queryByRole('heading', { name: 'Treasury, in motion.' })).not.toBeInTheDocument();
+    expect(generated).not.toHaveBeenCalled();
+  });
+  it('rejects invalid CSV values while keeping the current run available', async () => {
+    const { user, api } = renderApp(); await start(user);
+    const imported = vi.spyOn(api, 'createRunFromCashflows');
+    await user.click(screen.getByRole('button', { name: 'Import cash flows' }));
+    await user.upload(screen.getByLabelText('Cash flow CSV file'), new File(['timestamp,inflow_cents,outflow_cents\n2026-10-17T08:00:00Z,1.20,0\n2026-10-17T08:15:00Z,1,0'], 'invalid.csv', { type: 'text/csv' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/Row 2/);
+    expect(screen.getByRole('button', { name: 'Start CSV simulation' })).toBeDisabled();
+    expect(imported).not.toHaveBeenCalled();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Import cash flows' })).toHaveFocus();
+    expect(screen.getAllByTitle('$20,000,000.00').length).toBeGreaterThan(0);
+  });
+  it('keeps CSV execution disabled in live mode without sending a file', async () => {
+    const api = createMockApi({ latency: 0 }); api.mode = 'real';
+    const imported = vi.spyOn(api, 'createRunFromCashflows');
+    const { user } = renderApp(api);
+    await user.click(screen.getByRole('button', { name: 'Import cash flows' }));
+    await user.upload(screen.getByLabelText('Cash flow CSV file'), new File(['timestamp,inflow_cents,outflow_cents\n2026-10-17T08:00:00Z,100,0\n2026-10-17T08:15:00Z,100,0'], 'live.csv', { type: 'text/csv' }));
+    await screen.findByText('live.csv');
+    expect(screen.getByRole('button', { name: 'Start CSV simulation' })).toBeDisabled();
+    expect(imported).not.toHaveBeenCalled();
+  });
+  it('lets visitors pause presentation motion and explore capital tiers without creating a run', async () => {
+    const { user, api } = renderApp();
+    const create = vi.spyOn(api, 'createRun');
+    await user.click(screen.getByRole('button', { name: 'Pause motion' }));
+    expect(screen.getByRole('button', { name: 'Resume motion' })).toHaveAttribute('aria-pressed', 'true');
+    expect(document.querySelector('.landing-experience')).toHaveClass('presentation-paused');
+    await user.click(screen.getByRole('button', { name: '02 Bonds' }));
+    expect(screen.getByText('Market value, duration, and settlement timing in one view.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '02 Bonds' })).toHaveAttribute('aria-pressed', 'true');
+    expect(create).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Resume motion' }));
+    expect(screen.getByRole('button', { name: 'Pause motion' })).toHaveAttribute('aria-pressed', 'false');
+  });
   it('opens the first-visit story and enters the real dashboard from its main action', async () => {
     const { user } = renderApp();
     expect(screen.getByRole('heading', { name: 'Treasury, in motion.' })).toBeInTheDocument();
@@ -31,7 +119,7 @@ describe('three-screen frontend workflow', () => {
     expect(screen.getByRole('heading', { name: /Compare the paths/ })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /Open Command Center/ }));
     await screen.findByRole('heading', { name: /Treasury Command Center/ });
-    expect(screen.getByTitle('$20,000,000.00')).toBeInTheDocument();
+    expect(screen.getAllByTitle('$20,000,000.00').length).toBeGreaterThan(0);
   });
   it('opens the mobile navigation with keyboard focus and closes on Escape', async () => {
     const { user } = renderApp();
@@ -47,10 +135,67 @@ describe('three-screen frontend workflow', () => {
   });
   it('loads the exact API balances and distinguishes actual from forecast', async () => {
     const { user } = renderApp(); await start(user);
-    expect(screen.getByTitle('$20,000,000.00')).toBeInTheDocument();
+    expect(screen.getAllByTitle('$20,000,000.00').length).toBeGreaterThan(0);
     expect(screen.getByText('Realized interest')).toBeInTheDocument();
+    await user.click(screen.getByRole('tab', { name: 'Forecasts' }));
     expect(screen.getByRole('img', { name: /Solid: observed/ })).toHaveTextContent('Actual net flow, Forecast net flow');
     expect(screen.getByText(/Mock environment/)).toBeInTheDocument();
+  });
+  it('keeps the scrollable landing page available after creating a simulation', async () => {
+    const { user, api } = renderApp(); const create = vi.spyOn(api, 'createRun');
+    await start(user);
+    expect(screen.getByRole('navigation', { name: 'Workspace taskbar' })).toBeInTheDocument();
+    await user.click(screen.getByRole('link', { name: 'Reserve Juggler home' }));
+    expect(screen.getByRole('heading', { name: 'Treasury, in motion.' })).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Overview' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('navigation', { name: 'Treasury workflow' })).not.toBeInTheDocument();
+    await user.click(within(screen.getByRole('navigation', { name: 'Primary navigation' })).getByRole('link', { name: 'Command Center', exact: true }));
+    expect(screen.getByRole('tab', { name: 'Overview' })).toHaveAttribute('aria-selected', 'true');
+    expect(create).toHaveBeenCalledTimes(1);
+  });
+  it('uses a persistent workspace taskbar to change screens without resetting the run', async () => {
+    const { user, api } = renderApp(); const create = vi.spyOn(api, 'createRun');
+    await start(user);
+    await user.click(screen.getByRole('button', { name: 'Advance one step' }));
+    await screen.findByText(/Step 1 \/ /);
+    const taskbar = () => within(screen.getByRole('navigation', { name: 'Workspace taskbar' }));
+    await user.click(taskbar().getByRole('link', { name: 'Liquidity Shock Lab', exact: true }));
+    expect(taskbar().getByRole('link', { name: 'Liquidity Shock Lab', exact: true })).toHaveAttribute('aria-current', 'page');
+    await user.click(taskbar().getByRole('link', { name: 'Strategy Arena', exact: true }));
+    expect(taskbar().getByRole('link', { name: 'Strategy Arena', exact: true })).toHaveAttribute('aria-current', 'page');
+    await user.click(taskbar().getByRole('link', { name: 'Command Center', exact: true }));
+    expect(screen.getByRole('tab', { name: 'Overview' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByText(/Step 1 \/ /)).toBeInTheDocument();
+    expect(create).toHaveBeenCalledTimes(1);
+  });
+  it('switches dashboard views with keyboard tabs while keeping one panel accessible', async () => {
+    const { user } = renderApp(); await start(user);
+    const overview = screen.getByRole('tab', { name: 'Overview' });
+    overview.focus();
+    await user.keyboard('{ArrowRight}');
+    expect(screen.getByRole('tab', { name: 'Portfolio' })).toHaveFocus();
+    expect(screen.getByRole('tab', { name: 'Portfolio' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getAllByRole('tabpanel')).toHaveLength(1);
+    expect(screen.getByRole('tabpanel')).toHaveAttribute('aria-labelledby', screen.getByRole('tab', { name: 'Portfolio' }).id);
+    await user.keyboard('{End}');
+    expect(screen.getByRole('tab', { name: 'Activity' })).toHaveFocus();
+    expect(screen.getByRole('tab', { name: 'Activity' })).toHaveAttribute('aria-selected', 'true');
+    await user.keyboard('{Home}');
+    expect(overview).toHaveFocus();
+    expect(screen.getByText('Realized interest')).toBeInTheDocument();
+  });
+  it('keeps all workspace destinations accessible without opening a mobile menu', async () => {
+    const previousMatchMedia = window.matchMedia;
+    window.matchMedia = vi.fn().mockImplementation((media) => ({ matches: media === '(max-width: 760px)', media, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+    try {
+      const { user } = renderApp(undefined, '/shock-lab');
+      const taskbar = within(screen.getByRole('navigation', { name: 'Workspace taskbar' }));
+      expect(taskbar.getByRole('link', { name: 'Command Center', exact: true })).toBeVisible();
+      expect(taskbar.getByRole('link', { name: 'Liquidity Shock Lab', exact: true })).toBeVisible();
+      await user.click(taskbar.getByRole('link', { name: 'Strategy Arena', exact: true }));
+      expect(screen.getByRole('heading', { name: /Treasury Strategy Arena/ })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Open navigation' })).not.toBeInTheDocument();
+    } finally { window.matchMedia = previousMatchMedia; }
   });
   it('schedules HIGH_WITHDRAWAL then observes two real snapshots and compares strategies', async () => {
     const { user, api } = renderApp(); const scenarioSpy = vi.spyOn(api, 'applyScenario');

@@ -1,0 +1,22 @@
+/* The product story scrolls on the document. Workspaces keep navigation in view. */
+.workspace-mode { height: 100dvh; min-height: 0; overflow: hidden; display: flex; flex-direction: column; background: #f5f7fa; }
+.workspace-mode .global-header { flex: 0 0 auto; }
+.workspace-mode .workspace-main { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.workspace-mode .control-bar { flex: 0 0 auto; backdrop-filter: none; background: #fafbfd; }
+.workspace-mode .control-bar-inner { min-height: 54px; padding-block: 9px; }
+.workspace-mode main { flex: 1; min-height: 0; width: 100%; max-width: none; margin: 0; padding: 0; overflow-y: auto; overscroll-behavior: contain; scroll-padding-top: 18px; outline: none; }
+.workspace-mode .page-content { width: min(1280px, 100%); margin: 0 auto; padding: 28px 28px 48px; animation: none; }
+.workspace-mode .page-heading { margin-bottom: 24px; }.workspace-mode .page-heading h1 { font-size: clamp(30px, 3vw, 42px); line-height: 1.12; }.workspace-mode .page-heading p { font-size: 14px; }
+.workspace-mode .panel:hover { box-shadow: none; }.workspace-mode .story-progress,.workspace-mode .story-chapters { display: none; }
+.workspace-overview-link { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; color: #65788c; font-size: 12px; text-decoration: none; }.workspace-overview-link:hover { color: #0071e3; }
+.landing-upload-button { padding: 9px 15px; font-size: 12px; }.landing-mode .global-header-inner { max-width: 1440px; gap: 20px; }
+.workspace-mode .input-source-strip { padding-block: 9px; background: #edf5fc; }
+@media (max-width: 1050px) and (min-width: 761px) { .landing-mode .global-navigation { gap: 16px; }.landing-mode .header-status { display: none; } }
+@media (max-width: 760px) {
+  .workspace-mode .global-header-inner { gap: 12px; }.workspace-overview-link { font-size: 10px; }.workspace-mode .header-status { display: none; }
+  .workspace-mode .page-content { padding: 22px 18px 36px; }.workspace-mode .page-heading h1 { font-size: 32px; }.workspace-mode .page-heading { gap: 10px; margin-bottom: 18px; }
+  .workspace-mode .control-bar-inner { padding: 9px 18px; flex-direction: row; align-items: center; gap: 8px; }.workspace-mode .simulation-clock { gap: 5px 9px; font-size: 10px; }.workspace-mode .simulation-clock strong { font-size: 10px; }.workspace-mode .clock-details { display: none; }.workspace-mode .step-label { font-size: 9px; }
+  .workspace-mode .toolbar-actions { flex-wrap: nowrap; gap: 4px; }.workspace-mode .toolbar-actions .button { padding: 7px 9px; min-height: 34px; font-size: 11px; }.workspace-mode .toolbar-actions .hide-small { display: none; }
+  .landing-mode .header-status { display: none; }.landing-mode .global-header-inner { gap: 9px; }.landing-upload-button { margin-left: auto; padding: 9px 12px; font-size: 11px; }.landing-mode .brand-edition { display: none; }.landing-mode .brand { font-size: 15px; gap: 6px; }.landing-mode .brand-symbol { width: 24px; height: 24px; }
+}
+@media (prefers-reduced-motion: reduce) { .workspace-mode * { scroll-behavior: auto; } }

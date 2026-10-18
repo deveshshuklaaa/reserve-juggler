@@ -17,6 +17,46 @@ function randomAt(seed, step) {
   return () => { state ^= state << 13; state ^= state >>> 17; state ^= state << 5; return (state >>> 0) / 4294967296; };
 }
 const bpsOf = (value, bps) => Number(BigInt(value) * BigInt(bps) / 10000n);
+const STEP_MS = 15 * 60000;
+
+// Revalidate the data at the execution boundary. File preview metadata is never
+// trusted to determine money, timestamps, or the length of a mock simulation.
+function validateCashflows(dataset) {
+  check(Array.isArray(dataset?.rows) && dataset.rows.length >= 2 && dataset.rows.length <= 5000,
+    'CSV replay requires between 2 and 5,000 cash-flow rows.');
+  let totalInflow = 0; let totalOutflow = 0; let previousTime; let interval;
+  const rows = dataset.rows.map((row, index) => {
+    check(row && typeof row === 'object', `CSV row ${index + 1} is invalid.`);
+    const match = typeof row.timestamp === 'string' && row.timestamp.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|\+00:00)$/);
+    const time = match ? Date.parse(row.timestamp) : NaN;
+    check(Number.isFinite(time) && new Date(time).toISOString().slice(0, 19) === row.timestamp.slice(0, 19),
+      `CSV row ${index + 1} needs a valid ISO 8601 UTC timestamp.`);
+    integer(row.inflow_cents, 0, 100000000000, `CSV row ${index + 1} inflow`);
+    integer(row.outflow_cents, 0, 100000000000, `CSV row ${index + 1} outflow`);
+    totalInflow += row.inflow_cents; totalOutflow += row.outflow_cents;
+    check(totalInflow <= 1000000000000 && totalOutflow <= 1000000000000,
+      'CSV cash flows exceed the mock replay limit of $10 billion per direction.');
+    if (index > 0) {
+      const gap = time - previousTime;
+      if (index === 1) interval = gap;
+      check((interval === STEP_MS || interval === STEP_MS * 4) && gap === interval,
+        'CSV timestamps must be strictly increasing at regular 15-minute or hourly intervals.');
+    }
+    previousTime = time;
+    return { timestamp: new Date(time).toISOString(), inflow_cents: row.inflow_cents, outflow_cents: row.outflow_cents };
+  });
+  const durationSteps = (Date.parse(rows.at(-1).timestamp) - Date.parse(rows[0].timestamp)) / STEP_MS + 1;
+  integer(durationSteps, 1, 2880, 'CSV replay duration');
+  return { rows, interval_minutes: interval / 60000, start_time: rows[0].timestamp,
+    end_time: rows.at(-1).timestamp, total_inflow_cents: totalInflow, total_outflow_cents: totalOutflow,
+    duration_steps: durationSteps };
+}
+
+function inputSource(run) {
+  const data = run.config.cashflow_input;
+  return data ? { type: 'CSV', row_count: data.rows.length, interval_minutes: data.interval_minutes,
+    start_time: data.start_time, end_time: data.end_time } : undefined;
+}
 
 export function validatePolicy(input) {
   const policy = { ...DEFAULT_POLICY, ...input };
@@ -31,6 +71,11 @@ export function validatePolicy(input) {
 
 export function createEngine(input = {}, id = 'mock-run-1', strategy = 'RESERVE_JUGGLER') {
   const config = { ...DEFAULT_RUN, ...input };
+  if (Object.hasOwn(input, 'cashflow_input')) {
+    config.cashflow_input = validateCashflows(input.cashflow_input);
+    config.start_time = new Date(Date.parse(config.cashflow_input.start_time) - STEP_MS).toISOString();
+    config.duration_steps = config.cashflow_input.duration_steps;
+  }
   integer(config.seed, 0, 4294967295, 'Seed');
   integer(config.duration_steps, 1, 2880, 'Duration');
   check(config.step_minutes === 15, 'The mock supports 15-minute steps.');
@@ -44,6 +89,9 @@ export function createEngine(input = {}, id = 'mock-run-1', strategy = 'RESERVE_
     borrowed: 0, yield: 0, penalties: 0, borrowing_costs: 0, failed_payouts: 0,
     failed_amount: 0, reserve_breaches: 0, sweeps: 0, emergency_events: 0, alerts: [],
     inflow_total: 0, outflow_total: 0, decision: null };
+  if (config.cashflow_input) run.cashflows_by_step = new Map(config.cashflow_input.rows.map((row) => [
+    (Date.parse(row.timestamp) - Date.parse(config.start_time)) / STEP_MS, row,
+  ]));
   if (config.initial_vault_cents) addPosition(run, config.initial_vault_cents, 0);
   run.history.push(historyPoint(run, 0, 0));
   return run;
@@ -72,8 +120,8 @@ function vaultTotals(run) {
 function forecastBasis(run) {
   const observed = run.history.slice(-8).filter((item) => item.step > 0);
   const average = (field, fallback) => observed.length ? Math.round(observed.reduce((sum, item) => sum + item[field], 0) / observed.length) : fallback;
-  const inflow = average('inflow_cents', 250000000);
-  const outflow = average('requested_outflow_cents', 245000000);
+  const inflow = average('inflow_cents', run.config.cashflow_input ? 0 : 250000000);
+  const outflow = average('requested_outflow_cents', run.config.cashflow_input ? 0 : 245000000);
   const drain = Math.max(0, outflow - inflow);
   const peak = Math.max(650000000, drain * 8);
   const uncertainty = Math.round(Math.max(80000000, outflow * 0.6) * ({ 90: 0.8, 95: 1, 99: 1.5 }[run.policy.risk_percentile]));
@@ -98,6 +146,8 @@ function historyPoint(run, inflow, outflow, requestedOutflow = outflow) {
 
 export function scheduleScenario(run, input) {
   check(SCENARIOS.some((item) => item.id === input.scenario), 'Unknown scenario enum.');
+  check(!(run.config.cashflow_input && input.scenario === 'SETTLEMENT_DELAY'),
+    'CSV cash flows do not identify merchant settlements. Choose another scenario.');
   const parameters = { duration_steps: 8, multiplier_bps: 30000, reduction_bps: 6000,
     delay_steps: 8, fraction_bps: 7500, shock_cents: 800000000, ...input.parameters };
   integer(parameters.duration_steps, 1, 96, 'Scenario duration');
@@ -127,9 +177,11 @@ export function advanceEngine(run, expectedStep = run.step, includeSnapshot = tr
   check(run.step < run.config.duration_steps, 'The simulation has completed.');
   run.step += 1; run.alerts = [];
   const random = randomAt(run.config.seed, run.step);
-  let deposit = Math.round(180000000 + random() * 110000000);
-  let settlement = Math.round(25000000 + random() * 40000000);
-  let withdrawal = Math.round(200000000 + random() * 100000000);
+  const imported = run.config.cashflow_input != null;
+  const row = run.cashflows_by_step?.get(run.step);
+  let deposit = imported ? row?.inflow_cents ?? 0 : Math.round(180000000 + random() * 110000000);
+  let settlement = imported ? 0 : Math.round(25000000 + random() * 40000000);
+  let withdrawal = imported ? row?.outflow_cents ?? 0 : Math.round(200000000 + random() * 100000000);
   let shock = 0;
   for (const event of run.events) event.status = run.step < event.effective_step ? 'SCHEDULED' : run.step < event.effective_step + event.parameters.duration_steps ? 'ACTIVE' : 'COMPLETED';
   // The newest effective scenario supersedes the previous future flow regime.
@@ -225,8 +277,8 @@ export function advanceEngine(run, expectedStep = run.step, includeSnapshot = tr
     operational_buffer_cents: run.policy.operational_buffer_cents, explanation };
   run.decisions.push(clone(run.decision));
   for (const [type, direction, amountCents, source] of [
-    ['DEPOSIT', 'INFLOW', deposit, 'Client deposits'], ['MERCHANT_SETTLEMENT', 'INFLOW', settlement, 'Merchant receipts'],
-    ['WITHDRAWAL', 'OUTFLOW', paid, shock ? 'Customer payouts + shock' : 'Customer payouts'],
+    ['DEPOSIT', 'INFLOW', deposit, imported ? 'CSV cash inflow' : 'Client deposits'], ['MERCHANT_SETTLEMENT', 'INFLOW', settlement, 'Merchant receipts'],
+    ['WITHDRAWAL', 'OUTFLOW', paid, imported ? (shock ? 'CSV cash outflow + shock' : 'CSV cash outflow') : shock ? 'Customer payouts + shock' : 'Customer payouts'],
   ]) if (amountCents > 0) run.transactions.push({ id: `TX-${run.step}-${type}`, timestamp: timestamp(run), type, direction, amount_cents: amountCents, source });
   run.history[run.history.length - 1] = historyPoint(run, inflow, paid, requestedOutflow);
   return includeSnapshot ? snapshot(run) : undefined;
@@ -236,6 +288,7 @@ export function snapshot(run) {
   const totals = vaultTotals(run); const basis = forecastBasis(run); const reserve = reserveFor(run);
   return { run_id: run.id, step: run.step, timestamp: timestamp(run), status: run.step >= run.config.duration_steps ? 'COMPLETED' : 'PAUSED',
     duration_steps: run.config.duration_steps, seed: run.config.seed, currency: 'USD', source: 'mock',
+    ...(run.config.cashflow_input ? { input_source: inputSource(run) } : {}),
     checking_cents: run.checking, vault_locked_cents: totals.locked, vault_redeemable_cents: totals.redeemable,
     accrued_interest_cents: totals.accrued, required_reserve_cents: reserve,
     deployable_surplus_cents: run.checking - reserve >= run.policy.min_sweep_cents ? Math.max(0, run.checking - reserve) : 0,
@@ -299,6 +352,7 @@ export function forecastSeries(run, horizon = 1440) {
 export function report(run) {
   const average = Math.round(run.history.reduce((sum, p) => sum + p.checking_cents, 0) / run.history.length);
   return { run_id: run.id, seed: run.config.seed, source: 'mock', strategy: run.strategy,
+    ...(run.config.cashflow_input ? { input_source: inputSource(run) } : {}),
     duration_steps: run.step, realized_interest_cents: run.yield, average_checking_cents: average,
     penalties_cents: run.penalties, borrowing_costs_cents: run.borrowing_costs, borrowing_outstanding_cents: run.borrowed,
     reserve_breaches: run.reserve_breaches, emergency_events: run.emergency_events, failed_payouts: run.failed_payouts,
@@ -307,17 +361,30 @@ export function report(run) {
 }
 
 export function backtest(input = {}, policy = DEFAULT_POLICY) {
-  integer(input.days, 7, 30, 'Backtest days');
-  check([7, 14, 30].includes(input.days), 'Unsupported duration.');
-  check(SCENARIOS.some((s) => s.id === input.scenario), 'Unknown scenario.');
+  const cashflows = Object.hasOwn(input, 'cashflow_input') ? validateCashflows(input.cashflow_input) : null;
+  if (!cashflows) {
+    integer(input.days, 7, 30, 'Backtest days');
+    check([7, 14, 30].includes(input.days), 'Unsupported duration.');
+    check(SCENARIOS.some((s) => s.id === input.scenario), 'Unknown scenario.');
+  }
+  const scenario = cashflows ? 'NORMAL' : input.scenario;
   const selected = input.strategies ?? STRATEGIES.map((item) => item.id);
   check(selected.length > 0 && selected.every((s) => STRATEGIES.some((item) => item.id === s)), 'Select supported strategies.');
   const results = selected.map((strategy) => {
-    const run = createEngine({ seed: input.seed, duration_steps: input.days * 96, policy }, `backtest-${strategy}`, strategy);
-    if (input.scenario !== 'NORMAL') scheduleScenario(run, { scenario: input.scenario, effective_step: 32, parameters: input.parameters });
+    const config = { seed: input.seed, duration_steps: input.days * 96, policy };
+    if (cashflows) {
+      config.cashflow_input = cashflows;
+      for (const key of ['initial_checking_cents', 'initial_vault_cents']) if (input[key] != null) config[key] = input[key];
+    }
+    const run = createEngine(config, `backtest-${strategy}`, strategy);
+    if (scenario !== 'NORMAL') scheduleScenario(run, { scenario, effective_step: 32, parameters: input.parameters });
     while (run.step < run.config.duration_steps) advanceEngine(run, run.step, false);
     return { ...report(run), history: run.history.filter((_, index) => index % 16 === 0 || index === run.step) };
   });
-  return { status: 'COMPLETED', source: 'mock', scenario: input.scenario, seed: input.seed, days: input.days,
+  return { status: 'COMPLETED', source: 'mock', scenario, seed: input.seed,
+    days: cashflows ? cashflows.duration_steps / 96 : input.days,
+    duration_steps: cashflows ? cashflows.duration_steps : input.days * 96,
+    label: cashflows ? 'Imported cash-flow replay' : `${input.days}-day treasury outcomes`,
+    ...(cashflows ? { input_source: inputSource({ config: { cashflow_input: cashflows } }) } : {}),
     model_evaluation: null, results };
 }

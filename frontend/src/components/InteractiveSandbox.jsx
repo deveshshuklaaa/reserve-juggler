@@ -1,74 +1,30 @@
 import { useState, useMemo } from 'react';
 import { Sliders, Shield, Zap, TrendingUp, AlertTriangle, CheckCircle2, RotateCcw } from 'lucide-react';
 import { money } from '../utils/format';
+import { previewLiquidityShock } from '../mocks/liquidityPreview';
 
 export default function InteractiveSandbox() {
-  const [shockValue, setShockValue] = useState(-5000000); // -$5M default shock
+  const [shockValue, setShockValue] = useState(-6000000);
   const [autopilot, setAutopilot] = useState(true);
   const [preset, setPreset] = useState('moderate');
 
-  // Interactive calculations
-  const state = useMemo(() => {
-    const baseChecking = 20000000; // $20M base
-    const baseReserve = 4500000;   // $4.5M required reserve
-    const baseVault = 12000000;    // $12M invested in yield vault
-
-    if (autopilot) {
-      // RJ Autopilot: absorbs shocks, pulls from vault if needed without penalty, keeps reserves safe
-      const netChecking = Math.max(2000000, baseChecking + shockValue);
-      const dynamicReserve = Math.max(3000000, baseReserve + Math.abs(shockValue) * 0.25);
-      const dynamicVault = shockValue < -8000000 ? baseVault - 3000000 : baseVault;
-      const yieldEarned = Math.round((dynamicVault * 0.052) / 365 * 30);
-      const isDefended = netChecking >= dynamicReserve * 0.8;
-
-      return {
-        checking: netChecking,
-        reserve: dynamicReserve,
-        vault: dynamicVault,
-        yieldEarned,
-        status: isDefended ? 'OPTIMIZED' : 'DEFENDING',
-        statusText: isDefended ? 'Resilient & Protected' : 'Autonomous Defense Engaged',
-        healthScore: Math.min(100, Math.round((netChecking / dynamicReserve) * 85)),
-        overdraftRisk: '0.00%',
-        color: '#2997ff',
-      };
-    } else {
-      // Manual Legacy: fixed reserves, checking gets crushed, zero dynamic rebalance
-      const netChecking = baseChecking + shockValue;
-      const dynamicReserve = baseReserve;
-      const dynamicVault = baseVault;
-      const yieldEarned = Math.round((dynamicVault * 0.02) / 365 * 30);
-      const isDefended = netChecking > dynamicReserve;
-
-      return {
-        checking: Math.max(0, netChecking),
-        reserve: dynamicReserve,
-        vault: dynamicVault,
-        yieldEarned,
-        status: isDefended ? 'STABLE' : 'CRITICAL DEFICIT',
-        statusText: isDefended ? 'Static Allocation' : 'Overdraft Warning!',
-        healthScore: Math.max(10, Math.min(100, Math.round((netChecking / dynamicReserve) * 50))),
-        overdraftRisk: netChecking < dynamicReserve ? '42.8%' : '3.2%',
-        color: isDefended ? '#eab308' : '#ef4444',
-      };
-    }
-  }, [shockValue, autopilot]);
-
+  // Frontend illustration only: no asset sales, invented cash, or execution.
+  const state = useMemo(() => previewLiquidityShock(shockValue * 100, autopilot), [shockValue, autopilot]);
   const applyPreset = (type, val) => {
     setPreset(type);
     setShockValue(val);
   };
 
   return (
-    <div className="apple-window sandbox-showcase" id="interactive-lab">
+    <div className="sandbox-showcase">
       <div className="sandbox-header">
         <span className="apple-kicker">HANDS-ON SIMULATOR</span>
         <h2 className="sandbox-title">
-          Test it live.<br />
-          <span>Feel the control.</span>
+          Move the liquidity.<br />
+          <span>See the trade-off.</span>
         </h2>
         <p className="sandbox-subtitle">
-          Drag the stress slider to simulate extreme liquidity shocks and watch how Reserve Juggler dynamically stabilizes checking reserves compared to legacy static rules.
+          Illustrative mock: move cash flows and compare a fixed buffer with an adaptive buffer. Proposed allocations leave cash unchanged until execution.
         </p>
       </div>
 
@@ -76,21 +32,21 @@ export default function InteractiveSandbox() {
         {/* Top Controls Toolbar */}
         <div className="sandbox-toolbar">
           <div className="sandbox-mode-toggle">
-            <span className="mode-label">TREASURY ENGINE</span>
+            <span className="mode-label">PREVIEW POLICY</span>
             <div className="mode-buttons">
               <button
                 type="button"
                 className={`mode-btn ${autopilot ? 'active' : ''}`}
                 onClick={() => setAutopilot(true)}
               >
-                <Zap size={15} /> Reserve Juggler Autopilot
+                <Zap size={15} /> Adaptive buffer
               </button>
               <button
                 type="button"
                 className={`mode-btn ${!autopilot ? 'active' : ''}`}
                 onClick={() => setAutopilot(false)}
               >
-                Legacy Static Rules
+                Fixed buffer
               </button>
             </div>
           </div>
@@ -168,20 +124,20 @@ export default function InteractiveSandbox() {
               <span>CHECKING CASH</span>
               <Shield size={16} />
             </div>
-            <div className="meter-value" title={money(state.checking * 100)}>
-              {money(state.checking * 100, true)}
+            <div className="meter-value" title={money(state.checking_cents)}>
+              {money(state.checking_cents, true)}
             </div>
             <div className="meter-bar-track">
               <div
                 className="meter-bar-fill"
                 style={{
-                  width: `${Math.min(100, (state.checking / 25000000) * 100)}%`,
-                  background: state.checking < state.reserve ? '#ef4444' : '#2997ff',
+                  width: `${Math.min(100, (state.checking_cents / 3500000000) * 100)}%`,
+                  background: state.reserve_deficit_cents > 0 ? '#ef4444' : '#2997ff',
                 }}
               />
             </div>
             <span className="meter-footnote">
-              {state.checking < state.reserve ? 'Reserve Breached!' : 'Fully Liquid & Deployable'}
+              {state.reserve_deficit_cents > 0 ? 'Reserve Breached!' : 'Available cash after the illustrative flow'}
             </span>
           </div>
 
@@ -190,42 +146,42 @@ export default function InteractiveSandbox() {
               <span>REQUIRED RESERVE</span>
               <AlertTriangle size={16} />
             </div>
-            <div className="meter-value" title={money(state.reserve * 100)}>
-              {money(state.reserve * 100, true)}
+            <div className="meter-value" title={money(state.required_reserve_cents)}>
+              {money(state.required_reserve_cents, true)}
             </div>
             <div className="meter-bar-track">
               <div
                 className="meter-bar-fill"
                 style={{
-                  width: `${Math.min(100, (state.reserve / 15000000) * 100)}%`,
+                  width: `${Math.min(100, (state.required_reserve_cents / 1500000000) * 100)}%`,
                   background: '#bf5af2',
                 }}
               />
             </div>
             <span className="meter-footnote">
-              {autopilot ? 'Dynamic Quantile Buffer' : 'Fixed Static Limit'}
+              {autopilot ? 'Illustrative adaptive buffer' : 'Fixed Static Limit'}
             </span>
           </div>
 
           <div className="sandbox-meter yield-meter">
             <div className="meter-header">
-              <span>MONTHLY ESTIMATED YIELD</span>
+              <span>PROPOSED ALLOCATION</span>
               <TrendingUp size={16} />
             </div>
-            <div className="meter-value" title={money(state.yieldEarned * 100)}>
-              +{money(state.yieldEarned * 100, true)}
+            <div className="meter-value" title={money(state.proposed_allocation_cents)}>
+              {money(state.proposed_allocation_cents, true)}
             </div>
             <div className="meter-bar-track">
               <div
                 className="meter-bar-fill"
                 style={{
-                  width: `${Math.min(100, (state.yieldEarned / 60000) * 100)}%`,
+                  width: `${Math.min(100, (state.proposed_allocation_cents / 3500000000) * 100)}%`,
                   background: '#30d158',
                 }}
               />
             </div>
             <span className="meter-footnote">
-              {autopilot ? '5.2% APY Swept Overnight' : '2.0% Stagnant Cash Yield'}
+              {autopilot ? 'Unexecuted surplus proposal' : 'Fixed policy keeps cash unchanged'}
             </span>
           </div>
         </div>
@@ -236,18 +192,18 @@ export default function InteractiveSandbox() {
             {autopilot ? <CheckCircle2 size={24} className="text-emerald" /> : <AlertTriangle size={24} className="text-amber" />}
           </div>
           <div className="status-copy">
-            <strong>{state.statusText}</strong>
+            <strong>{state.reserve_deficit_cents > 0 ? 'Reserve shortfall' : 'Cash covers the preview reserve'}</strong>
             <span>
-              {autopilot
-                ? `System automatically balanced reserves. Risk of overdraft: ${state.overdraftRisk}. Treasury Health Score: ${state.healthScore}%.`
-                : `Legacy rules caused rigid cash immobilization. Risk of overdraft: ${state.overdraftRisk}. Treasury Health Score: ${state.healthScore}%.`}
+              {state.reserve_deficit_cents > 0
+                ? `${money(state.reserve_deficit_cents)} below the preview reserve. No liquidation or borrowing has been executed.`
+                : 'Frontend illustration only. The adaptive rule adds 25% of an outflow to the base buffer; it is not an engine forecast.'}
             </span>
           </div>
           <button
             type="button"
             className="sandbox-reset-btn"
             onClick={() => {
-              setShockValue(-5000000);
+              setShockValue(-6000000);
               setAutopilot(true);
               setPreset('moderate');
             }}
