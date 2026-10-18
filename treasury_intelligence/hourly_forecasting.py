@@ -394,6 +394,8 @@ def validate_hourly_forecast_inputs(
             prev_ts = getattr(history[i - 1], "timestamp", getattr(history[i - 1], "start_at", None))
             if ts <= prev_ts:
                 raise ValueError("history observations must be strictly chronologically ordered")
+            if ts - prev_ts != timedelta(hours=1):
+                raise ValueError("hourly history must be contiguous; missing hours cannot be treated as hourly lags")
 
     if history:
         last_ts = getattr(history[-1], "timestamp", getattr(history[-1], "start_at", None))
@@ -606,7 +608,15 @@ def hourly_seasonal_naive_forecast(
     for i in range(horizon_hours):
         target_time = start_at + i * hour_delta
         # Match the historical observation from season_hours ago for this relative cycle index
-        hist_idx = n - season_hours + (i % season_hours)
+        # Align by timestamp, including explicit start_at=as_of and stale
+        # histories. Recycle only already observed seasonal values.
+        reference_time = target_time - timedelta(hours=season_hours)
+        last_time = getattr(history[-1], "timestamp", getattr(history[-1], "start_at", None))
+        while reference_time > last_time:
+            reference_time -= timedelta(hours=season_hours)
+        hist_idx = n - 1 + int((reference_time - last_time) / hour_delta)
+        if hist_idx < 0:
+            hist_idx = n - 1  # No prior seasonal match; causal last-observation fallback.
         d_usd, w_usd, n_usd, d_cents, w_cents, n_cents = extracted[hist_idx]
 
         pred_dep = max(0, d_cents)
