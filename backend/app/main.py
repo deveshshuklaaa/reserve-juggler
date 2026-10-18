@@ -7,7 +7,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 import logging
 from app.database import engine, Base
 from app.routers import health, treasury, transactions, simulation, simulation_v1
-from app.routers import runs
+from app.routers import runs, datasets
 
 # Create schema tables if not exist (ensures standalone testing works instantly)
 Base.metadata.create_all(bind=engine)
@@ -34,6 +34,7 @@ app.include_router(health.router)
 
 # Domain Routers
 app.include_router(runs.router, prefix="/api/v1")
+app.include_router(datasets.router, prefix="/api/v1")
 app.include_router(simulation_v1.router, include_in_schema=False)
 
 # Existing dashboard clients keep working while they migrate to /api/v1.

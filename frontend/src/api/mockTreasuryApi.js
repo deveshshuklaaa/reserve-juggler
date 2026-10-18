@@ -30,6 +30,7 @@ export function createMockApi({ latency = 100 } = {}) {
     }, options, 2),
     // The LIVE adapter explicitly rejects this local-only operation until the
     // backend publishes and implements a cash-flow ingestion contract.
+    createRunFromOrganizer: async () => { throw new Error('Organizer CSV simulation requires live backend mode.'); },
     createRunFromCashflows: (dataset, options = {}) => respond(() => {
       const { signal, ...config } = options;
       const id = `mock-${++counter}`;

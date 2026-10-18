@@ -19,9 +19,11 @@ const metrics = [
 
 function ArenaContent() {
   const sim = useSimulation();
+  const availableDays = [7, 14, 30].filter((value) => !sim.snapshot.source_dataset || value * 24 <= sim.snapshot.source_dataset.row_count);
   const imported = sim.snapshot.input_source?.type === 'CSV';
   const [scenario, setScenario] = useState('NORMAL');
-  const [days, setDays] = useState(7); const [seed, setSeed] = useState(2026);
+  const [days, setDays] = useState(availableDays[0] ?? 7); const [seed, setSeed] = useState(2026);
+  const selectedDays = availableDays.includes(days) ? days : (availableDays[0] ?? 7);
   const [strategies, setStrategies] = useState(STRATEGIES.map((item) => item.id));
   const [pending, setPending] = useState(false);
   const [error, setError] = useState(''); const [criterion, setCriterion] = useState('net_benefit_cents');
@@ -30,7 +32,7 @@ function ArenaContent() {
     event.preventDefault(); setError('');
     if (!strategies.length) return setError('Select at least one strategy.');
     setPending(true);
-    try { await sim.runComparison({ scenario, days, seed, strategies }); } finally { setPending(false); }
+    try { await sim.runComparison({ scenario, days: selectedDays, seed, strategies }); } finally { setPending(false); }
   };
   const ranked = [...results].sort((a, b) => criterion === 'net_benefit_cents' ? b[criterion] - a[criterion] : a[criterion] - b[criterion]);
   const leaders = ranked.length ? ranked.filter((item) => item[criterion] === ranked[0][criterion]) : [];
@@ -40,9 +42,10 @@ function ArenaContent() {
   })) ?? [];
   const exportResults = () => exportCsv('reserve-juggler-strategies.csv', ['source', 'run_id', 'scenario', 'seed', 'days', 'duration_steps', 'input_type', 'strategy', ...metrics.map((item) => item[1])], results.map((result) => [sim.mode, sim.snapshot.run_id, comparison.scenario, comparison.seed, comparison.days, result.duration_steps, comparison.input_source?.type ?? 'GENERATED', result.strategy, ...metrics.map(([, key]) => result[key])]));
   return <>
-    <Panel className="arena-config" title="Design a fair comparison" subtitle={imported ? 'Replay the complete imported dataset with identical opening capital and policy for every strategy. Shock Lab overlays are excluded.' : sim.mode === 'real' ? 'Independent runs: $20M opening cash, January 1 source start, identical hourly observations and selected seed. Live shocks are excluded.' : 'Compare strategies under identical seeded cash flows and starting capital.'}>
-      <form onSubmit={submit}><div className="arena-form-grid">{imported ? <><Field label="Cash-flow source"><input readOnly value="Imported CSV · original flows" /></Field><Field label="Replay horizon"><input readOnly value={`${sim.snapshot.input_source.row_count} observations · ${sim.snapshot.duration_steps} steps`} /></Field><Field label="Random seed"><input readOnly value={sim.snapshot.seed} /></Field></> : <><Field label="Stress scenario"><select value={scenario} onChange={(e) => setScenario(e.target.value)}>{SCENARIOS.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field><Field label="Simulation duration"><select value={days} onChange={(e) => setDays(Number(e.target.value))}>{[7, 14, 30].map((value) => <option key={value} value={value}>{value} days</option>)}</select></Field><Field label="Random seed"><input type="number" min="0" max="4294967295" step="1" required value={seed} onChange={(e) => setSeed(Number(e.target.value))} /></Field></>}<Button variant="primary" type="submit" busy={pending} disabled={sim.busy || sim.playing}><BarChart3 size={15} />Run strategy comparison</Button></div>
-      <div className="strategy-options">{STRATEGIES.map((strategy) => <label key={strategy.id} className={`strategy-option ${strategies.includes(strategy.id) ? 'selected' : ''}`}><input type="checkbox" checked={strategies.includes(strategy.id)} onChange={(e) => setStrategies(e.target.checked ? [...strategies, strategy.id] : strategies.filter((id) => id !== strategy.id))} /><span className="strategy-option-dot" style={{ background: strategy.color }} /><span><strong>{strategy.name}</strong><small>{strategy.description}</small></span>{strategies.includes(strategy.id) && <Check size={13} />}</label>)}</div>
+    <Panel className="arena-config" title="Design a fair comparison" subtitle={imported ? 'Replay the complete imported dataset with identical opening capital and policy for every strategy. Shock Lab overlays are excluded.' : sim.mode === 'real' ? 'Independent runs use the same selected dataset from its first observation, $20M opening cash and selected seed. Live shocks are excluded.' : 'Compare strategies under identical seeded cash flows and starting capital.'}>
+      <form onSubmit={submit}><div className="arena-form-grid">{imported ? <><Field label="Cash-flow source"><input readOnly value="Imported CSV · original flows" /></Field><Field label="Replay horizon"><input readOnly value={`${sim.snapshot.input_source.row_count} observations · ${sim.snapshot.duration_steps} steps`} /></Field><Field label="Random seed"><input readOnly value={sim.snapshot.seed} /></Field></> : <><Field label="Stress scenario"><select value={scenario} onChange={(e) => setScenario(e.target.value)}>{SCENARIOS.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></Field><Field label="Simulation duration"><select value={selectedDays} onChange={(e) => setDays(Number(e.target.value))}>{availableDays.map((value) => <option key={value} value={value}>{value} days</option>)}</select></Field><Field label="Random seed"><input type="number" min="0" max="4294967295" step="1" required value={seed} onChange={(e) => setSeed(Number(e.target.value))} /></Field></>}<Button variant="primary" type="submit" busy={pending} disabled={sim.busy || sim.playing || (!imported && !availableDays.length)}><BarChart3 size={15} />Run strategy comparison</Button></div>
+      <div className="strategy-options">{STRATEGIES.map((strategy) => <label key={strategy.id} className={`strategy-option ${strategies.includes(strategy.id) ? 'selected' : ''}`}><input type="checkbox" checked={strategies.includes(strategy.id)} onChange={(e) => setStrategies(e.target.checked ? [...strategies, strategy.id] : strategies.filter((id) => id !== strategy.id))} /><span className="strategy-option-dot" style={{ background: strategy.color }} /><span><strong>{strategy.name}</strong><small>{sim.mode === 'real' && strategy.id === 'RESERVE_JUGGLER' ? 'Uses the shared hourly forecast and portfolio policy.' : strategy.description}</small></span>{strategies.includes(strategy.id) && <Check size={13} />}</label>)}</div>
+      {!imported && !availableDays.length && <Alert>Strategy comparisons require at least 168 hourly observations (7 days).</Alert>}
       {error && <Alert tone="danger">{error}</Alert>}
       </form>
     </Panel>

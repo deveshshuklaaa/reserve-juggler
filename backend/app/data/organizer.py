@@ -214,7 +214,10 @@ class OrganizerDatasetSource:
         path = self.path
         if not path.is_absolute():
             path = Path(__file__).resolve().parents[3] / path
-        raw = path.read_bytes()  # read-only, and hash exactly the bytes being parsed
+        return self.load_bytes(path.read_bytes())
+
+    def load_bytes(self, raw: bytes, *, ignore_trailing_empty: bool = False) -> OrganizerDataset:
+        """Validate an immutable byte snapshot; uploads may ignore empty suffix rows."""
         digest = hashlib.sha256(raw).hexdigest()
         try:
             reader = csv.reader(io.StringIO(raw.decode("utf-8-sig"), newline=""), strict=True)
@@ -224,6 +227,9 @@ class OrganizerDatasetSource:
                     code="SCHEMA", message=f"Expected exactly these columns: {EXPECTED_COLUMNS}"
                 ),))
             records = [(reader.line_num, row) for row in reader]
+            if ignore_trailing_empty:
+                while records and not any(cell.strip() for cell in records[-1][1]):
+                    records.pop()
         except (UnicodeDecodeError, csv.Error) as exc:
             raise DatasetValidationError((ValidationIssue(code="CSV", message=str(exc)),)) from exc
 

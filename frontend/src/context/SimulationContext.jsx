@@ -84,7 +84,12 @@ export function SimulationProvider({ children, api = treasuryApi }) {
 
   const createRun = useCallback((config = DEFAULT_RUN) => startSimulation((options) => api.createRun(config, options)), [api, startSimulation]);
   const importCashflows = useCallback((dataset) => {
-    if (api.mode !== 'mock' || typeof api.createRunFromCashflows !== 'function') return Promise.reject(new Error('Live CSV ingestion is pending the backend upload contract. Your file stays on this device.'));
+    if (dataset.format === 'organizer' && api.mode === 'real' && api.createRunFromOrganizer) {
+      return startSimulation((options) => api.createRunFromOrganizer(dataset, options));
+    }
+    if (dataset.format === 'organizer' || api.mode !== 'mock') {
+      return Promise.reject(new Error('Use an hourly organizer CSV in live mode, or the cash-flow template for local replay.'));
+    }
     return startSimulation((options) => api.createRunFromCashflows(dataset, options));
   }, [api, startSimulation]);
   const resetRun = useCallback(() => lastStart.current ? startSimulation(lastStart.current) : createRun(), [startSimulation, createRun]);
@@ -130,7 +135,7 @@ export function SimulationProvider({ children, api = treasuryApi }) {
   }, [api, pause, perform]);
   const runComparison = useCallback(async (body) => {
     pause(); setComparison(null);
-    const result = await perform((current, signal) => api.runBacktest(current.run_id, body, { signal }));
+    const result = await perform((current, signal) => api.runBacktest(current.run_id, { ...body, source_dataset: current.source_dataset }, { signal }));
     if (result) setComparison(result);
   }, [api, pause, perform]);
   const refreshComparison = useCallback(async () => {

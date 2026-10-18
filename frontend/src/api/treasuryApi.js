@@ -79,6 +79,7 @@ export function sanitizeCreateRun(body = {}) {
     seed: body.seed ?? 42,
     scenario: body.scenario ?? 'NORMAL',
   };
+  if (body.dataset_id) payload.dataset_id = body.dataset_id;
   if (body.start_time) {
     payload.start_time = body.start_time;
   }
@@ -141,6 +142,8 @@ export function flattenBacktestMetrics(data, originalRequest = {}) {
   return {
     status: 'COMPLETED',
     source: data.source ?? 'backend',
+    dataset_id: data.dataset_id,
+    dataset_sha256: data.dataset_sha256,
     run_id: data.run_id,
     scenario: data.scenario ?? originalRequest.scenario ?? 'NORMAL',
     seed: data.seed ?? originalRequest.seed,
@@ -182,7 +185,19 @@ export function createRealApi(baseUrl = '') {
   return {
     mode: 'real',
     createRunFromCashflows: async () => {
-      throw new ApiError('Live CSV ingestion awaits Member 2’s upload contract. No file has been sent.', { code: 'NOT_IMPLEMENTED', status: 501 });
+      throw new ApiError('Live simulation requires the 16-column hourly organizer CSV.', {code: 'UNSUPPORTED_FORMAT'});
+    },
+    createRunFromOrganizer: async (dataset, options = {}) => {
+      const imported = await get('/api/v1/datasets', {
+        ...options, method: 'POST', body: dataset.csv_file ?? dataset.csv_text, content_type: 'text/csv', timeout_ms: 60000,
+      });
+      if (!imported?.dataset_id || !Number.isInteger(imported.row_count) || imported.row_count < 2) {
+        throw new ApiError('Dataset import response is incomplete.', {code: 'INVALID_RESPONSE'});
+      }
+      return post('/api/v1/runs', {
+        dataset_id: imported.dataset_id, duration_steps: imported.row_count,
+        initial_cash_cents: 2000000000, seed: 42, scenario: 'NORMAL',
+      }, options);
     },
     health: (options) => get('/health', options),
     createRun: async (body, options) => {
@@ -245,7 +260,8 @@ export function createRealApi(baseUrl = '') {
       // A fresh parent makes the UI scenario/seed/horizon explicit, independent of live overlays.
       const parent = await post('/api/v1/runs', sanitizeCreateRun({
         initial_cash_cents: 2000000000, duration_steps: (body.days ?? 7) * 24,
-        start_time: '2026-01-01T00:00:00Z', scenario: body.scenario ?? 'NORMAL', seed: body.seed ?? 42,
+        dataset_id: body.source_dataset?.dataset_id,
+        start_time: body.source_dataset ? undefined : '2026-01-01T00:00:00Z', scenario: body.scenario ?? 'NORMAL', seed: body.seed ?? 42,
       }), options);
       if (!parent?.run_id) throw new ApiError('Comparison parent is missing run_id.', { code: 'INVALID_RESPONSE' });
       const data = await post(path(parent.run_id, 'backtest'), payload, { timeout_ms: 300000, ...options });

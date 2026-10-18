@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[2]
 def test_openapi_matches_frozen_contract():
     stored = yaml.safe_load((ROOT / "contracts/openapi.yaml").read_text(encoding="utf-8-sig"))
     assert stored == app.openapi()
-    assert set(stored["paths"]) == {"/health", "/api/v1/runs"} | {
+    assert set(stored["paths"]) == {"/health", "/api/v1/runs", "/api/v1/datasets"} | {
         f"/api/v1/runs/{{id}}/{suffix}" for suffix in (
             "snapshot", "advance", "scenario", "policy", "history", "forecast",
             "decisions", "transactions", "backtest", "report",

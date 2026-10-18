@@ -4,7 +4,7 @@ export class ApiError extends Error {
   }
 }
 
-export async function requestJson(url, { method = 'GET', body, signal, timeout_ms = 15000 } = {}) {
+export async function requestJson(url, { method = 'GET', body, signal, timeout_ms = 15000, content_type = 'application/json' } = {}) {
   const controller = new AbortController();
   const abort = () => controller.abort();
   if (signal?.aborted) abort();
@@ -13,8 +13,8 @@ export async function requestJson(url, { method = 'GET', body, signal, timeout_m
   const timeout = setTimeout(() => { timedOut = true; controller.abort(); }, timeout_ms);
   try {
     const response = await fetch(url, { method, signal: controller.signal,
-      headers: { Accept: 'application/json', ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) },
-      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+      headers: { Accept: 'application/json', ...(body === undefined ? {} : { 'Content-Type': content_type }) },
+      ...(body === undefined ? {} : { body: content_type === 'application/json' ? JSON.stringify(body) : body }),
     });
     const text = await response.text();
     let data;

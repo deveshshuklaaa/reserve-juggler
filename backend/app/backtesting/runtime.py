@@ -140,6 +140,7 @@ class SharedRuntimeFactory:
         policy_for_model = {k: v for k, v in policy_dict.items() if k not in ("scenarios", "scenario_parameters", "strategy")}
         policy_obj = TreasuryPolicy.model_validate(policy_for_model) if policy_for_model else TreasuryPolicy()
         create_req = CreateRunRequest(
+            dataset_id=spec.dataset_id,
             initial_cash_cents=spec.initial_capital_cents,
             duration_steps=spec.steps,
             seed=spec.seed,

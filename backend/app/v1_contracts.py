@@ -80,6 +80,7 @@ class TreasuryPolicy(ContractModel):
 
 
 class CreateRunRequest(ContractModel):
+    dataset_id: str | None = Field(default=None, min_length=1, max_length=200)
     initial_cash_cents: Cents = 2000000000
     duration_steps: PositiveSteps = 288
     seed: int = Field(default=42, strict=True, ge=0, le=2147483647)
@@ -106,6 +107,18 @@ class RunCreated(ContractModel):
     current_step: Step
     checking_cents: Cents
     vault_locked_cents: Cents
+
+
+class DatasetImported(ContractModel):
+    dataset_id: str
+    row_count: int
+    content_hash: str
+    native_interval_seconds: Literal[3600]
+    first_timestamp: str
+    last_timestamp: str
+    timezone_status: Literal["UNSPECIFIED"]
+    validation_status: Literal["VALIDATED", "VALIDATED_WITH_DIAGNOSTICS"]
+    validation: dict[str, Any]
 
 
 class AdvanceRequest(ContractModel):
@@ -344,6 +357,8 @@ class FourTierPortfolioSnapshot(ContractModel):
 
 
 class SimulationSnapshot(ContractModel):
+    source_dataset: dict[str, Any] | None = None
+    duration_steps: PositiveSteps | None = None
     run_id: UUID
     step: Step
     timestamp: datetime
