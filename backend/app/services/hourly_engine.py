@@ -238,7 +238,258 @@ def execute_hourly_step(
                 "automatic_true_up": False,
             })
 
-    # 3. Apply customer cash flows with scenario adjustments
+    # Contractual settlements due at T are known opening liquidity. Refresh the
+    # canonical snapshot after settlement so matured claims cannot be counted twice.
+    session.flush()
+    (portfolio, cash_acc, db_repos, db_bonds, db_equities, db_overdrafts,
+     published_observation) = hydrate_decision_portfolio(
+        session, run, observation, publication_delay_seconds)
+    opening_cash_cents = cash_acc.balance_cents
+
+    # 3. Opening decision and immediate fills, before unpublished customer flows
+    active_strategy = normalize_strategy_id(strategy or policy_dict.get("strategy"))
+    cutoff = get_information_cutoff(observation.timestamp, publication_delay_seconds)
+
+    forecasts = None
+    if active_strategy == STRATEGY_STATIC:
+        req_reserve = policy_obj.base_buffer_cents
+        strategy_rationale = f"STATIC strategy: fixed buffer of {req_reserve} cents."
+    elif active_strategy == STRATEGY_REACTIVE:
+        trailing_start = cutoff - timedelta(hours=24)
+        recent_obs = list(
+            session.scalars(
+                select(DbOrganizerObservation).where(
+                    DbOrganizerObservation.dataset_id == run.dataset_id,
+                    DbOrganizerObservation.timestamp <= cutoff,
+                    DbOrganizerObservation.timestamp >= trailing_start,
+                )
+            ).all()
+        )
+        max_withdrawal = max(
+            [int(round(o.withdrawals_usd * 100)) for o in recent_obs],
+            default=0,
+        )
+        req_reserve = max(
+            policy_obj.base_buffer_cents,
+            max_withdrawal + (policy_obj.base_buffer_cents // 2),
+        )
+        strategy_rationale = (
+            f"REACTIVE strategy: buffer set to {req_reserve} cents based on trailing 24h peak withdrawal of {max_withdrawal} cents."
+        )
+    else:
+        forecasts = get_hourly_forecasts_from_db(
+            session, run.dataset_id, observation.timestamp, horizon_hours=15,
+            publication_delay_seconds=publication_delay_seconds,
+        )
+        opt_result = recommend_four_tier_allocation_decision(
+            portfolio,
+            policy_obj,
+            published_observation,
+            forecasts=forecasts,
+            horizon_hours=15,
+            risk_aversion=policy_dict.get("risk_aversion", "1"),
+            publication_delay_seconds=publication_delay_seconds,
+        )
+        req_reserve = opt_result.decision.targets.tier0_target_cents
+        strategy_rationale = (
+            f"RESERVE_JUGGLER: dynamic required reserve {req_reserve} cents. "
+            f"RESERVE_JUGGLER: canonical optimizer recommended reserve {req_reserve} cents. "
+            f"Summary action: {opt_result.summary_action}."
+        )
+        for order in opt_result.decision.orders:
+            if order.action in {"BUY_BONDS", "SELL_BONDS", "BUY_EQUITIES", "SELL_EQUITIES"}:
+                try:
+                    fill = execute_market_order(session, run, cash_acc, order, observation,
+                        target_step, minimum_cash_cents=req_reserve,
+                        publication_delay_seconds=publication_delay_seconds)
+                    fill["position_id"] = str(fill["position_id"])
+                    orders_executed.append(fill)
+                    # Preserve the public legacy summary enum; exact instrument
+                    # actions and independent fills live in persisted receipts.
+                    action_decision = "SWEEP" if order.action.startswith("BUY_") else "WITHDRAW"
+                    decision_amount += fill["executed_amount_cents"]
+                except TradeRejected as error:
+                    orders_rejected.append({"order_id": str(order.id), "action": order.action,
+                        "requested_amount_cents": order.amount_cents, "executed_amount_cents": 0,
+                        "status": "REJECTED", "reason": str(error)})
+                    executed_decision = False
+                continue
+            if order.action != "INVEST_REPO":
+                orders_rejected.append({"order_id": str(order.id), "action": order.action,
+                    "reason": "Canonical recommendation execution for this action is not supported yet"})
+                executed_decision = False
+                decision_explanations.append(f"Rejected unimplemented recommendation {order.action}; no fill was fabricated.")
+                continue
+            if order.action == "INVEST_REPO" and order.amount_cents > 0:
+                if published_observation is None or observation.timestamp.hour != 17:
+                    orders_rejected.append({"order_id": str(order.id), "action": order.action,
+                        "requested_amount_cents": order.amount_cents, "executed_amount_cents": 0,
+                        "status": "REJECTED", "reason": "Repo requires the contractual window and a supported published rate"})
+                    executed_decision = False
+                    continue
+                sweep_cents = min(order.amount_cents, max(0, cash_acc.balance_cents - req_reserve))
+                if sweep_cents > 0:
+                    pre_sweep = cash_acc.balance_cents
+                    cash_acc.balance_cents -= sweep_cents
+
+                    sweep_ledger = DbLedgerEntry(
+                        id=uuid4(),
+                        run_id=run.id,
+                        step=target_step,
+                        timestamp=None,
+                        entry_type="OVERNIGHT_REPO_SWEEP_DEBIT",
+                        amount_cents=sweep_cents,
+                        balance_before_cents=pre_sweep,
+                        balance_after_cents=cash_acc.balance_cents,
+                        reference_id=f"REPO-SWEEP-{target_step}",
+                        source_type=run.source_type,
+                        dataset_id=run.dataset_id,
+                        source_observation_timestamp=observation.timestamp,
+                        event_at=observation.timestamp,
+                    )
+                    session.add(sweep_ledger)
+                    session.flush()
+
+                    maturity_time = observation.timestamp.replace(hour=8) + timedelta(days=1)
+                    new_repo = DbRepoPosition(
+                        id=uuid4(),
+                        run_id=run.id,
+                        source_type=run.source_type,
+                        dataset_id=run.dataset_id,
+                        source_observation_timestamp=observation.timestamp,
+                        principal_cents=sweep_cents,
+                        entered_at=observation.timestamp,
+                        scheduled_maturity_at=maturity_time,
+                        applicable_apy_pct=published_observation.tier1_repo_rate_apy,
+                        status="LOCKED",
+                        early_redemption_haircut_pct=published_observation.tier1_early_redemption_haircut_pct,
+                    )
+                    session.add(new_repo)
+                    session.flush()
+
+                    session.add(
+                        DbInvestmentMovement(
+                            id=uuid4(),
+                            run_id=run.id,
+                            tier=1,
+                            repo_position_id=new_repo.id,
+                            kind="INVESTMENT",
+                            occurred_at=observation.timestamp,
+                            cash_delta_cents=-sweep_cents,
+                            principal_cents=sweep_cents,
+                            interest_cents=0,
+                            haircut_cost_cents=0,
+                            ledger_entry_id=sweep_ledger.id,
+                            reference_id=f"mov-sweep-{target_step}",
+                            source_type=run.source_type,
+                            dataset_id=run.dataset_id,
+                            source_observation_timestamp=observation.timestamp,
+                        )
+                    )
+                    action_decision = "SWEEP"
+                    decision_amount = sweep_cents
+                    decision_explanations.append(
+                        f"Canonical optimizer executed repo sweep of {sweep_cents} cents. {strategy_rationale}"
+                    )
+                    orders_executed.append({
+                        "instrument": "OVERNIGHT_REPO",
+                        "action": "SWEEP",
+                        "amount_cents": sweep_cents,
+                        "order_id": str(order.id),
+                        "position_id": str(new_repo.id),
+                        "ledger_entry_id": str(sweep_ledger.id),
+                        "execution_phase": "OPENING",
+                    })
+
+    if (active_strategy in (STRATEGY_STATIC, STRATEGY_REACTIVE) and observation.timestamp.hour == 17
+            and published_observation is not None):
+        # Plan from opening funds, never from unpublished same-hour flows.
+        planned_surplus = max(0, portfolio.cash.balance_cents - req_reserve)
+        deployable_surplus = min(planned_surplus, max(0, cash_acc.balance_cents - req_reserve))
+        min_sweep = policy_dict.get("min_sweep_cents", policy_dict.get("minimum_sweep_cents", 1000000))
+        if deployable_surplus >= min_sweep:
+            sweep_cents = deployable_surplus
+            pre_sweep = cash_acc.balance_cents
+            cash_acc.balance_cents -= sweep_cents
+
+            sweep_ledger = DbLedgerEntry(
+                id=uuid4(),
+                run_id=run.id,
+                step=target_step,
+                timestamp=None,
+                entry_type="OVERNIGHT_REPO_SWEEP_DEBIT",
+                amount_cents=sweep_cents,
+                balance_before_cents=pre_sweep,
+                balance_after_cents=cash_acc.balance_cents,
+                reference_id=f"REPO-SWEEP-{target_step}",
+                source_type=run.source_type,
+                dataset_id=run.dataset_id,
+                source_observation_timestamp=observation.timestamp,
+                event_at=observation.timestamp,
+            )
+            session.add(sweep_ledger)
+            session.flush()
+
+            maturity_time = observation.timestamp.replace(hour=8) + timedelta(days=1)
+            new_repo = DbRepoPosition(
+                id=uuid4(),
+                run_id=run.id,
+                source_type=run.source_type,
+                dataset_id=run.dataset_id,
+                source_observation_timestamp=observation.timestamp,
+                principal_cents=sweep_cents,
+                entered_at=observation.timestamp,
+                scheduled_maturity_at=maturity_time,
+                applicable_apy_pct=published_observation.tier1_repo_rate_apy,
+                status="LOCKED",
+                early_redemption_haircut_pct=published_observation.tier1_early_redemption_haircut_pct,
+            )
+            session.add(new_repo)
+            session.flush()
+
+            session.add(
+                DbInvestmentMovement(
+                    id=uuid4(),
+                    run_id=run.id,
+                    tier=1,
+                    repo_position_id=new_repo.id,
+                    kind="INVESTMENT",
+                    occurred_at=observation.timestamp,
+                    cash_delta_cents=-sweep_cents,
+                    principal_cents=sweep_cents,
+                    interest_cents=0,
+                    haircut_cost_cents=0,
+                    ledger_entry_id=sweep_ledger.id,
+                    reference_id=f"mov-sweep-{target_step}",
+                    source_type=run.source_type,
+                    dataset_id=run.dataset_id,
+                    source_observation_timestamp=observation.timestamp,
+                )
+            )
+            action_decision = "SWEEP"
+            decision_amount = sweep_cents
+            decision_explanations.append(
+                f"17:00 sweep window open. Swept {sweep_cents} cents excess cash into overnight repo. {strategy_rationale}"
+            )
+            orders_executed.append({
+                "instrument": "OVERNIGHT_REPO",
+                "action": "SWEEP",
+                "amount_cents": sweep_cents,
+            })
+
+    # A later payout may legitimately liquidate a newly filled position. Refresh
+    # holdings after opening fills; never retroactively resize the earlier trade.
+    session.flush()
+    db_repos = list(session.scalars(select(DbRepoPosition).where(
+        DbRepoPosition.run_id == run.id,
+        DbRepoPosition.status.in_(["ACTIVE", "LOCKED"])
+    ).order_by(DbRepoPosition.entered_at, DbRepoPosition.id)))
+    db_bonds = list(session.scalars(select(DbBondPosition).where(
+        DbBondPosition.run_id == run.id, DbBondPosition.status == "OPEN")))
+    db_equities = list(session.scalars(select(DbEquityPosition).where(
+        DbEquityPosition.run_id == run.id, DbEquityPosition.status == "OPEN")))
+
+    # 4. Apply customer cash flows with scenario adjustments
     scenario_info = get_active_scenario(run, target_step)
     scen_name = scenario_info.get("scenario", "NORMAL")
     scen_params = scenario_info.get("parameters", {})
@@ -543,7 +794,7 @@ def execute_hourly_step(
                     f"Cash deficit of {cash_shortfall} cents covered via emergency overdraft."
                 )
 
-    # 4. Overdraft repayment & hourly interest accrual
+    # 5. Overdraft repayment & hourly interest accrual
     active_ods = list(
         session.scalars(
             select(DbOverdraftLiability).where(
@@ -645,8 +896,7 @@ def execute_hourly_step(
                 source_observation_timestamp=observation.timestamp))
 
     session.flush()
-    # Keep canonical planning inputs at the opening decision boundary. Current
-    # customer flows are execution outcomes, not available forecast features.
+    # Interval payouts are execution outcomes; opening fills have already occurred.
 
     paid_outflow_cents = sum(session.scalars(select(DbLedgerEntry.amount_cents).where(
         DbLedgerEntry.run_id == run.id, DbLedgerEntry.step == target_step,
@@ -658,239 +908,6 @@ def execute_hourly_step(
         decision_explanations.append(
             f"{unpaid_outflow_cents} cents remain unpaid; overdraft disabled or principal cap exhausted. "
             "No unfunded payout leg was executed; unpaid requests are not automatically retried.")
-
-    # 5. Required Reserve & Sweep Decision by Strategy
-    active_strategy = normalize_strategy_id(strategy or policy_dict.get("strategy"))
-    cutoff = get_information_cutoff(observation.timestamp, publication_delay_seconds)
-
-    forecasts = None
-    if active_strategy == STRATEGY_STATIC:
-        req_reserve = policy_obj.base_buffer_cents
-        strategy_rationale = f"STATIC strategy: fixed buffer of {req_reserve} cents."
-    elif active_strategy == STRATEGY_REACTIVE:
-        trailing_start = cutoff - timedelta(hours=24)
-        recent_obs = list(
-            session.scalars(
-                select(DbOrganizerObservation).where(
-                    DbOrganizerObservation.dataset_id == run.dataset_id,
-                    DbOrganizerObservation.timestamp <= cutoff,
-                    DbOrganizerObservation.timestamp >= trailing_start,
-                )
-            ).all()
-        )
-        max_withdrawal = max(
-            [int(round(o.withdrawals_usd * 100)) for o in recent_obs],
-            default=0,
-        )
-        req_reserve = max(
-            policy_obj.base_buffer_cents,
-            max_withdrawal + (policy_obj.base_buffer_cents // 2),
-        )
-        strategy_rationale = (
-            f"REACTIVE strategy: buffer set to {req_reserve} cents based on trailing 24h peak withdrawal of {max_withdrawal} cents."
-        )
-    else:
-        forecasts = get_hourly_forecasts_from_db(
-            session, run.dataset_id, observation.timestamp, horizon_hours=15,
-            publication_delay_seconds=publication_delay_seconds,
-        )
-        opt_result = recommend_four_tier_allocation_decision(
-            portfolio,
-            policy_obj,
-            published_observation,
-            forecasts=forecasts,
-            horizon_hours=15,
-            risk_aversion=policy_dict.get("risk_aversion", "1"),
-            publication_delay_seconds=publication_delay_seconds,
-        )
-        req_reserve = opt_result.decision.targets.tier0_target_cents
-        strategy_rationale = (
-            f"RESERVE_JUGGLER: dynamic required reserve {req_reserve} cents. "
-            f"RESERVE_JUGGLER: canonical optimizer recommended reserve {req_reserve} cents. "
-            f"Summary action: {opt_result.summary_action}."
-        )
-        for order in opt_result.decision.orders:
-            if unpaid_outflow_cents:
-                orders_rejected.append({"order_id": str(order.id), "action": order.action,
-                    "requested_amount_cents": order.amount_cents, "executed_amount_cents": 0,
-                    "status": "REJECTED", "reason": "Unpaid customer payout requires resolution before reallocation"})
-                continue
-            if order.action in {"BUY_BONDS", "SELL_BONDS", "BUY_EQUITIES", "SELL_EQUITIES"}:
-                try:
-                    fill = execute_market_order(session, run, cash_acc, order, observation,
-                        target_step, minimum_cash_cents=req_reserve,
-                        publication_delay_seconds=publication_delay_seconds)
-                    fill["position_id"] = str(fill["position_id"])
-                    orders_executed.append(fill)
-                    # Preserve the public legacy summary enum; exact instrument
-                    # actions and independent fills live in persisted receipts.
-                    action_decision = "SWEEP" if order.action.startswith("BUY_") else "WITHDRAW"
-                    decision_amount += fill["executed_amount_cents"]
-                except TradeRejected as error:
-                    orders_rejected.append({"order_id": str(order.id), "action": order.action,
-                        "requested_amount_cents": order.amount_cents, "executed_amount_cents": 0,
-                        "status": "REJECTED", "reason": str(error)})
-                    executed_decision = False
-                continue
-            if order.action != "INVEST_REPO":
-                orders_rejected.append({"order_id": str(order.id), "action": order.action,
-                    "reason": "Canonical recommendation execution for this action is not supported yet"})
-                executed_decision = False
-                decision_explanations.append(f"Rejected unimplemented recommendation {order.action}; no fill was fabricated.")
-                continue
-            if order.action == "INVEST_REPO" and order.amount_cents > 0:
-                if published_observation is None or observation.timestamp.hour != 17:
-                    orders_rejected.append({"order_id": str(order.id), "action": order.action,
-                        "requested_amount_cents": order.amount_cents, "executed_amount_cents": 0,
-                        "status": "REJECTED", "reason": "Repo requires the contractual window and a supported published rate"})
-                    executed_decision = False
-                    continue
-                sweep_cents = min(order.amount_cents, max(0, cash_acc.balance_cents - req_reserve))
-                if sweep_cents > 0:
-                    pre_sweep = cash_acc.balance_cents
-                    cash_acc.balance_cents -= sweep_cents
-
-                    sweep_ledger = DbLedgerEntry(
-                        id=uuid4(),
-                        run_id=run.id,
-                        step=target_step,
-                        timestamp=None,
-                        entry_type="OVERNIGHT_REPO_SWEEP_DEBIT",
-                        amount_cents=sweep_cents,
-                        balance_before_cents=pre_sweep,
-                        balance_after_cents=cash_acc.balance_cents,
-                        reference_id=f"REPO-SWEEP-{target_step}",
-                        source_type=run.source_type,
-                        dataset_id=run.dataset_id,
-                        source_observation_timestamp=observation.timestamp,
-                        event_at=observation.timestamp,
-                    )
-                    session.add(sweep_ledger)
-                    session.flush()
-
-                    maturity_time = observation.timestamp.replace(hour=8) + timedelta(days=1)
-                    new_repo = DbRepoPosition(
-                        id=uuid4(),
-                        run_id=run.id,
-                        source_type=run.source_type,
-                        dataset_id=run.dataset_id,
-                        source_observation_timestamp=observation.timestamp,
-                        principal_cents=sweep_cents,
-                        entered_at=observation.timestamp,
-                        scheduled_maturity_at=maturity_time,
-                        applicable_apy_pct=published_observation.tier1_repo_rate_apy,
-                        status="LOCKED",
-                        early_redemption_haircut_pct=published_observation.tier1_early_redemption_haircut_pct,
-                    )
-                    session.add(new_repo)
-                    session.flush()
-
-                    session.add(
-                        DbInvestmentMovement(
-                            id=uuid4(),
-                            run_id=run.id,
-                            tier=1,
-                            repo_position_id=new_repo.id,
-                            kind="INVESTMENT",
-                            occurred_at=observation.timestamp,
-                            cash_delta_cents=-sweep_cents,
-                            principal_cents=sweep_cents,
-                            interest_cents=0,
-                            haircut_cost_cents=0,
-                            ledger_entry_id=sweep_ledger.id,
-                            reference_id=f"mov-sweep-{target_step}",
-                            source_type=run.source_type,
-                            dataset_id=run.dataset_id,
-                            source_observation_timestamp=observation.timestamp,
-                        )
-                    )
-                    action_decision = "SWEEP"
-                    decision_amount = sweep_cents
-                    decision_explanations.append(
-                        f"Canonical optimizer executed repo sweep of {sweep_cents} cents. {strategy_rationale}"
-                    )
-                    orders_executed.append({
-                        "instrument": "OVERNIGHT_REPO",
-                        "action": "SWEEP",
-                        "amount_cents": sweep_cents,
-                        "order_id": str(order.id),
-                    })
-
-    if (active_strategy in (STRATEGY_STATIC, STRATEGY_REACTIVE) and observation.timestamp.hour == 17
-            and published_observation is not None):
-        # Plan from opening funds, never from unpublished same-hour flows.
-        planned_surplus = max(0, portfolio.cash.balance_cents - req_reserve)
-        deployable_surplus = min(planned_surplus, max(0, cash_acc.balance_cents - req_reserve))
-        min_sweep = policy_dict.get("min_sweep_cents", policy_dict.get("minimum_sweep_cents", 1000000))
-        if deployable_surplus >= min_sweep:
-            sweep_cents = deployable_surplus
-            pre_sweep = cash_acc.balance_cents
-            cash_acc.balance_cents -= sweep_cents
-
-            sweep_ledger = DbLedgerEntry(
-                id=uuid4(),
-                run_id=run.id,
-                step=target_step,
-                timestamp=None,
-                entry_type="OVERNIGHT_REPO_SWEEP_DEBIT",
-                amount_cents=sweep_cents,
-                balance_before_cents=pre_sweep,
-                balance_after_cents=cash_acc.balance_cents,
-                reference_id=f"REPO-SWEEP-{target_step}",
-                source_type=run.source_type,
-                dataset_id=run.dataset_id,
-                source_observation_timestamp=observation.timestamp,
-                event_at=observation.timestamp,
-            )
-            session.add(sweep_ledger)
-            session.flush()
-
-            maturity_time = observation.timestamp.replace(hour=8) + timedelta(days=1)
-            new_repo = DbRepoPosition(
-                id=uuid4(),
-                run_id=run.id,
-                source_type=run.source_type,
-                dataset_id=run.dataset_id,
-                source_observation_timestamp=observation.timestamp,
-                principal_cents=sweep_cents,
-                entered_at=observation.timestamp,
-                scheduled_maturity_at=maturity_time,
-                applicable_apy_pct=published_observation.tier1_repo_rate_apy,
-                status="LOCKED",
-                early_redemption_haircut_pct=published_observation.tier1_early_redemption_haircut_pct,
-            )
-            session.add(new_repo)
-            session.flush()
-
-            session.add(
-                DbInvestmentMovement(
-                    id=uuid4(),
-                    run_id=run.id,
-                    tier=1,
-                    repo_position_id=new_repo.id,
-                    kind="INVESTMENT",
-                    occurred_at=observation.timestamp,
-                    cash_delta_cents=-sweep_cents,
-                    principal_cents=sweep_cents,
-                    interest_cents=0,
-                    haircut_cost_cents=0,
-                    ledger_entry_id=sweep_ledger.id,
-                    reference_id=f"mov-sweep-{target_step}",
-                    source_type=run.source_type,
-                    dataset_id=run.dataset_id,
-                    source_observation_timestamp=observation.timestamp,
-                )
-            )
-            action_decision = "SWEEP"
-            decision_amount = sweep_cents
-            decision_explanations.append(
-                f"17:00 sweep window open. Swept {sweep_cents} cents excess cash into overnight repo. {strategy_rationale}"
-            )
-            orders_executed.append({
-                "instrument": "OVERNIGHT_REPO",
-                "action": "SWEEP",
-                "amount_cents": sweep_cents,
-            })
 
     # 6. Mark to Market & Valuations
     # Re-query after fills: opening hydration must not hide newly acquired lots.
@@ -1030,6 +1047,14 @@ def execute_hourly_step(
             "calibration": "fallback-baseline-v1", "model_evaluation": None,
         },
         "strategy": active_strategy,
+        "opening_checking_cents": opening_cash_cents,
+        "execution_order": "contractual_settlements,opening_orders,customer_flows,financing,closing_valuation",
+        "reserve_check": {
+            "required_reserve_cents": req_reserve,
+            "closing_cash_cents": cash_acc.balance_cents,
+            "reserve_breach": cash_acc.balance_cents < req_reserve,
+            "reserve_gap_cents": max(0, req_reserve - cash_acc.balance_cents),
+        },
         "pre_checking_cents": pre_out,
         "post_checking_cents": cash_acc.balance_cents,
         "executed": executed_decision,
@@ -1225,6 +1250,9 @@ def execute_hourly_step(
         "decision": {
             "action": action_decision,
             "amount_cents": decision_amount,
+            "opening_checking_cents": opening_cash_cents,
+            "execution_order": details["execution_order"],
+            "reserve_check": details["reserve_check"],
             "pre_checking_cents": pre_out,
             "post_checking_cents": cash_acc.balance_cents,
             "executed": executed_decision,
