@@ -95,6 +95,8 @@ class CreateRunRequest(ContractModel):
         d = dict(data)
         if "initial_checking_cents" in d and "initial_cash_cents" not in d:
             d["initial_cash_cents"] = d.pop("initial_checking_cents")
+        d.pop("initial_vault_cents", None)
+        d.pop("step_minutes", None)
         return d
 
 
@@ -409,6 +411,26 @@ class BacktestRequest(ContractModel):
         default_factory=lambda: ["STATIC_RESERVE", "REACTIVE_RESERVE", "RESERVE_JUGGLER"],
         min_length=1,
     )
+    days: int | None = None
+    scenario: Scenario | None = None
+    seed: int | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_frontend_backtest_fields(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        d = dict(data)
+        if "strategies" in d and isinstance(d["strategies"], list):
+            mapping = {
+                "STATIC": "STATIC_RESERVE",
+                "STATIC_RESERVE": "STATIC_RESERVE",
+                "REACTIVE": "REACTIVE_RESERVE",
+                "REACTIVE_RESERVE": "REACTIVE_RESERVE",
+                "RESERVE_JUGGLER": "RESERVE_JUGGLER",
+            }
+            d["strategies"] = [mapping.get(s, s) for s in d["strategies"]]
+        return d
 
     @field_validator("strategies")
     @classmethod

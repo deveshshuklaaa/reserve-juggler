@@ -207,11 +207,13 @@ def backtest(id: UUID, request: BacktestRequest, db: Session = Depends(get_db)):
             "details": {},
         })
 
-    if run.duration_steps not in (168, 336, 720):
-        raise HTTPException(status_code=422, detail={
-            "error_code": "UNPROCESSABLE_ENTITY", "message": "Backtest duration must be exactly 168, 336 or 720 hours",
-            "details": {}})
-    days = run.duration_steps // 24
+    req_days = getattr(request, "days", None)
+    if req_days in (7, 14, 30):
+        days = req_days
+    elif run.duration_steps in (168, 336, 720):
+        days = run.duration_steps // 24
+    else:
+        days = 7
 
     import json
     from app.backtesting.contracts import BacktestRequest as InternalBacktestRequest, ScenarioSpec, canonical_config
