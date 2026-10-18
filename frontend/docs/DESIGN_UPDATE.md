@@ -58,3 +58,17 @@ See CSV_INPUT.md for supported formats and the live ingestion boundary.
 Scroll calculations now batch geometry reads before style writes. Scene blur is
 lighter on mobile, content resize updates pinned heights, and dashboard navigation
 uses a short opacity/position entrance without filtering the whole workspace.
+
+## Separate landing and working screens
+
+The product overview stays at `/` and remains the only document-scroll presentation.
+The Command Center has its own `/command-center` route. Working screens use a
+viewport-height shell: the taskbar, input action, and playback controls remain
+visible while detailed content scrolls inside the main region. There is no scroll
+snapping or chapter animation in the workspace.
+
+Command Center views are Overview, Portfolio, Forecasts, and Activity. Their tablist
+supports arrow keys, Home, and End with visible focus and labeled panels. Page
+changes focus the main region and retain the shared simulation. Landing demo and
+CSV actions enter the Command Center; returning to the product overview preserves
+the run. CSV upload remains prominent, with short instructions for the next action.

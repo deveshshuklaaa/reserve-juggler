@@ -1,6 +1,6 @@
 # CSV input
 
-Choose **Upload CSV** in the workflow bar at the top of any screen.
+Choose **Upload CSV** in the landing header or the workspace taskbar.
 Files are read locally; nothing is uploaded
 to FastAPI. Download a working cash-flow template from the import dialog.
 

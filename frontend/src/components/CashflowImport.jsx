@@ -6,6 +6,7 @@ import { parseOrganizerCsv } from '../utils/organizerCsv';
 import { exportCsv, money } from '../utils/format';
 import { Alert, Button } from './ui';
 import './CashflowImport.css';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const headers = ['timestamp', 'inflow_cents', 'outflow_cents'];
 const sample = [
@@ -23,6 +24,8 @@ const readText = (file) => new Promise((resolve, reject) => {
 
 export default function CashflowImport() {
   const sim = useSimulation();
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [preview, setPreview] = useState(null);
   const [error, setError] = useState('');
   const [reading, setReading] = useState(false);
@@ -82,7 +85,7 @@ export default function CashflowImport() {
 
   const launch = async () => {
     setError('');
-    try { const result = await sim.importCashflows(preview); if (!result) setError('The simulation could not start. Close this preview to see the connection details, then retry.'); }
+    try { const result = await sim.importCashflows(preview); if (!result) setError('The simulation could not start. Close this preview to see the connection details, then retry.'); else if (pathname === '/') navigate('/command-center'); }
     catch (failure) { setError(failure.message); }
   };
   const organizer = preview?.format === 'organizer';

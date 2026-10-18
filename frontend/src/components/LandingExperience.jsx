@@ -6,6 +6,7 @@ import RJQuantumPrism from './RJQuantumPrism';
 import InteractiveSandbox from './InteractiveSandbox';
 import PresentationScene from './PresentationScene';
 import CapitalFlow from './CapitalFlow';
+import { useNavigate } from 'react-router-dom';
 import './presentation.css';
 
 const windows = [
@@ -16,7 +17,9 @@ const windows = [
 ];
 
 export default function LandingExperience() {
-  const { createRun, busy } = useSimulation();
+  const { createRun, busy, snapshot } = useSimulation();
+  const navigate = useNavigate();
+  const startDemo = async () => { if (snapshot || await createRun()) navigate('/command-center'); };
   const root = useRef(null);
   const [activeWindow, setActiveWindow] = useState('window-hero');
   const [motionPaused, setMotionPaused] = useState(false);
@@ -133,8 +136,8 @@ export default function LandingExperience() {
             <a href="#window-hero" className={activeWindow === 'window-hero' ? 'active-link' : ''}>Overview</a>
             <a href="#interactive-lab" className={activeWindow === 'interactive-lab' ? 'active-link' : ''}>Interactive Lab</a>
             <a href="#landing-story" className={activeWindow === 'landing-story' ? 'active-link' : ''}>Compare Paths</a>
-            <Button variant="primary" busy={busy} onClick={() => createRun()} className="subnav-cta">
-              Create simulation <ArrowRight size={14} />
+            <Button variant="primary" busy={busy} onClick={startDemo} className="subnav-cta">
+              {snapshot ? 'Return to workspace' : 'Create simulation'} <ArrowRight size={14} />
             </Button>
           </div>
         </div>
@@ -158,7 +161,7 @@ export default function LandingExperience() {
           </p>
 
           <div className="landing-opening-actions">
-            <Button variant="primary" busy={busy} onClick={() => createRun()} className="apple-hero-btn">
+            <Button variant="primary" busy={busy} onClick={startDemo} className="apple-hero-btn">
               Open Command Center <ArrowRight size={18} />
             </Button>
             <a href="#landing-story" className="landing-text-link">
@@ -297,8 +300,8 @@ export default function LandingExperience() {
           <CapitalFlow />
 
           <div className="finale-action-group">
-            <Button variant="primary" busy={busy} onClick={() => createRun()} className="apple-hero-btn">
-              Create simulation <ArrowRight size={18} />
+            <Button variant="primary" busy={busy} onClick={startDemo} className="apple-hero-btn">
+              {snapshot ? 'Return to workspace' : 'Create simulation'} <ArrowRight size={18} />
             </Button>
           </div>
 

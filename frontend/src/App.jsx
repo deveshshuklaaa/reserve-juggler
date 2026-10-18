@@ -5,6 +5,7 @@ import { Layout } from './components/Layout';
 import TreasuryDashboard from './pages/TreasuryDashboard';
 import LiquidityShockLab from './pages/LiquidityShockLab';
 import StrategyArena from './pages/StrategyArena';
+import LandingExperience from './components/LandingExperience';
 
 class ErrorBoundary extends Component {
   state = { failed: false };
@@ -15,7 +16,7 @@ class ErrorBoundary extends Component {
   }
 }
 export function AppRoutes() {
-  return <Routes><Route element={<Layout />}><Route index element={<TreasuryDashboard />} /><Route path="shock-lab" element={<LiquidityShockLab />} /><Route path="strategy-arena" element={<StrategyArena />} /><Route path="*" element={<div className="empty-state"><h1>Page not found</h1><Link to="/">Return to Command Center</Link></div>} /></Route></Routes>;
+  return <Routes><Route element={<Layout />}><Route index element={<div className="page-content landing-page"><LandingExperience /></div>} /><Route path="command-center" element={<TreasuryDashboard />} /><Route path="shock-lab" element={<LiquidityShockLab />} /><Route path="strategy-arena" element={<StrategyArena />} /><Route path="*" element={<div className="empty-state"><h1>Page not found</h1><Link to="/command-center">Return to Command Center</Link></div>} /></Route></Routes>;
 }
 export default function App() {
   return <ErrorBoundary><BrowserRouter><SimulationProvider><AppRoutes /></SimulationProvider></BrowserRouter></ErrorBoundary>;
