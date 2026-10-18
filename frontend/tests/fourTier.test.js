@@ -222,7 +222,8 @@ describe('Precision, Decimal Formatting & Time Invariants', () => {
 
   it('formats decimal percentages without truncating to integer bps', () => {
     expect(formatRateDecimal('5.2500')).toBe('5.25%');
-    expect(formatRateDecimal(525)).toBe('5.25%');
+    expect(formatRateDecimal(525, 2, 'bps')).toBe('5.25%');
+    expect(formatRateDecimal(525)).toBe('525.00%');
     expect(formatRateDecimal(null)).toBe('—');
   });
 

@@ -1,3 +1,4 @@
+import { formatSourceTimestamp } from '../utils/precision';
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, ComposedChart, Legend, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { money, utc } from '../utils/format';
 import { Empty } from './ui';
@@ -23,9 +24,9 @@ export function TimeChart({ data, series, height = 260, summary, forecast = fals
     <ResponsiveContainer width="100%" height="100%" minWidth={0}>
       <ComposedChart data={data} margin={commonMargin}>
         <CartesianGrid vertical={false} stroke="#e5e5ea" />
-        <XAxis dataKey="timestamp" tickFormatter={(v) => utc(v)} tick={axis} axisLine={false} tickLine={false} minTickGap={42} dy={8} />
+        <XAxis dataKey="timestamp" tickFormatter={(v) => formatSourceTimestamp(v, false)} tick={axis} axisLine={false} tickLine={false} minTickGap={42} dy={8} />
         <YAxis tickFormatter={amountTick} tick={axis} axisLine={false} tickLine={false} width={76} tickCount={5} />
-        <Tooltip contentStyle={tooltip} labelFormatter={(v) => `${utc(v, true)} UTC`} formatter={amountTooltip} />
+        <Tooltip contentStyle={tooltip} labelFormatter={(v) => `${formatSourceTimestamp(v)}${/(Z|[+-][0-9]{2}:[0-9]{2})$/.test(v) ? '' : ' (source time UNSPECIFIED)'}`} formatter={amountTooltip} />
         {forecast && <Area type="linear" dataKey="band" name="Mock forecast interval" fill="rgba(41, 151, 255, 0.15)" stroke="none" connectNulls={false} isAnimationActive={false} />}
         {series.map((s) => <Line key={s.key} type="linear" dataKey={s.key} name={s.name} stroke={s.color} strokeWidth={s.width ?? 2.8} dot={false} activeDot={{ r: 5, strokeWidth: 2, stroke: '#fff' }} strokeDasharray={s.dashed ? '4 5' : undefined} connectNulls={false} isAnimationActive={false} />)}
         {currentTime && <ReferenceLine x={currentTime} stroke="#2997ff" strokeDasharray="3 3" />}

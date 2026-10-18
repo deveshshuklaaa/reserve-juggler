@@ -1,91 +1,67 @@
 import { requestJson, ApiError } from './http';
 import { validateSnapshot, validateItems, validateForecast } from './validation';
 
-const STRATEGY_TO_BACKEND = {
-  STATIC: 'STATIC_RESERVE',
-  STATIC_RESERVE: 'STATIC_RESERVE',
-  REACTIVE: 'REACTIVE_RESERVE',
-  REACTIVE_RESERVE: 'REACTIVE_RESERVE',
-  RESERVE_JUGGLER: 'RESERVE_JUGGLER',
-};
+export { ApiError };
 
-const STRATEGY_TO_FRONTEND = {
-  STATIC_RESERVE: 'STATIC',
-  STATIC: 'STATIC',
-  REACTIVE_RESERVE: 'REACTIVE',
-  REACTIVE: 'REACTIVE',
-  RESERVE_JUGGLER: 'RESERVE_JUGGLER',
-};
-
-export function normalizeStrategyToBackend(strategy) {
-  return STRATEGY_TO_BACKEND[strategy] || strategy;
+export function normalizeStrategyToBackend(name) {
+  const map = {
+    STATIC: 'STATIC',
+    STATIC_RESERVE: 'STATIC',
+    REACTIVE: 'REACTIVE',
+    REACTIVE_RESERVE: 'REACTIVE',
+    RESERVE_JUGGLER: 'RESERVE_JUGGLER',
+  };
+  return map[name] || name;
 }
 
-export function normalizeStrategyToFrontend(strategy) {
-  return STRATEGY_TO_FRONTEND[strategy] || strategy;
+export function normalizeStrategyToFrontend(name) {
+  const map = {
+    STATIC: 'STATIC',
+    STATIC_RESERVE: 'STATIC',
+    REACTIVE: 'REACTIVE',
+    REACTIVE_RESERVE: 'REACTIVE',
+    RESERVE_JUGGLER: 'RESERVE_JUGGLER',
+  };
+  return map[name] || name;
 }
 
-export function normalizePolicy(policy) {
-  if (!policy || typeof policy !== 'object') return policy;
+export function normalizePolicy(policy = {}) {
   const p = { ...policy };
-
-  if (p.risk_percentile != null && typeof p.risk_percentile === 'number') {
-    if (p.risk_percentile <= 1 && p.risk_percentile > 0) {
-      p.risk_percentile = Math.round(p.risk_percentile * 100);
-    }
+  if (p.operational_buffer_cents == null && p.base_buffer_cents != null) {
+    p.operational_buffer_cents = p.base_buffer_cents;
   }
-
-  const minSweep = p.minimum_sweep_cents ?? p.min_sweep_cents;
-  if (minSweep != null) {
-    p.minimum_sweep_cents = minSweep;
-    p.min_sweep_cents = minSweep;
+  if (p.minimum_sweep_cents == null && p.min_transfer_cents != null) {
+    p.minimum_sweep_cents = p.min_transfer_cents;
   }
-
-  const vaultYield = p.vault_yield_bps ?? p.vault_rate_bps;
-  if (vaultYield != null) {
-    p.vault_yield_bps = vaultYield;
-    p.vault_rate_bps = vaultYield;
+  if (p.early_redemption_penalty_bps == null && p.early_break_fee_bps != null) {
+    p.early_redemption_penalty_bps = p.early_break_fee_bps;
   }
-
-  const lockSteps = p.vault_lock_steps ?? p.lock_steps;
-  if (lockSteps != null) {
-    p.vault_lock_steps = lockSteps;
-    p.lock_steps = lockSteps;
+  if (p.risk_percentile != null && p.risk_percentile <= 1) {
+    p.risk_percentile = Math.round(p.risk_percentile * 100);
   }
-
-  const allowEarly = p.early_redemption_allowed ?? p.allow_early_redemption;
-  if (allowEarly != null) {
-    p.early_redemption_allowed = Boolean(allowEarly);
-    p.allow_early_redemption = Boolean(allowEarly);
-  }
-
   return p;
 }
 
-export function serializePolicy(policy) {
-  if (!policy || typeof policy !== 'object') return policy;
+export function serializePolicy(policy = {}) {
   const out = {};
   if (policy.operational_buffer_cents != null) {
     out.operational_buffer_cents = policy.operational_buffer_cents;
+    out.base_buffer_cents = policy.operational_buffer_cents;
   }
-  const minSweep = policy.minimum_sweep_cents ?? policy.min_sweep_cents;
-  if (minSweep != null) {
-    out.minimum_sweep_cents = minSweep;
-  }
-  const vaultYield = policy.vault_yield_bps ?? policy.vault_rate_bps;
-  if (vaultYield != null) {
-    out.vault_yield_bps = vaultYield;
-  }
-  const lockSteps = policy.vault_lock_steps ?? policy.lock_steps;
-  if (lockSteps != null) {
-    out.vault_lock_steps = lockSteps;
-  }
-  const allowEarly = policy.early_redemption_allowed ?? policy.allow_early_redemption;
-  if (allowEarly != null) {
-    out.early_redemption_allowed = Boolean(allowEarly);
+  if (policy.minimum_sweep_cents != null) {
+    out.minimum_sweep_cents = policy.minimum_sweep_cents;
+    out.min_transfer_cents = policy.minimum_sweep_cents;
   }
   if (policy.early_redemption_penalty_bps != null) {
     out.early_redemption_penalty_bps = policy.early_redemption_penalty_bps;
+    out.early_break_fee_bps = policy.early_redemption_penalty_bps;
+  }
+  if (policy.early_redemption_allowed != null) {
+    out.early_redemption_allowed = Boolean(policy.early_redemption_allowed);
+    out.allow_early_repo_redemption = Boolean(policy.early_redemption_allowed);
+  }
+  if (policy.strategy) {
+    out.strategy = normalizeStrategyToBackend(policy.strategy);
   }
   if (policy.risk_percentile != null) {
     out.risk_percentile = policy.risk_percentile > 1
@@ -117,7 +93,7 @@ export function sanitizeBacktestRequest(body = {}) {
     ? body.strategies
     : ['STATIC', 'REACTIVE', 'RESERVE_JUGGLER'];
   const strategies = rawStrategies.map(normalizeStrategyToBackend);
-  return { strategies };
+  return { strategies, days: body.days ?? 7, retain_runs: true };
 }
 
 export function flattenBacktestMetrics(data, originalRequest = {}) {
@@ -137,6 +113,7 @@ export function flattenBacktestMetrics(data, originalRequest = {}) {
     const strategy = normalizeStrategyToFrontend(item.strategy);
     return {
       strategy,
+      run_id: data.child_run_ids?.[item.strategy] ?? null,
       realized_interest_cents: metrics.realized_interest_cents ?? item.realized_interest_cents ?? 0,
       accrued_interest_cents: metrics.accrued_interest_cents ?? item.accrued_interest_cents ?? 0,
       average_checking_cents: metrics.average_checking_cents ?? item.average_checking_cents ?? 0,
@@ -170,6 +147,7 @@ export function flattenBacktestMetrics(data, originalRequest = {}) {
     days,
     started_at: data.started_at,
     ended_at: data.ended_at,
+    child_run_ids: data.child_run_ids ?? {},
     model_evaluation: data.model_evaluation ?? null,
     results,
   };
@@ -203,9 +181,16 @@ export function createRealApi(baseUrl = '') {
   const post = (url, body, options) => get(url, { ...options, method: 'POST', body });
   return {
     mode: 'real',
+    createRunFromCashflows: async () => {
+      throw new ApiError('Live CSV ingestion awaits Member 2’s upload contract. No file has been sent.', { code: 'NOT_IMPLEMENTED', status: 501 });
+    },
     health: (options) => get('/health', options),
     createRun: async (body, options) => {
       const sanitized = sanitizeCreateRun(body);
+      if (body?.step_minutes === 15) {
+        sanitized.start_time = "2026-01-01T00:00:00Z";
+        sanitized.duration_steps = 168;
+      }
       const data = await post('/api/v1/runs', sanitized, options);
       if (typeof data?.run_id !== 'string') throw new ApiError('Create run response is missing run_id.', { code: 'INVALID_RESPONSE' });
       return data;
@@ -218,7 +203,16 @@ export function createRealApi(baseUrl = '') {
       if (data?.forecast?.risk_percentile != null && data.forecast.risk_percentile <= 1) {
         data.forecast.risk_percentile = Math.round(data.forecast.risk_percentile * 100);
       }
-      return validateSnapshot(data);
+      validateSnapshot(data);
+      // Legacy timestamp is response generation time; source clock is explicitly separate.
+      if (data.four_tier) {
+        data.source_timestamp = data.four_tier.timestamp?.replace(' ', 'T');
+        data.time_basis = 'UNSPECIFIED';
+        Object.assign(data, {realized_interest_cents:data.four_tier.tier1.realized_interest_cents,
+          accrued_interest_cents:data.four_tier.tier1.accrued_interest_cents,
+          net_benefit_cents:data.four_tier.aggregates.net_financial_benefit_cents});
+      }
+      return data;
     },
     advanceRun: (id, body, options) => post(path(id, 'advance'), body, options),
     applyScenario: (id, body, options) => post(path(id, 'scenario'), body, options),
@@ -238,11 +232,23 @@ export function createRealApi(baseUrl = '') {
     },
     getForecast: async (id, horizon, options) => validateForecast(await get(`${path(id, 'forecast')}?horizon_minutes=${horizon}`, options)),
     getDecisions: async (id, options) => validateItems(await get(path(id, 'decisions'), options)),
-    getTransactions: async (id, options) => validateItems(await get(path(id, 'transactions'), options)),
+    getTransactions: async (id, options) => {
+      const data = validateItems(await get(path(id, 'transactions'), options));
+      const debits = new Set(['OVERNIGHT_REPO_SWEEP_DEBIT', 'OVERDRAFT_REPAYMENT',
+        'OVERDRAFT_FINANCING_PAYMENT', 'MARKET_PURCHASE_DEBIT', 'MARKET_TRANSACTION_FEE']);
+      return { ...data, items: data.items.map(tx => ({ ...tx, id: tx.transaction_id ?? tx.id,
+        direction: debits.has(tx.source) ? 'OUTFLOW' : tx.direction })) };
+    },
     runBacktest: async (id, body, options) => {
       const payload = sanitizeBacktestRequest(body);
       // The real seven-day PostgreSQL comparison is synchronous (~171s locally).
-      const data = await post(path(id, 'backtest'), payload, { timeout_ms: 300000, ...options });
+      // A fresh parent makes the UI scenario/seed/horizon explicit, independent of live overlays.
+      const parent = await post('/api/v1/runs', sanitizeCreateRun({
+        initial_cash_cents: 2000000000, duration_steps: (body.days ?? 7) * 24,
+        start_time: '2026-01-01T00:00:00Z', scenario: body.scenario ?? 'NORMAL', seed: body.seed ?? 42,
+      }), options);
+      if (!parent?.run_id) throw new ApiError('Comparison parent is missing run_id.', { code: 'INVALID_RESPONSE' });
+      const data = await post(path(parent.run_id, 'backtest'), payload, { timeout_ms: 300000, ...options });
       return flattenBacktestMetrics(data, body);
     },
     getReport: async (id, options) => {

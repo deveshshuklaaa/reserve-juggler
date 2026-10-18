@@ -256,10 +256,17 @@ def backtest(id: UUID, request: BacktestRequest, db: Session = Depends(get_db)):
         # The validated response is materialized before rolling back child runs.
         with db.begin_nested() as evaluation:
             result = report_svc.compare(bt_req)
-            evaluation.rollback()
+            if not request.retain_runs:
+                evaluation.rollback()
+        child_run_ids = {}
+        if request.retain_runs:
+            from uuid import uuid5
+            child_run_ids = {row.strategy: str(uuid5(run.id, {"STATIC_RESERVE": "STATIC", "REACTIVE_RESERVE": "REACTIVE", "RESERVE_JUGGLER": "RESERVE_JUGGLER"}[row.strategy])) for row in result.results}
+            db.commit()
         selected = {row.strategy: row for row in result.results}
         return BacktestReport(**(result.model_dump() | {
-            "results": tuple(selected[name] for name in request.strategies)}))
+            "results": tuple(selected[name] for name in request.strategies),
+            "child_run_ids": child_run_ids}))
     except (ValueError, RuntimeError) as exc:
         raise HTTPException(status_code=422, detail={
             "error_code": "UNPROCESSABLE_ENTITY",

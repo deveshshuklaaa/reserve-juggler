@@ -7,6 +7,7 @@ import { Alert, Badge, Button, Empty, Field, Panel } from '../components/ui';
 import { TimeChart } from '../components/Charts';
 import { DecisionCard } from '../components/Treasury';
 import { StartState } from './TreasuryDashboard';
+import StressMatrix from '../components/StressMatrix';
 
 function PolicyControls() {
   const { snapshot, updatePolicy, busy, playing } = useSimulation();
@@ -58,14 +59,14 @@ function LabContent() {
   return <>
     <div className="lab-grid"><div className="lab-controls"><Panel title="Choose your stress test" subtitle="Five controlled scenarios. One shared simulation.">
       <form onSubmit={trigger}>
-        <div className="scenario-options" role="radiogroup" aria-label="Stress scenario">{SCENARIOS.map((item) => <button type="button" role="radio" aria-checked={scenario === item.id} key={item.id} className={`scenario-option ${scenario === item.id ? 'selected' : ''}`} onClick={() => setScenario(item.id)}><span className="scenario-symbol">{item.id === 'NORMAL' ? <Activity size={18} /> : item.id === 'SETTLEMENT_DELAY' ? <Clock3 size={18} /> : item.id === 'LIQUIDITY_SHOCK' ? <Zap size={18} /> : <ArrowDownRight size={18} />}</span><span><strong>{item.name}</strong><small>{item.detail}</small></span><span className="radio-indicator" /></button>)}</div>
+        <div className="scenario-options" role="radiogroup" aria-label="Stress scenario">{SCENARIOS.map((item) => <button type="button" role="radio" aria-checked={scenario === item.id} key={item.id} disabled={snapshot.input_source?.type === 'CSV' && item.id === 'SETTLEMENT_DELAY'} className={`scenario-option ${scenario === item.id ? 'selected' : ''}`} onClick={() => setScenario(item.id)}><span className="scenario-symbol">{item.id === 'NORMAL' ? <Activity size={18} /> : item.id === 'SETTLEMENT_DELAY' ? <Clock3 size={18} /> : item.id === 'LIQUIDITY_SHOCK' ? <Zap size={18} /> : <ArrowDownRight size={18} />}</span><span><strong>{item.name}</strong><small>{snapshot.input_source?.type === 'CSV' && item.id === 'SETTLEMENT_DELAY' ? 'CSV rows do not identify merchant settlements.' : item.detail}</small></span><span className="radio-indicator" /></button>)}</div>
         <div className="scenario-parameters"><div className="subsection-label">SCENARIO PARAMETERS</div>
           {scenario === 'HIGH_WITHDRAWAL' && <Field label={`Withdrawal multiplier · ${multiplier.toFixed(1)}×`} hint="1× preserves normal withdrawal volume."><input aria-label="Withdrawal multiplier" type="range" min="1" max="5" step="0.1" value={multiplier} onChange={(e) => setMultiplier(Number(e.target.value))} /><span className="range-labels"><span>1×</span><span>5×</span></span></Field>}
           {scenario === 'LOW_DEPOSIT' && <Field label={`Deposit reduction · ${reduction}%`}><input aria-label="Deposit reduction" type="range" min="0" max="100" step="1" value={reduction} onChange={(e) => setReduction(Number(e.target.value))} /><span className="range-labels"><span>0%</span><span>100%</span></span></Field>}
           {scenario === 'SETTLEMENT_DELAY' && <div className="form-grid"><Field label="Delay (15-min steps)"><input type="number" min="1" max="96" step="1" required value={delay} onChange={(e) => setDelay(Number(e.target.value))} /></Field><Field label="Receipts delayed (%)"><input type="number" min="0" max="100" step="1" required value={fraction} onChange={(e) => setFraction(Number(e.target.value))} /></Field></div>}
           {scenario === 'LIQUIDITY_SHOCK' && <Field label="Unexpected outflow (USD)" hint="One event at the effective step."><input type="number" min="0.01" max="100000000" step="0.01" required value={amount} onChange={(e) => setAmount(e.target.value)} /></Field>}
           {scenario === 'NORMAL' && <p className="muted small">Normal operations resume for future events. Recorded shocks and delayed receipts remain in history.</p>}
-          <div className="form-grid"><Field label="Effective in (steps)"><input type="number" min="1" max="96" step="1" required value={offset} onChange={(e) => setOffset(Number(e.target.value))} /></Field><Field label="Duration (steps)" hint={`${duration * 15} simulated minutes`}><input type="number" min="1" max="96" step="1" required value={duration} onChange={(e) => setDuration(Number(e.target.value))} /></Field></div>
+          <div className="form-grid"><Field label="Effective in (steps)"><input type="number" min="1" max="96" step="1" required value={offset} onChange={(e) => setOffset(Number(e.target.value))} /></Field><Field label="Duration (steps)" hint={`${duration * (sim.mode === 'real' ? 60 : 15)} simulated minutes`}><input type="number" min="1" max="96" step="1" required value={duration} onChange={(e) => setDuration(Number(e.target.value))} /></Field></div>
         </div>
         {error && <Alert tone="danger">{error}</Alert>}
         <Button type="submit" variant="primary" className="full-width" disabled={sim.busy || sim.playing || sim.status === 'COMPLETED'} busy={sim.busy}><FlaskConical size={15} />Trigger scenario</Button>
@@ -84,6 +85,7 @@ function LabContent() {
       </Panel>
       <PolicyControls key={snapshot.run_id} />
     </div></div>
+    <StressMatrix scenario={scenario} snapshot={snapshot} beforeShock={beforeShock} executed={executed} />
     {snapshot.alerts?.map((alert, index) => <Alert key={`${snapshot.step}-${index}`} tone={alert.severity === 'CRITICAL' ? 'danger' : 'warning'}>{alert.severity} — {alert.message}</Alert>)}
     <div className="lab-bottom"><DecisionCard snapshot={snapshot} /><Panel title="Scenario activity" subtitle="Scheduled and observed events belong to this run.">
       {!snapshot.scenarios?.length ? <p className="panel-copy">No scenarios have been submitted. Choose a stress test to begin.</p> : <div className="event-list">{snapshot.scenarios.slice().reverse().map((event) => <div key={event.id}><span className="event-node" /><div><strong>{SCENARIOS.find((s) => s.id === event.scenario)?.name ?? event.scenario}</strong><small>Effective step {event.effective_step} · Submitted at step {event.submitted_step}</small></div><Badge tone={event.status === 'ACTIVE' ? 'warning' : 'neutral'}>{event.status}</Badge></div>)}</div>}

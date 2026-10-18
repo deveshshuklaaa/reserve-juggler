@@ -411,6 +411,7 @@ class BacktestRequest(ContractModel):
         default_factory=lambda: ["STATIC_RESERVE", "REACTIVE_RESERVE", "RESERVE_JUGGLER"],
         min_length=1,
     )
+    retain_runs: bool = False
     days: int | None = None
     scenario: Scenario | None = None
     seed: int | None = None

@@ -58,7 +58,7 @@ export default function AppleSiliconChip() {
   };
 
   return (
-    <div className="apple-window silicon-showcase" id="silicon-specs">
+    <div className="silicon-showcase" id="silicon-specs">
       <div className="silicon-header">
         <span className="apple-kicker">RJ-1 ULTRA SILICON</span>
         <h2 className="silicon-title">

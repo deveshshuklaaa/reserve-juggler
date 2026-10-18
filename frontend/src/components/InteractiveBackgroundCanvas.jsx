@@ -25,6 +25,7 @@ export default function InteractiveBackgroundCanvas() {
     const handleResize = () => {
       width = canvas.width = window.innerWidth;
       height = canvas.height = window.innerHeight;
+      restart();
     };
 
     const handleMouseMove = (e) => {
@@ -54,7 +55,8 @@ export default function InteractiveBackgroundCanvas() {
     window.addEventListener('resize', handleResize);
     window.addEventListener('mousemove', handleMouseMove);
 
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let reduceMotion = motionPreference.matches;
 
     let time = 0;
     const render = () => {
@@ -109,7 +111,7 @@ export default function InteractiveBackgroundCanvas() {
           const dx = mouse.x - p.x;
           const dy = mouse.y - p.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 180) {
+          if (dist > 0 && dist < 180) {
             const force = (180 - dist) / 180;
             p.x -= (dx / dist) * force * 1.5;
             p.y -= (dy / dist) * force * 1.5;
@@ -140,15 +142,26 @@ export default function InteractiveBackgroundCanvas() {
         }
       }
 
-      animationFrameId = requestAnimationFrame(render);
+      if (!reduceMotion && !document.hidden) animationFrameId = requestAnimationFrame(render);
     };
 
+    const restart = () => {
+      cancelAnimationFrame(animationFrameId);
+      reduceMotion = motionPreference.matches || document.documentElement.classList.contains('treasury-motion-paused');
+      if (!document.hidden) render();
+    };
+    motionPreference.addEventListener('change', restart);
+    window.addEventListener('treasury-motion-change', restart);
+    document.addEventListener('visibilitychange', restart);
     render();
 
     return () => {
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('mousemove', handleMouseMove);
+      motionPreference.removeEventListener('change', restart);
+      window.removeEventListener('treasury-motion-change', restart);
+      document.removeEventListener('visibilitychange', restart);
     };
   }, []);
 

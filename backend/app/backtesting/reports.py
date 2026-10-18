@@ -52,6 +52,7 @@ class ReportStrategyResult(PublicStrategyResult):
 
 
 class BacktestReport(PublicBacktestResult):
+    child_run_ids: dict[str, str] = {}
     model_config = ConfigDict(frozen=True, extra="forbid")
     results: tuple[ReportStrategyResult, ...]
     execution_kind: Literal["SHARED","TEST_DOUBLE"]

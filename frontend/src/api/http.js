@@ -21,8 +21,8 @@ export async function requestJson(url, { method = 'GET', body, signal, timeout_m
     try { data = text ? JSON.parse(text) : null; } catch {
       throw new ApiError('The backend returned invalid JSON.', { status: response.status, code: 'INVALID_RESPONSE' });
     }
-    if (!response.ok) throw new ApiError(typeof data?.detail === 'string' ? data.detail : `The request failed (${response.status}).`,
-      { status: response.status, code: data?.code ?? 'HTTP_ERROR', details: data });
+    if (!response.ok) throw new ApiError(data?.message ?? data?.detail?.message ?? (typeof data?.detail === 'string' ? data.detail : `The request failed (${response.status}).`),
+      { status: response.status, code: data?.error_code ?? data?.detail?.error_code ?? data?.code ?? 'HTTP_ERROR', details: data });
     return data;
   } catch (error) {
     if (timedOut) throw new ApiError('The request timed out. Refresh the run before retrying a change.', { code: 'TIMEOUT' });

@@ -500,3 +500,8 @@
   - Result: 14 passed (100%)
 - **Commit Hash**: `cc4ee9d`
 - **Push Status**: Pushed to `origin/feat/treasury-intelligence`
+
+
+## RJ-M1-16G-FINAL - Local integration verification (2026-10-18)
+
+Combined repaired backend 88f9f456 and approved frontend 5bfee5c on isolated fix/rj-m1-16g-final-demo. Protected quantitative files remain byte-identical to de48d699; chronology source unchanged from 88f9f456. Added narrow live UI mappings and opt-in retained backtest children (default remains ephemeral). Results: 63 frozen quantitative, 30 focused PostgreSQL, 18 API/report and 198 frontend tests passed; production no-mock build passed. Browser exercised real creation/advance/scenario and one fresh 168-hour NORMAL comparison. See [final handoff](../FINAL_DEMO_HANDOFF.md) and [measured evidence](../FINAL_DEMO_EVIDENCE.json). Real losses, unpaid payouts and distinct emergency-event/closing-reserve-deficit counts are disclosed. Local commit only; no push or merge. Member 1 retains sign-off.
