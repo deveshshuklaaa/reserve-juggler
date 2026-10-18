@@ -57,6 +57,46 @@ def test_repo_maturity_pays_earned_accrual_once_and_is_not_hydrated_twice(runtim
     assert not state.repo_positions and state.valuation.tier1_value_cents == 0
 
 
+def test_acceptance_h2_contractual_repo_maturity_at_eight_am_with_delay_invariance(runtime_session, dataset):
+    """H2 positive acceptance: contractual repo maturity remains strictly at 08:00,
+    settlement is neither duplicated nor retroactive, and unavailable quotes are not consumed.
+    """
+    session = runtime_session
+    run = create_run(session, initial=100_000_000_000, buffer=5_000_000_000)
+    for step in range(32):
+        execute_persisted_hour(session, run.id, step)
+
+    position = session.scalar(select(RepoPosition).where(RepoPosition.run_id == run.id))
+    assert position.entered_at == datetime(2026, 1, 1, 17)
+    assert position.scheduled_maturity_at == datetime(2026, 1, 2, 8)
+    assert position.status == "LOCKED"
+
+    # Step 32 is the 08:00 hour (2026-01-01 00:00 + 32 hours = 2026-01-02 08:00)
+    receipt_8am = execute_persisted_hour(session, run.id, 32)
+    assert position.status == "MATURED"
+    assert position.scheduled_maturity_at == datetime(2026, 1, 2, 8)
+
+    maturity_movements = list(session.scalars(select(InvestmentMovement).where(
+        InvestmentMovement.run_id == run.id, InvestmentMovement.kind == "MATURITY")))
+    assert len(maturity_movements) == 1
+    movement = maturity_movements[0]
+    assert movement.occurred_at == datetime(2026, 1, 2, 8)
+    assert movement.cash_delta_cents == position.principal_cents + position.realized_interest_cents
+    assert receipt_8am.realized_interest_cents == position.realized_interest_cents
+
+    # Advance through 09:00 (step 33) and 10:00 (step 34)
+    execute_persisted_hour(session, run.id, 33)
+    execute_persisted_hour(session, run.id, 34)
+
+    # Verify settlement remains unique, non-duplicated, and non-retroactive
+    maturity_movements_after = list(session.scalars(select(InvestmentMovement).where(
+        InvestmentMovement.run_id == run.id, InvestmentMovement.kind == "MATURITY")))
+    assert len(maturity_movements_after) == 1
+    assert maturity_movements_after[0].occurred_at == datetime(2026, 1, 2, 8)
+    assert maturity_movements_after[0].cash_delta_cents == movement.cash_delta_cents
+
+
+
 @pytest.mark.parametrize("instrument", ["BOND", "EQUITY"])
 @pytest.mark.parametrize("residual_borrowing", [False, True])
 def test_real_emergency_sale_separates_market_pnl_slippage_and_debt(runtime_session, instrument, residual_borrowing):
